@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyurular - Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li class="active"><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Duyurular - Yeşil Vadi Sitesi</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
+                    <span>Ahmet Yılmaz</span>
+                </div>
+            </div>
+            
+            <!-- Duyurular İçeriği -->
+            <div class="announcements-content">
+                <!-- Yeni Duyuru Formu -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Yeni Duyuru Ekle</div>
+                    </div>
+                    <form id="announcementForm">
+                        <div class="form-group">
+                            <label for="announcementTitle">Duyuru Başlığı</label>
+                            <input type="text" id="announcementTitle" placeholder="Duyuru başlığını girin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcementContent">Duyuru İçeriği</label>
+                            <textarea id="announcementContent" placeholder="Duyuru içeriğini girin" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="announcementDate">Yayın Tarihi</label>
+                                <input type="date" id="announcementDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="announcementExpiry">Son Geçerlilik Tarihi</label>
+                                <input type="date" id="announcementExpiry" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcementPriority">Öncelik</label>
+                            <select id="announcementPriority" required>
+                                <option value="normal">Normal</option>
+                                <option value="important">Önemli</option>
+                                <option value="urgent">Acil</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Duyuruyu Yayınla</button>
+                    </form>
+                </div>
+                
+                <!-- Aktif Duyurular -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Aktif Duyurular</div>
+                        <div class="table-subtitle">3 Aktif Duyuru</div>
+                    </div>
+                    
+                    <div class="announcements-list">
+                        <div class="announcement-item urgent">
+                            <div class="announcement-header">
+                                <div class="announcement-title">ASANSÖR BAKIMI - ACİL</div>
+                                <span class="status unpaid">Acil</span>
+                            </div>
+                            <div class="announcement-content">
+                                Önümüzdeki hafta asansörlerimiz bakıma alınacaktır. 25-26 Ekim tarihlerinde asansörler kullanılamayacaktır. Lütfen bu süre zarfında asansörleri kullanmaktan kaçının. Acil durumlar için site yöneticisi ile iletişime geçiniz.
+                            </div>
+                            <div class="announcement-meta">
+                                <span class="announcement-date">Yayın: 10.10.2023</span>
+                                <span class="announcement-expiry">Son: 26.10.2023</span>
+                                <div class="announcement-actions">
+                                    <button class="btn btn-primary btn-small"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger btn-small"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="announcement-item important">
+                            <div class="announcement-header">
+                                <div class="announcement-title">Aidat Ödemeleri</div>
+                                <span class="status pending">Önemli</span>
+                            </div>
+                            <div class="announcement-content">
+                                Bu ayın aidatları için son ödeme tarihi 15 Ekim'dir. Lütfen ödemelerinizi zamanında yapınız. Ödemelerinizi site yönetim ofisine nakit veya banka havalesi ile yapabilirsiniz.
+                            </div>
+                            <div class="announcement-meta">
+                                <span class="announcement-date">Yayın: 01.10.2023</span>
+                                <span class="announcement-expiry">Son: 15.10.2023</span>
+                                <div class="announcement-actions">
+                                    <button class="btn btn-primary btn-small"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger btn-small"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="announcement-item">
+                            <div class="announcement-header">
+                                <div class="announcement-title">Site Temizliği</div>
+                                <span class="status paid">Normal</span>
+                            </div>
+                            <div class="announcement-content">
+                                Site genel temizliği 20 Ekim tarihinde yapılacaktır. Lütfen araçlarınızı otoparktan çekiniz ve balkonlarınızdaki eşyaları kaldırınız. Temizlik saat 09:00'da başlayacak ve 17:00'da sona erecektir.
+                            </div>
+                            <div class="announcement-meta">
+                                <span class="announcement-date">Yayın: 05.10.2023</span>
+                                <span class="announcement-expiry">Son: 20.10.2023</span>
+                                <div class="announcement-actions">
+                                    <button class="btn btn-primary btn-small"><i class="fas fa-edit"></i></button>
+                                    <button class="btn btn-danger btn-small"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geçmiş Duyurular -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Geçmiş Duyurular</div>
+                        <div class="table-subtitle">5 Geçmiş Duyuru</div>
+                    </div>
+                    
+                    <div class="announcements-list">
+                        <div class="announcement-item expired">
+                            <div class="announcement-header">
+                                <div class="announcement-title">Su Kesintisi</div>
+                                <span class="status unpaid">Süresi Doldu</span>
+                            </div>
+                            <div class="announcement-content">
+                                Bakım çalışması nedeniyle 12 Ekim günü 09:00 - 17:00 saatleri arasında su kesintisi olacaktır.
+                            </div>
+                            <div class="announcement-meta">
+                                <span class="announcement-date">Yayın: 08.10.2023</span>
+                                <span class="announcement-expiry">Son: 12.10.2023</span>
+                                <div class="announcement-actions">
+                                    <button class="btn btn-primary btn-small"><i class="fas fa-redo"></i> Yeniden Yayınla</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="announcement-item expired">
+                            <div class="announcement-header">
+                                <div class="announcement-title">Toplantı Duyurusu</div>
+                                <span class="status unpaid">Süresi Doldu</span>
+                            </div>
+                            <div class="announcement-content">
+                                Site yönetim toplantısı 5 Ekim'de yapılacaktır. Tüm site sakinlerinin katılımını rica ederiz.
+                            </div>
+                            <div class="announcement-meta">
+                                <span class="announcement-date">Yayın: 01.10.2023</span>
+                                <span class="announcement-expiry">Son: 05.10.2023</span>
+                                <div class="announcement-actions">
+                                    <button class="btn btn-primary btn-small"><i class="fas fa-redo"></i> Yeniden Yayınla</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

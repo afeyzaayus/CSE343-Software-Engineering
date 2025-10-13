@@ -1,1 +1,11 @@
 slaknlasndv
+
+git add .    
+git commit  -m "commit ismi"
+git push
+
+
+git branch branch_adı
+git branch tüm_branchleri_görme
+git restore .
+git pull

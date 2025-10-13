@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayarlar - Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li class="active"><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h2>Ayarlar - Yeşil Vadi Sitesi</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
+                    <span>Ahmet Yılmaz</span>
+                </div>
+            </div>
+            
+            <!-- Ayarlar İçeriği -->
+            <div class="settings-content">
+                <!-- Site Bilgileri -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Site Bilgileri</div>
+                    </div>
+                    <form id="siteSettingsForm">
+                        <div class="form-group">
+                            <label for="siteName">Site Adı</label>
+                            <input type="text" id="siteName" value="Yeşil Vadi Sitesi" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="siteAddress">Site Adresi</label>
+                            <input type="text" id="siteAddress" value="Atatürk Mah. Site Cad. No:123 Bahçelievler/İstanbul" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="totalApartments">Toplam Daire Sayısı</label>
+                                <input type="number" id="totalApartments" value="56" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="totalBlocks">Blok Sayısı</label>
+                                <input type="number" id="totalBlocks" value="4" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="sitePhone">Site Telefonu</label>
+                            <input type="tel" id="sitePhone" value="0212 123 4567" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Site Bilgilerini Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- Yönetici Bilgileri -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Yönetici Bilgileri</div>
+                    </div>
+                    <form id="managerSettingsForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="managerName">Ad Soyad</label>
+                                <input type="text" id="managerName" value="Ahmet Yılmaz" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="managerPhone">Telefon</label>
+                                <input type="tel" id="managerPhone" value="0555 123 4567" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="managerEmail">E-posta</label>
+                            <input type="email" id="managerEmail" value="ahmet.yilmaz@yesilvadi.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="managerAddress">İletişim Adresi</label>
+                            <input type="text" id="managerAddress" value="Site Yönetim Ofisi - Giriş Kat" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Yönetici Bilgilerini Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- Aidat Ayarları -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Aidat Ayarları</div>
+                    </div>
+                    <form id="duesSettingsForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="duesAmount">Aylık Aidat Tutarı (TL)</label>
+                                <input type="number" id="duesAmount" value="250" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="duesDueDate">Son Ödeme Günü</label>
+                                <input type="number" id="duesDueDate" value="15" min="1" max="31" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="lateFeeRate">Gecikme Faiz Oranı (%)</label>
+                                <input type="number" id="lateFeeRate" value="5" step="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lateFeeDays">Gecikme Başlangıç Günü</label>
+                                <input type="number" id="lateFeeDays" value="5" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="duesDescription">Aidat Açıklaması</label>
+                            <textarea id="duesDescription" rows="3">Site giderleri, güvenlik, temizlik, bakım ve onarım masrafları için aylık aidat tutarıdır.</textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Aidat Ayarlarını Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- Bildirim Ayarları -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Bildirim Ayarları</div>
+                    </div>
+                    <form id="notificationSettingsForm">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="smsNotifications" checked>
+                                <span class="checkmark"></span>
+                                SMS Bildirimleri Gönder
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="emailNotifications" checked>
+                                <span class="checkmark"></span>
+                                E-posta Bildirimleri Gönder
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="duesReminders" checked>
+                                <span class="checkmark"></span>
+                                Aidat Hatırlatma Bildirimleri
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="announcementNotifications" checked>
+                                <span class="checkmark"></span>
+                                Duyuru Bildirimleri
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="complaintNotifications" checked>
+                                <span class="checkmark"></span>
+                                Şikayet/Talep Bildirimleri
+                            </label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Bildirim Ayarlarını Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- Sistem Ayarları -->
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Sistem Ayarları</div>
+                    </div>
+                    <form id="systemSettingsForm">
+                        <div class="form-group">
+                            <label for="language">Dil</label>
+                            <select id="language" required>
+                                <option value="tr" selected>Türkçe</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="timezone">Saat Dilimi</label>
+                            <select id="timezone" required>
+                                <option value="+03:00" selected>UTC+3 (Türkiye Saati)</option>
+                                <option value="+01:00">UTC+1</option>
+                                <option value="+02:00">UTC+2</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dateFormat">Tarih Formatı</label>
+                            <select id="dateFormat" required>
+                                <option value="DD.MM.YYYY" selected>GG.AA.YYYY (31.12.2023)</option>
+                                <option value="YYYY-MM-DD">YYYY-AA-GG (2023-12-31)</option>
+                                <option value="MM/DD/YYYY">AA/GG/YYYY (12/31/2023)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="autoBackup">Otomatik Yedekleme</label>
+                            <select id="autoBackup" required>
+                                <option value="daily">Günlük</option>
+                                <option value="weekly" selected>Haftalık</option>
+                                <option value="monthly">Aylık</option>
+                                <option value="never">Yapma</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sistem Ayarlarını Kaydet</button>
+                    </form>
+                </div>
+
+                <!-- Tehlike Bölgesi -->
+                <div class="form-container danger-zone">
+                    <div class="table-header">
+                        <div class="table-title" style="color: var(--accent-color);">Tehlike Bölgesi</div>
+                    </div>
+                    <div class="danger-actions">
+                        <div class="danger-item">
+                            <h4><i class="fas fa-database"></i> Veritabanını Sıfırla</h4>
+                            <p>Tüm site verilerini siler ve sistemi fabrika ayarlarına döndürür.</p>
+                            <button class="btn btn-danger" id="resetDatabaseBtn">
+                                <i class="fas fa-exclamation-triangle"></i> Veritabanını Sıfırla
+                            </button>
+                        </div>
+                        
+                        <div class="danger-item">
+                            <h4><i class="fas fa-trash-alt"></i> Tüm Verileri Sil</h4>
+                            <p>Tüm daire sahipleri, aidat kayıtları, duyurular ve şikayetleri kalıcı olarak siler.</p>
+                            <button class="btn btn-danger" id="deleteAllDataBtn">
+                                <i class="fas fa-trash"></i> Tüm Verileri Sil
+                            </button>
+                        </div>
+                        
+                        <div class="danger-item">
+                            <h4><i class="fas fa-user-slash"></i> Hesabı Sil</h4>
+                            <p>Yönetici hesabını ve tüm yetkileri kalıcı olarak siler.</p>
+                            <button class="btn btn-danger" id="deleteAccountBtn">
+                                <i class="fas fa-user-times"></i> Hesabı Sil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onay Modalı -->
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--accent-color);">İşlemi Onayla</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">Bu işlem geri alınamaz. Devam etmek istiyor musunuz?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelBtn">İptal</button>
+                <button class="btn btn-danger" id="confirmBtn">Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
