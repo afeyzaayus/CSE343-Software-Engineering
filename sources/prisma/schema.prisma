@@ -1,0 +1,37 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["public"]   // sadece public tabloları hedefle
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  full_name    String
+  email        String   @unique
+  phone_number String   @unique
+  password     String
+  site_id      String
+  block_no     String
+  apartment_no String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@schema("public")   // <-- burası önemli
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  full_name    String
+  email        String   @unique
+  password     String
+  site_id      String
+  account_type String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@schema("public")   // <-- burası da önemli
+}
