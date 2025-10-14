@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş - Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2 class="login-title">Site Yönetim Sistemi</h2>
+            <form id="loginForm">
+                <div class="form-group">
+                    <input type="text" placeholder="Kullanıcı Adı" value="admin" required>
+                </div>
+                <div class="form-group">
+                    <input type="password" placeholder="Şifre" value="123456" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Giriş Yap</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Site Seçim Modalı -->
+    <div class="modal" id="siteSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Site Seçin</div>
+            </div>
+            <div class="site-list">
+                <div class="site-item" data-site="yesil-vadi">Yeşil Vadi Sitesi</div>
+                <div class="site-item" data-site="mavi-bahce">Mavi Bahçe Sitesi</div>
+                <div class="site-item" data-site="orman-evleri">Orman Evleri</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
