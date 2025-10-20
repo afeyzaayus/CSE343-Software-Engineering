@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Giriş Sayfası -->
+    <div id="login-page" class="container">
+        <div class="header">
+            <h1>Site Yönetim Sistemi</h1>
+            <p>Hoş Geldiniz</p>
+        </div>
+        <div class="content">
+            <div id="login-alert" class="alert hidden"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>Kullanıcı Tipi</label>
+                    <select id="login-type">
+                        <option value="user">Kullanıcı</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div id="user-login-fields">
+                    <div class="form-group">
+                        <label>Telefon Numarası</label>
+                        <input type="tel" id="login-phone" placeholder="5321234567">
+                    </div>
+                </div>
+                <div id="admin-login-fields" class="hidden">
+                    <div class="form-group">
+                        <label>E-posta</label>
+                        <input type="email" id="login-email" placeholder="ornek@email.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="login-password" placeholder="••••••••">
+                </div>
+                <button type="submit" class="btn btn-primary">Giriş Yap</button>
+            </form>
+            <div class="link-text">
+                Hesabınız yok mu? <a href="#" id="show-register">Kayıt Olun</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kayıt Sayfası -->
+    <div id="register-page" class="container hidden">
+        <div class="header">
+            <h1>Kayıt Ol</h1>
+            <p>Yeni Hesap Oluştur</p>
+        </div>
+        <div class="content">
+            <div id="register-alert" class="alert hidden"></div>
+            <form id="register-form">
+                <div class="form-group">
+                    <label>Hesap Tipi</label>
+                    <select id="register-type">
+                        <option value="user">Kullanıcı</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tam Ad</label>
+                    <input type="text" id="register-fullname" placeholder="Ad Soyad" required>
+                </div>
+                <div class="form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="register-email" placeholder="ornek@email.com" required>
+                </div>
+                
+                <div id="user-register-fields">
+                    <div class="form-group">
+                        <label>Telefon Numarası</label>
+                        <input type="tel" id="register-phone" placeholder="5321234567">
+                    </div>
+                    <div class="form-group">
+                        <label>Site ID</label>
+                        <input type="text" id="register-siteid" placeholder="site-a-01">
+                    </div>
+                    <div class="form-group">
+                        <label>Blok No</label>
+                        <input type="text" id="register-block" placeholder="A Blok">
+                    </div>
+                    <div class="form-group">
+                        <label>Daire No</label>
+                        <input type="text" id="register-apartment" placeholder="12">
+                    </div>
+                </div>
+
+                <div id="admin-register-fields" class="hidden">
+                    <div class="form-group">
+                        <label>Hesap Türü</label>
+                        <select id="register-account-type">
+                            <option value="INDIVIDUAL">Bireysel</option>
+                            <option value="COMPANY">Şirket</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="company-name-group">
+                        <label>Şirket Adı</label>
+                        <input type="text" id="register-company" placeholder="Şirket A.Ş.">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" id="register-password" placeholder="••••••••" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre Tekrar</label>
+                    <input type="password" id="register-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+            </form>
+            <div class="link-text">
+                Zaten hesabınız var mı? <a href="#" id="show-login">Giriş Yapın</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kullanıcı Dashboard -->
+    <div id="user-dashboard" class="container dashboard hidden">
+        <div class="header">
+            <h1>Dashboard</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">U</div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 600;" id="user-name">Kullanıcı</div>
+                    <div style="font-size: 12px; opacity: 0.8;" id="user-role">Kullanıcı</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Çıkış</button>
+            </div>
+        </div>
+        <div class="dashboard-content">
+            <div class="welcome-card">
+                <h2 id="welcome-title">Hoş Geldiniz!</h2>
+                <p>Site yönetim sisteminize başarıyla giriş yaptınız.</p>
+            </div>
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <h3>Dashboard Hazırlanıyor</h3>
+                <p>Site özellikleriniz yakında burada görünecek.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-dashboard" class="container dashboard hidden">
+        <div class="header">
+            <h1>Admin Panel</h1>
+            <div class="user-info">
+                <div class="user-avatar" id="admin-avatar">A</div>
+                <div>
+                    <div style="font-size: 14px; font-weight: 600;" id="admin-name">Admin</div>
+                    <div style="font-size: 12px; opacity: 0.8;" id="admin-type">INDIVIDUAL</div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Çıkış</button>
+            </div>
+        </div>
+        <div class="dashboard-content">
+            <div class="stats">
+                <div class="stat-card">
+                    <h4>Toplam Site</h4>
+                    <div class="value" id="total-sites">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Site Limiti</h4>
+                    <div class="value" id="site-limit">1</div>
+                </div>
+            </div>
+
+            <h3 class="section-title">Mevcut Siteler</h3>
+            <div id="sites-list" class="site-list">
+                <div class="empty-state">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <h3>Henüz Site Yok</h3>
+                    <p>Aşağıdaki formu kullanarak ilk sitenizi oluşturun.</p>
+                </div>
+            </div>
+
+            <h3 class="section-title" style="margin-top: 40px;">Yeni Site Oluştur</h3>
+            <div id="create-site-alert" class="alert hidden"></div>
+            <form id="create-site-form">
+                <div class="form-group">
+                    <label>Site ID (Otomatik oluşturulur)</label>
+                    <input type="text" id="site-id" placeholder="Otomatik oluşturulacak" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Site Adı</label>
+                    <input type="text" id="site-name" placeholder="Örn: Yeşil Vadi Sitesi" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Site Adresi</label>
+                    <input type="text" id="site-address" placeholder="Örn: İstanbul, Ümraniye" required>
+                </div>
+
+                <button type="submit">Site Oluştur</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
