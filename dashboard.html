@@ -3,89 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Site Yönetim Sistemi</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Ana Sayfa - Yeşil Vadi Sitesi</title>
+    
+    <link rel="stylesheet" href="css/base.css">         
+    <link rel="stylesheet" href="css/dashboard.css">    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
+        
         <div class="sidebar">
-            <div class="logo">
-                <h1>Site Yönetim Sistemi</h1>
-            </div>
+            <div class="logo">Site Yönetimi</div>
             <ul class="nav-links">
-                <li class="active"><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
-                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
-                <li><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
-                <li><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
-                <li><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
-                <li><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
-                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
-            </ul>
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="dues.html"><i class="fas fa-wallet"></i> Aidatlar</a></li>
+                <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                </ul>
         </div>
         
-        <!-- Main Content -->
         <div class="main-content">
             <div class="header">
                 <h2>Ana Sayfa - Yeşil Vadi Sitesi</h2>
-                <div class="user-info">
-                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
-                    <span>Ahmet Yılmaz</span>
-                </div>
+                <div class="user-info"> ... </div>
             </div>
             
-            <!-- Dashboard İçeriği -->
             <div class="dashboard-content">
+                
                 <div class="dashboard-cards">
-                    <!-- Tıklanabilir Metrik Kartları -->
-                    <div class="card" onclick="window.location.href='daire-sahipleri.html'">
+                    
+                    <div class="card" id="occupancy-card">
                         <div class="card-header">
                             <div class="card-title">Daire Doluluk Oranı</div>
-                            <div class="card-icon blue">
-                                <i class="fas fa-home"></i>
-                            </div>
+                            <div class="card-icon blue"><i class="fas fa-home"></i></div> 
                         </div>
-                        <div class="card-value">%85</div>
-                        <div class="card-footer">48/56 dolu</div>
+                        <div class="card-value">--%</div>
+                        <div class="card-footer">-- dolu</div>
                     </div>
-                    
-                    <div class="card" onclick="window.location.href='aidat-takibi.html'">
+
+                    <div class="card" id="dues-card">
                         <div class="card-header">
-                            <div class="card-title">Aidat Ödenme Oranı</div>
-                            <div class="card-icon green">
-                                <i class="fas fa-money-bill-wave"></i>
-                            </div>
+                            <div class="card-title">Aidat Ödeme Oranı</div>
+                            <div class="card-icon green"><i class="fas fa-wallet"></i></div>
                         </div>
-                        <div class="card-value">%75</div>
-                        <div class="card-footer">36/48 ödendi</div>
+                        <div class="card-value">--%</div>
+                        <div class="card-footer">-- ödendi</div>
                     </div>
-                    
-                    <div class="card" onclick="window.location.href='duyurular.html'">
+
+                    <div class="card" id="announcement-card">
                         <div class="card-header">
                             <div class="card-title">Aktif Duyurular</div>
-                            <div class="card-icon orange">
-                                <i class="fas fa-bullhorn"></i>
-                            </div>
+                            <div class="card-icon orange"><i class="fas fa-bullhorn"></i></div>
                         </div>
-                        <div class="card-value">3</div>
-                        <div class="card-footer">Aktif duyuru sayısı</div>
+                        <div class="card-value">--</div>
+                        <div class="card-footer">Tüm duyuruları gör</div>
                     </div>
-                    
-                    <div class="card" onclick="window.location.href='sikayet-talep.html'">
+
+                    <div class="card" id="requests-card">
                         <div class="card-header">
-                            <div class="card-title">Bekleyen Şikayet/Talepler</div>
-                            <div class="card-icon red">
-                                <i class="fas fa-comments"></i>
-                            </div>
+                            <div class="card-title">Bekleyen Talepler</div>
+                            <div class="card-icon red"><i class="fas fa-cogs"></i></div>
                         </div>
-                        <div class="card-value">5</div>
-                        <div class="card-footer">Çözüm bekleyen</div>
+                        <div class="card-value">--</div>
+                        <div class="card-footer">İşlem bekleyen arızalar</div>
                     </div>
+
                 </div>
                 
-                <!-- Son Duyurular -->
                 <div class="announcements-section">
                     <div class="announcements-header">
                         <div class="announcements-title">Son Duyurular</div>
@@ -94,29 +78,13 @@
                         </button>
                     </div>
                     <div id="current-announcements">
-                        <div class="announcement-item">
-                            <div class="announcement-title">Asansör Bakımı</div>
-                            <div class="announcement-content">Önümüzdeki hafta asansörlerimiz bakıma alınacaktır. Lütfen bu süre zarfında asansörleri kullanmaktan kaçının.</div>
-                            <div class="announcement-meta">
-                                <span class="announcement-date">Yayın: 10.10.2023</span>
-                                <span class="announcement-expiry">Son: 17.10.2023</span>
-                            </div>
-                        </div>
-                        
-                        <div class="announcement-item">
-                            <div class="announcement-title">Aidat Ödemeleri</div>
-                            <div class="announcement-content">Bu ayın aidatları için son ödeme tarihi 15 Ekim'dir. Lütfen ödemelerinizi zamanında yapınız.</div>
-                            <div class="announcement-meta">
-                                <span class="announcement-date">Yayın: 01.10.2023</span>
-                                <span class="announcement-expiry">Son: 15.10.2023</span>
-                            </div>
-                        </div>
+                        <p style="text-align: center; padding: 15px; color: #7f8c8d;">Özet yükleniyor...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

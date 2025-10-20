@@ -4,29 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aidat Takibi - Site Yönetim Sistemi</title>
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="css/base.css">        
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/complaint.css">  
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="logo">
                 <h1>Site Yönetim Sistemi</h1>
             </div>
             <ul class="nav-links">
                 <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
-                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
-                <li class="active"><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
-                <li><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
-                <li><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
-                <li><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li class="active"><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="announcement.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
         
-        <!-- Main Content -->
         <div class="main-content">
             <div class="header">
                 <h2>Aidat Takibi - Yeşil Vadi Sitesi</h2>
@@ -36,16 +38,13 @@
                 </div>
             </div>
             
-            <!-- Aidat Takip İçeriği -->
             <div class="dues-content">
-                <!-- Filtre Butonları -->
                 <div class="complaint-filters">
                     <button class="filter-btn active" data-filter="all">Tümü</button>
                     <button class="filter-btn" data-filter="paid">Ödeyenler</button>
                     <button class="filter-btn" data-filter="unpaid">Ödemeyenler</button>
                 </div>
 
-                <!-- Ödeyenler Tablosu -->
                 <div class="table-container" id="paid-section">
                     <div class="table-header">
                         <div class="table-title">Aidatını Ödeyenler</div>
@@ -111,7 +110,6 @@
                     </table>
                 </div>
 
-                <!-- Ödemeyenler Tablosu -->
                 <div class="table-container" id="unpaid-section">
                     <div class="table-header">
                         <div class="table-title">Aidatını Ödemeyenler</div>
@@ -188,7 +186,6 @@
         </div>
     </div>
 
-    <!-- Ödeme Ekleme Modalı -->
     <div class="modal" id="addPaymentModal">
         <div class="modal-content">
             <div class="modal-header">

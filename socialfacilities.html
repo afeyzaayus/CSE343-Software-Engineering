@@ -4,29 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sosyal Tesisler - Site Yönetim Sistemi</title>
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/facilities.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
         <div class="sidebar">
             <div class="logo">
                 <h1>Site Yönetim Sistemi</h1>
             </div>
             <ul class="nav-links">
                 <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
-                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
-                <li><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
-                <li><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
                 <li class="active"><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
-                <li><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
         
-        <!-- Main Content -->
         <div class="main-content">
             <div class="header">
                 <h2>Sosyal Tesisler - Yeşil Vadi Sitesi</h2>
@@ -36,9 +38,7 @@
                 </div>
             </div>
             
-            <!-- Sosyal Tesisler İçeriği -->
             <div class="facilities-content">
-                <!-- Yüzme Havuzu -->
                 <div class="facility-card">
                     <div class="facility-header">
                         <div class="facility-title">
@@ -74,7 +74,6 @@
                     </div>
                 </div>
 
-                <!-- Spor Salonu -->
                 <div class="facility-card">
                     <div class="facility-header">
                         <div class="facility-title">
@@ -108,7 +107,6 @@
                     </div>
                 </div>
 
-                <!-- Toplantı Salonu -->
                 <div class="facility-card">
                     <div class="facility-header">
                         <div class="facility-title">
@@ -142,7 +140,6 @@
                     </div>
                 </div>
 
-                <!-- Çocuk Oyun Parkı -->
                 <div class="facility-card">
                     <div class="facility-header">
                         <div class="facility-title">
@@ -176,7 +173,6 @@
                     </div>
                 </div>
 
-                <!-- Bahçe ve Mesire Alanı -->
                 <div class="facility-card">
                     <div class="facility-header">
                         <div class="facility-title">
@@ -214,6 +210,6 @@
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

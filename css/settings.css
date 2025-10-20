@@ -1,0 +1,31 @@
+/* Settings Styles */
+.danger-zone {
+    border: 2px solid var(--accent-color);
+}
+
+.danger-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.danger-item {
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #fefefe;
+}
+
+.danger-item h4 {
+    color: var(--accent-color);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.danger-item p {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 12px;
+}

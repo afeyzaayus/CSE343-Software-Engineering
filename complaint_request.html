@@ -4,49 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Şikayet/Talep - Site Yönetim Sistemi</title>
-    <link rel="stylesheet" href="css/style.css">
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="css/complaint.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <h1>Site Yönetim Sistemi</h1>
-            </div>
-            <ul class="nav-links">
-                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
-                <li><a href="daire-sahipleri.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
-                <li><a href="aidat-takibi.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
-                <li><a href="duyurular.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
-                <li><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li class="active"><a href="sikayet-talep.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
-                <li><a href="ayarlar.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
-                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
-            </ul>
-        </div>
-        
-        <!-- Main Content -->
+        <div class="sidebar"> ... </div>
         <div class="main-content">
             <div class="header">
                 <h2>Şikayet ve Talepler - Yeşil Vadi Sitesi</h2>
-                <div class="user-info">
-                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
-                    <span>Ahmet Yılmaz</span>
-                </div>
+                <div class="user-info"> ... </div>
             </div>
             
-            <!-- Şikayet/Talep İçeriği -->
             <div class="complaints-content">
-                <!-- Filtre Butonları -->
                 <div class="complaint-filters">
-                    <button class="filter-btn active" data-filter="all">Tümü (8)</button>
-                    <button class="filter-btn" data-filter="pending">Bekleyen (5)</button>
-                    <button class="filter-btn" data-filter="in-progress">İşlemde (2)</button>
-                    <button class="filter-btn" data-filter="resolved">Çözülen (1)</button>
+                    <button class="filter-btn" data-filter="all">Tümü</button>
+                    <button class="filter-btn" data-filter="pending">Bekleyen</button>
+                    <button class="filter-btn" data-filter="in-progress">İşlemde</button>
+                    <button class="filter-btn" data-filter="resolved">Çözülen</button>
                 </div>
 
-                <!-- Yeni Şikayet/Talep Butonu -->
                 <div class="table-container">
                     <div class="table-header">
                         <div class="table-title">Şikayet ve Talepler</div>
@@ -56,178 +37,36 @@
                     </div>
                 </div>
 
-                <!-- Bekleyen Şikayet/Talepler -->
-                <div class="table-container">
+                <div class="table-container" id="pending-requests-section">
                     <div class="table-header">
                         <div class="table-title">Bekleyen Şikayet/Talepler</div>
-                        <div class="table-subtitle">5 Bekleyen Kayıt</div>
-                    </div>
-
-                    <div class="complaints-list">
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Asansör Arızası - A Blok</div>
-                                <span class="status pending">Beklemede</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Mehmet Demir - A-101</span>
-                                <span><i class="fas fa-phone"></i> 0555 123 4567</span>
-                                <span><i class="fas fa-calendar"></i> 18.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Teknik Arıza</span>
-                            </div>
-                            <div class="complaint-content">
-                                A Blok asansörü 2. katta sıkışıyor ve kapılar tam açılmıyor. Acil müdahale gerekiyor, özellikle yaşlı komşularımız için risk oluşturuyor.
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-success btn-small"><i class="fas fa-play"></i> İşleme Al</button>
-                                <button class="btn btn-primary btn-small"><i class="fas fa-reply"></i> Yanıtla</button>
-                                <button class="btn btn-warning btn-small"><i class="fas fa-phone"></i> Ara</button>
-                            </div>
                         </div>
-
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Otopark Sorunu</div>
-                                <span class="status pending">Beklemede</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Ayşe Kaya - B-205</span>
-                                <span><i class="fas fa-phone"></i> 0555 234 5678</span>
-                                <span><i class="fas fa-calendar"></i> 17.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Otopark</span>
-                            </div>
-                            <div class="complaint-content">
-                                Misafirlerim için yeterli otopark alanı bulamıyorum. Özellikle akşam saatlerinde tüm alanlar dolu oluyor. Misafir otopark alanı yetersiz.
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-success btn-small"><i class="fas fa-play"></i> İşleme Al</button>
-                                <button class="btn btn-primary btn-small"><i class="fas fa-reply"></i> Yanıtla</button>
-                                <button class="btn btn-warning btn-small"><i class="fas fa-phone"></i> Ara</button>
-                            </div>
-                        </div>
-
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Çöp Konteyner Taşması</div>
-                                <span class="status pending">Beklemede</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Ali Yıldız - C-312</span>
-                                <span><i class="fas fa-phone"></i> 0555 345 6789</span>
-                                <span><i class="fas fa-calendar"></i> 16.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Temizlik</span>
-                            </div>
-                            <div class="complaint-content">
-                                C Blok önündeki çöp konteynerleri sürekli taşıyor ve etrafa koku yayılıyor. Daha sık boşaltılması gerekiyor.
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-success btn-small"><i class="fas fa-play"></i> İşleme Al</button>
-                                <button class="btn btn-primary btn-small"><i class="fas fa-reply"></i> Yanıtla</button>
-                                <button class="btn btn-warning btn-small"><i class="fas fa-phone"></i> Ara</button>
-                            </div>
-                        </div>
+                    <div class="complaints-list" id="pending-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
 
-                <!-- İşlemdeki Şikayet/Talepler -->
-                <div class="table-container">
+                <div class="table-container" id="inprogress-requests-section">
                     <div class="table-header">
                         <div class="table-title">İşlemdeki Şikayet/Talepler</div>
-                        <div class="table-subtitle">2 İşlemde Kayıt</div>
                     </div>
-
-                    <div class="complaints-list">
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Bahçe Sulama Sistemi Arızası</div>
-                                <span class="status unpaid">İşlemde</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Zeynep Şahin - D-104</span>
-                                <span><i class="fas fa-phone"></i> 0555 456 7890</span>
-                                <span><i class="fas fa-calendar"></i> 15.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Bahçe</span>
-                            </div>
-                            <div class="complaint-content">
-                                Otomatik sulama sisteminde sızıntı var. Su israfı oluyor ve çimler zarar görüyor.
-                            </div>
-                            <div class="complaint-response">
-                                <strong><i class="fas fa-reply"></i> Yönetici Yanıtı:</strong>
-                                "Sulama sistemindeki arıza için teknik ekip bilgilendirildi. Yarın sabah müdahale edecekler."
-                                <span class="response-date">- 16.10.2023 14:30</span>
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-success btn-small"><i class="fas fa-check"></i> Çözüldü</button>
-                                <button class="btn btn-primary btn-small"><i class="fas fa-reply"></i> Yanıt Ekle</button>
-                            </div>
-                        </div>
-
-                        <div class="complaint-item">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Güvenlik Kamera Arızası</div>
-                                <span class="status unpaid">İşlemde</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Fatma Öztürk - A-205</span>
-                                <span><i class="fas fa-phone"></i> 0555 567 8901</span>
-                                <span><i class="fas fa-calendar"></i> 14.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Güvenlik</span>
-                            </div>
-                            <div class="complaint-content">
-                                Ana girişteki güvenlik kamerası çalışmıyor. Güvenlik açığı oluşturuyor.
-                            </div>
-                            <div class="complaint-response">
-                                <strong><i class="fas fa-reply"></i> Yönetici Yanıtı:</strong>
-                                "Kamera firması ile iletişime geçildi. Ekip yarın gelip bakacak."
-                                <span class="response-date">- 15.10.2023 11:15</span>
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-success btn-small"><i class="fas fa-check"></i> Çözüldü</button>
-                                <button class="btn btn-primary btn-small"><i class="fas fa-reply"></i> Yanıt Ekle</button>
-                            </div>
-                        </div>
+                    <div class="complaints-list" id="inprogress-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
 
-                <!-- Çözülen Şikayet/Talepler -->
-                <div class="table-container">
+                <div class="table-container" id="resolved-requests-section">
                     <div class="table-header">
                         <div class="table-title">Çözülen Şikayet/Talepler</div>
-                        <div class="table-subtitle">1 Çözülen Kayıt</div>
                     </div>
-
-                    <div class="complaints-list">
-                        <div class="complaint-item resolved">
-                            <div class="complaint-header">
-                                <div class="complaint-title">Aydınlatma Sorunu - Bahçe</div>
-                                <span class="status paid">Çözüldü</span>
-                            </div>
-                            <div class="complaint-meta">
-                                <span><i class="fas fa-user"></i> Mustafa Çelik - B-108</span>
-                                <span><i class="fas fa-phone"></i> 0555 678 9012</span>
-                                <span><i class="fas fa-calendar"></i> 10.10.2023</span>
-                                <span><i class="fas fa-tag"></i> Aydınlatma</span>
-                            </div>
-                            <div class="complaint-content">
-                                Bahçe aydınlatmasının bir kısmı çalışmıyor. Akşam yürüyüşleri için tehlikeli oluyor.
-                            </div>
-                            <div class="complaint-response">
-                                <strong><i class="fas fa-reply"></i> Yönetici Yanıtı:</strong>
-                                "Aydınlatma arızası giderildi. Tüm lambalar değiştirildi ve çalışıyor."
-                                <span class="response-date">- 12.10.2023 16:45</span>
-                            </div>
-                            <div class="complaint-actions">
-                                <button class="btn btn-primary btn-small"><i class="fas fa-redo"></i> Yeniden Aç</button>
-                                <button class="btn btn-danger btn-small"><i class="fas fa-archive"></i> Arşivle</button>
-                            </div>
-                        </div>
+                    <div class="complaints-list" id="resolved-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Yeni Şikayet/Talep Modalı -->
     <div class="modal" id="addComplaintModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -235,49 +74,11 @@
                 <button class="close-btn">&times;</button>
             </div>
             <form id="complaintForm">
-                <div class="form-group">
-                    <label for="complaintType">Tip</label>
-                    <select id="complaintType" required>
-                        <option value="">Tip seçin</option>
-                        <option value="complaint">Şikayet</option>
-                        <option value="request">Talep</option>
-                        <option value="suggestion">Öneri</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="complaintCategory">Kategori</label>
-                    <select id="complaintCategory" required>
-                        <option value="">Kategori seçin</option>
-                        <option value="technical">Teknik Arıza</option>
-                        <option value="cleaning">Temizlik</option>
-                        <option value="security">Güvenlik</option>
-                        <option value="parking">Otopark</option>
-                        <option value="garden">Bahçe</option>
-                        <option value="other">Diğer</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="complaintTitle">Başlık</label>
-                    <input type="text" id="complaintTitle" placeholder="Şikayet/talep başlığını girin" required>
-                </div>
-                <div class="form-group">
-                    <label for="complaintDescription">Açıklama</label>
-                    <textarea id="complaintDescription" placeholder="Detaylı açıklama girin" rows="4" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="complaintPriority">Öncelik</label>
-                    <select id="complaintPriority" required>
-                        <option value="low">Düşük</option>
-                        <option value="normal">Normal</option>
-                        <option value="high">Yüksek</option>
-                        <option value="urgent">Acil</option>
-                    </select>
-                </div>
                 <button type="submit" class="btn btn-primary">Kaydet</button>
             </form>
         </div>
     </div>
 
-    <script src="js/main.js"></script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,100 @@
+/* Facilities Styles (Sosyal Tesisler) */
+.facility-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--box-shadow);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+.facility-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.facility-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.facility-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.facility-hours, .facility-rules {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.facility-hours h4, .facility-rules h4 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.facility-hours p, .facility-rules ul {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.facility-rules ul {
+    padding-left: 20px;
+}
+
+.facility-rules li {
+    margin-bottom: 5px;
+}
+
+.facility-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.gallery-item {
+    height: 120px;
+    background: #e9ecef;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7f8c8d;
+    font-weight: 600;
+}
+
+.facility-description {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.facility-description h4 {
+    color: var(--primary-color);
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.facility-description p {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .facility-info {
+        grid-template-columns: 1fr;
+    }
+}
