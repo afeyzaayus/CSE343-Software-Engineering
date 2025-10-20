@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
     min-height: 100vh;
     display: flex;
     justify-content: center;
@@ -15,18 +15,73 @@ body {
     padding: 20px;
 }
 
+/* Kaydırmalı Geçiş Container */
+.auth-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    overflow: hidden;
+}
+
+.auth-pages {
+    display: flex;
+    width: 200%;
+}
+
+.auth-page {
+    width: 50%;
+    flex-shrink: 0;
+}
+
+/* Giriş/Kayıt Switch Butonları */
+.auth-switch {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 25px;
+}
+
+.auth-switch-btn {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #666;
+}
+
+.auth-switch-btn.active {
+    background: white;
+    color: #2e86c1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Animasyonsuz geçiş classları */
+.slide-left {
+    transform: translateX(-50%);
+}
+
+.slide-right {
+    transform: translateX(0%);
+}
+
 .container {
     background: white;
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    max-width: 450px;
+    max-width: 400px;
     width: 100%;
     overflow: hidden;
 }
 
 .header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
+    background: linear-gradient(135deg, white 0%, rgb(206, 219, 233) 100%);
+    color: #1a5276;
     padding: 30px;
     text-align: center;
 }
@@ -57,7 +112,7 @@ input, select {
 
 input:focus, select:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: #2e86c1;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
@@ -74,7 +129,7 @@ input:focus, select:focus {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient( #2e86c1 0%, #3498db 100%);
     color: white;
 }
 
@@ -89,10 +144,6 @@ input:focus, select:focus {
 }
 
 .btn-secondary:hover { background: #e0e0e0; }
-
-.link-text { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
-.link-text a { color: #667eea; text-decoration: none; font-weight: 600; }
-.link-text a:hover { text-decoration: underline; }
 
 .alert {
     padding: 12px 15px;
@@ -125,7 +176,7 @@ input:focus, select:focus {
 
 .user-avatar {
     width: 40px; height: 40px; border-radius: 50%;
-    background: white; color: #667eea;
+    background: white; color:  #2e86c1;
     display: flex; align-items: center; justify-content: center;
     font-weight: bold; font-size: 18px;
 }
@@ -146,7 +197,7 @@ input:focus, select:focus {
 .dashboard-content { padding: 40px; }
 
 .welcome-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg,  #2e86c1 0%, #3498db 100%);
     color: white;
     padding: 40px;
     border-radius: 15px;
@@ -167,7 +218,7 @@ input:focus, select:focus {
 }
 
 .site-card:hover {
-    border-color: #667eea;
+    border-color: #2e86c1;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
@@ -176,7 +227,7 @@ input:focus, select:focus {
 .site-card p { color: #666; margin-bottom: 5px; font-size: 14px; }
 .site-card .badge {
     display: inline-block; padding: 4px 12px;
-    background: #667eea; color: white; border-radius: 20px;
+    background: #2e86c1; color: white; border-radius: 20px;
     font-size: 12px; margin-top: 10px;
 }
 
@@ -201,7 +252,7 @@ input:focus, select:focus {
 }
 
 .stat-card h4 { color: #999; font-size: 14px; margin-bottom: 8px; font-weight: 500; }
-.stat-card .value { font-size: 32px; font-weight: bold; color: #667eea; }
+.stat-card .value { font-size: 32px; font-weight: bold; color: #2e86c1; }
 
 .section-title {
     font-size: 20px;
@@ -223,35 +274,9 @@ input:focus, select:focus {
     transition: all 0.3s;
     flex: 1;
 }
-.btn-select { background: #667eea; color: white; }
+.btn-select { background: #2e86c1; color: white; }
 .btn-select:hover { background: #5568d3; }
-.login-type-toggle {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
 
-.login-type-option {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: #f0f0f0;
-    transition: all 0.2s;
-}
-
-.login-type-option.active {
-    background-color: #333;
-    color: white;
-    font-weight: bold;
-}
-.register-type-toggle {
-    display: flex;
-    gap: 10px;
-    margin-top: 5px;
-}
 .register-type-toggle {
     display: flex;
     gap: 10px;
@@ -274,4 +299,3 @@ input:focus, select:focus {
     color: white;
     font-weight: bold;
 }
-
