@@ -1,3 +1,8 @@
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
+
+
 import { validationResult } from 'express-validator';
 import { 
     registerAdminService, 
@@ -204,7 +209,29 @@ export const createSite = async (req, res) => {
         res.status(status).json({ message: error.message });
     }
 };
+export const getSitesByAdmin = async (req, res) => {
+    const adminId = req.admin ? req.admin.id : null;
 
+    if (!adminId) {
+        return res.status(401).json({ message: 'Oturum açmış Admin bulunamadı veya token geçersiz.' });
+    }
+
+    try {
+        // --- SERVİS ÇAĞRISI ---
+        const sites = await prisma.site.findMany({
+            where: { adminId } // Prisma modelindeki alanın adı adminId olmalı
+        });
+
+        res.status(200).json({
+            message: 'Admin’e ait siteler başarıyla listelendi.',
+            sites
+        });
+
+    } catch (error) {
+        console.error('Site listeleme hatası:', error.message);
+        res.status(500).json({ message: 'Siteler alınamadı.', error: error.message });
+    }
+};
 export const registerUser = async (req, res) => {
     const { full_name, email, phone_number, password, site_id, block_no, apartment_no } = req.body;
 

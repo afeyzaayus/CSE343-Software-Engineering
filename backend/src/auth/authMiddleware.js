@@ -1,3 +1,5 @@
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
@@ -5,9 +7,7 @@ dotenv.config();
 
 export const JWT_SECRET = process.env.JWT_SECRET;
 export const TOKEN_EXPIRATION = process.env.TOKEN_EXPIRATION;
-import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export const adminAuth = async (req, res, next) => {
     let token;

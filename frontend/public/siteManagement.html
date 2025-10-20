@@ -531,293 +531,268 @@
             <div id="create-site-alert" class="alert hidden"></div>
             <form id="create-site-form">
                 <div class="form-group">
-                    <label>Site ID (Benzersiz)</label>
-                    <input type="text" id="site-id" placeholder="site-a-01" required>
+                    <label>Site ID (Otomatik oluşturulur)</label>
+                    <input type="text" id="site-id" placeholder="Otomatik oluşturulacak" readonly>
                 </div>
+
                 <div class="form-group">
                     <label>Site Adı</label>
-                    <input type="text" id="site-name" placeholder="Örnek Residence" required>
+                    <input type="text" id="site-name" placeholder="Örn: Yeşil Vadi Sitesi" required>
                 </div>
+
                 <div class="form-group">
                     <label>Site Adresi</label>
-                    <input type="text" id="site-address" placeholder="İlçe/Şehir" required>
+                    <input type="text" id="site-address" placeholder="Örn: İstanbul, Ümraniye" required>
                 </div>
-                <button type="submit" class="btn btn-primary">Site Oluştur</button>
+
+                <button type="submit">Site Oluştur</button>
             </form>
         </div>
     </div>
 
     <script>
-        const BASE_URL = 'http://localhost:3000/api/auth';
-        
-        let currentUser = null;
-        let currentToken = null;
-        let userSites = [];
+const BASE_URL = 'http://localhost:3000/api/auth';
 
-        // Sayfa Elementleri
-        const loginPage = document.getElementById('login-page');
-        const registerPage = document.getElementById('register-page');
-        const userDashboard = document.getElementById('user-dashboard');
-        const adminDashboard = document.getElementById('admin-dashboard');
+let currentUser = null;
+let currentToken = null;
+let userSites = [];
 
-        // Giriş/Kayıt Tipi Değişimi
-        document.getElementById('login-type').addEventListener('change', function() {
-            const isAdmin = this.value === 'admin';
-            document.getElementById('user-login-fields').classList.toggle('hidden', isAdmin);
-            document.getElementById('admin-login-fields').classList.toggle('hidden', !isAdmin);
+// Sayfa Elementleri
+const pages = {
+    login: document.getElementById('login-page'),
+    register: document.getElementById('register-page'),
+    userDashboard: document.getElementById('user-dashboard'),
+    adminDashboard: document.getElementById('admin-dashboard')
+};
+
+// ------------------ SAYFA GEÇİŞLERİ ------------------
+function showPage(pageToShow) {
+    Object.values(pages).forEach(page => page.classList.add('hidden'));
+    pageToShow.classList.remove('hidden');
+}
+
+document.getElementById('show-register').addEventListener('click', e => {
+    e.preventDefault();
+    showPage(pages.register);
+});
+
+document.getElementById('show-login').addEventListener('click', e => {
+    e.preventDefault();
+    showPage(pages.login);
+});
+
+// ------------------ ALERT ------------------
+function showAlert(elementId, message, isError = false) {
+    const alert = document.getElementById(elementId);
+    alert.textContent = message;
+    alert.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+    alert.classList.remove('hidden');
+    setTimeout(() => alert.classList.add('hidden'), 5000);
+}
+
+// ------------------ API İSTEĞİ ------------------
+async function apiRequest(endpoint, data = {}, requiresAuth = false, method = 'POST') {
+    const headers = { 'Content-Type': 'application/json' };
+    if (requiresAuth && currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
+
+    try {
+        const response = await fetch(`${BASE_URL}${endpoint}`, {
+            method,
+            headers,
+            body: method === 'GET' ? undefined : JSON.stringify(data)
         });
+        const result = await response.json();
+        return { ok: response.ok, data: result };
+    } catch (error) {
+        console.error('API Hatası:', error);
+        return { ok: false, data: { message: 'Bağlantı hatası' } };
+    }
+}
 
-        document.getElementById('register-type').addEventListener('change', function() {
-            const isAdmin = this.value === 'admin';
-            document.getElementById('user-register-fields').classList.toggle('hidden', isAdmin);
-            document.getElementById('admin-register-fields').classList.toggle('hidden', !isAdmin);
-        });
+// ------------------ LOGIN/KAYIT TİPİ DEĞİŞİMİ ------------------
+function toggleLoginFields(isAdmin) {
+    document.getElementById('user-login-fields').classList.toggle('hidden', isAdmin);
+    document.getElementById('admin-login-fields').classList.toggle('hidden', !isAdmin);
+}
 
-        document.getElementById('register-account-type').addEventListener('change', function() {
-            const isCompany = this.value === 'COMPANY';
-            document.getElementById('company-name-group').style.display = isCompany ? 'block' : 'none';
-        });
+function toggleRegisterFields(isAdmin) {
+    document.getElementById('user-register-fields').classList.toggle('hidden', isAdmin);
+    document.getElementById('admin-register-fields').classList.toggle('hidden', !isAdmin);
+}
 
-        // Sayfa Geçişleri
-        document.getElementById('show-register').addEventListener('click', function(e) {
-            e.preventDefault();
-            loginPage.classList.add('hidden');
-            registerPage.classList.remove('hidden');
-        });
+document.getElementById('login-type').addEventListener('change', e => toggleLoginFields(e.target.value === 'admin'));
+document.getElementById('register-type').addEventListener('change', e => toggleRegisterFields(e.target.value === 'admin'));
 
-        document.getElementById('show-login').addEventListener('click', function(e) {
-            e.preventDefault();
-            registerPage.classList.add('hidden');
-            loginPage.classList.remove('hidden');
-        });
+document.getElementById('register-account-type').addEventListener('change', e => {
+    const isCompany = e.target.value === 'COMPANY';
+    document.getElementById('company-name-group').style.display = isCompany ? 'block' : 'none';
+});
 
-        // Alert Gösterme Fonksiyonu
-        function showAlert(elementId, message, isError = false) {
-            const alert = document.getElementById(elementId);
-            alert.textContent = message;
-            alert.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
-            alert.classList.remove('hidden');
-            setTimeout(() => alert.classList.add('hidden'), 5000);
-        }
+// ------------------ LOGIN ------------------
+document.getElementById('login-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    
+    const loginType = document.getElementById('login-type').value;
+    const data = loginType === 'admin' 
+        ? { email: document.getElementById('login-email').value, password: document.getElementById('login-password').value } 
+        : { phone_number: document.getElementById('login-phone').value, password: document.getElementById('login-password').value };
 
-        // API İsteği
-        async function apiRequest(endpoint, data, requiresAuth = false) {
-            const headers = { 'Content-Type': 'application/json' };
-            if (requiresAuth && currentToken) {
-                headers['Authorization'] = `Bearer ${currentToken}`;
-            }
+    const endpoint = loginType === 'admin' ? '/admin/login' : '/user/login';
+    const response = await apiRequest(endpoint, data);
 
-            try {
-                const response = await fetch(`${BASE_URL}${endpoint}`, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify(data),
-                });
+    if (response.ok) {
+        currentToken = response.data.token;
+        currentUser = response.data.admin || response.data.user;
+        showPage(loginType === 'admin' ? pages.adminDashboard : pages.userDashboard);
+        loginType === 'admin' ? showAdminDashboard() : showUserDashboard();
+    } else {
+        showAlert('login-alert', response.data.message || 'Giriş başarısız', true);
+    }
+});
 
-                const result = await response.json();
-                return { ok: response.ok, data: result };
-            } catch (error) {
-                console.error('API Hatası:', error);
-                return { ok: false, data: { message: 'Bağlantı hatası' } };
-            }
-        }
+// ------------------ REGISTER ------------------
+document.getElementById('register-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    
+    const registerType = document.getElementById('register-type').value;
+    let data = {};
 
-        // Giriş İşlemi
-        document.getElementById('login-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const loginType = document.getElementById('login-type').value;
-            let endpoint, data;
+    if (registerType === 'admin') {
+        const accountType = document.getElementById('register-account-type').value;
+        data = {
+            full_name: document.getElementById('register-fullname').value,
+            email: document.getElementById('register-email').value,
+            password: document.getElementById('register-password').value,
+            account_type: accountType,
+            company_name: accountType === 'COMPANY' ? document.getElementById('register-company').value : undefined
+        };
+    } else {
+        data = {
+            full_name: document.getElementById('register-fullname').value,
+            email: document.getElementById('register-email').value,
+            phone_number: document.getElementById('register-phone').value,
+            password: document.getElementById('register-password').value,
+            site_id: document.getElementById('register-siteid').value,
+            block_no: document.getElementById('register-block').value,
+            apartment_no: document.getElementById('register-apartment').value
+        };
+    }
 
-            if (loginType === 'admin') {
-                endpoint = '/admin/login';
-                data = {
-                    email: document.getElementById('login-email').value,
-                    password: document.getElementById('login-password').value,
-                };
-            } else {
-                endpoint = '/user/login';
-                data = {
-                    phone_number: document.getElementById('login-phone').value,
-                    password: document.getElementById('login-password').value,
-                };
-            }
+    const endpoint = registerType === 'admin' ? '/admin/register' : '/user/register';
+    const response = await apiRequest(endpoint, data);
 
-            const response = await apiRequest(endpoint, data);
+    if (response.ok) {
+        showAlert('register-alert', 'Kayıt başarılı! Giriş yapabilirsiniz.', false);
+        setTimeout(() => showPage(pages.login), 2000);
+    } else {
+        showAlert('register-alert', response.data.message || 'Kayıt başarısız', true);
+    }
+});
 
-            if (response.ok) {
-                currentToken = response.data.token;
-                currentUser = response.data.admin || response.data.user;
-                
-                loginPage.classList.add('hidden');
-                
-                if (loginType === 'admin') {
-                    showAdminDashboard();
-                } else {
-                    showUserDashboard();
-                }
-            } else {
-                showAlert('login-alert', response.data.message || 'Giriş başarısız', true);
-            }
-        });
+// ------------------ DASHBOARD ------------------
+function showUserDashboard() {
+    document.getElementById('user-name').textContent = currentUser.full_name || 'Kullanıcı';
+    document.getElementById('user-role').textContent = 'Site Kullanıcısı';
+    document.getElementById('user-avatar').textContent = (currentUser.full_name || 'U').charAt(0).toUpperCase();
+    document.getElementById('welcome-title').textContent = `Hoş Geldiniz, ${currentUser.full_name}!`;
+}
 
-        // Kayıt İşlemi
-        document.getElementById('register-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const registerType = document.getElementById('register-type').value;
-            let endpoint, data;
+function showAdminDashboard() {
+    document.getElementById('admin-name').textContent = currentUser.full_name || 'Admin';
+    document.getElementById('admin-type').textContent = currentUser.account_type || 'INDIVIDUAL';
+    document.getElementById('admin-avatar').textContent = (currentUser.full_name || 'A').charAt(0).toUpperCase();
+    const siteLimit = currentUser.account_type === 'COMPANY' ? 5 : 1;
+    document.getElementById('site-limit').textContent = siteLimit;
+    loadSites();
+}
 
-            if (registerType === 'admin') {
-                endpoint = '/admin/register';
-                const accountType = document.getElementById('register-account-type').value;
-                data = {
-                    full_name: document.getElementById('register-fullname').value,
-                    email: document.getElementById('register-email').value,
-                    password: document.getElementById('register-password').value,
-                    account_type: accountType,
-                    company_name: accountType === 'COMPANY' ? document.getElementById('register-company').value : undefined
-                };
-            } else {
-                endpoint = '/user/register';
-                data = {
-                    full_name: document.getElementById('register-fullname').value,
-                    email: document.getElementById('register-email').value,
-                    phone_number: document.getElementById('register-phone').value,
-                    password: document.getElementById('register-password').value,
-                    site_id: document.getElementById('register-siteid').value,
-                    block_no: document.getElementById('register-block').value,
-                    apartment_no: document.getElementById('register-apartment').value
-                };
-            }
+// ------------------ SİTE YÖNETİMİ ------------------
+async function loadSites() {
+    const response = await apiRequest('/site/admin-sites', {}, true, 'GET'); // admin’e bağlı siteler endpointi
+    // Backend'den dönen data.sites dizisini kullan
+    userSites = response.ok && Array.isArray(response.data.sites) ? response.data.sites : [];
+    updateSitesList();
+}
 
-            const response = await apiRequest(endpoint, data);
+function updateSitesList() {
+    const sitesList = document.getElementById('sites-list');
+    document.getElementById('total-sites').textContent = userSites.length;
 
-            if (response.ok) {
-                showAlert('register-alert', 'Kayıt başarılı! Giriş yapabilirsiniz.', false);
-                setTimeout(() => {
-                    registerPage.classList.add('hidden');
-                    loginPage.classList.remove('hidden');
-                }, 2000);
-            } else {
-                showAlert('register-alert', response.data.message || 'Kayıt başarısız', true);
-            }
-        });
+    if (userSites.length === 0) {
+        sitesList.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <h3>Henüz Site Yok</h3>
+                <p>Aşağıdaki formu kullanarak ilk sitenizi oluşturun.</p>
+            </div>`;
+    } else {
+        sitesList.innerHTML = userSites.map(site => `
+            <div class="site-card">
+                <h3>${site.site_name}</h3>
+                <p><strong>Site ID:</strong> ${site.site_id}</p>
+                <p><strong>Adres:</strong> ${site.site_address}</p>
+                <span class="badge">Aktif</span>
+                <div class="site-actions">
+                    <button class="btn-small btn-select" onclick="selectSite('${site.site_id}')">Siteyi Seç</button>
+                </div>
+            </div>`).join('');
+    }
+}
 
-        // Kullanıcı Dashboard Göster
-        function showUserDashboard() {
-            userDashboard.classList.remove('hidden');
-            document.getElementById('user-name').textContent = currentUser.full_name || 'Kullanıcı';
-            document.getElementById('user-role').textContent = 'Site Kullanıcısı';
-            document.getElementById('user-avatar').textContent = (currentUser.full_name || 'U').charAt(0).toUpperCase();
-            document.getElementById('welcome-title').textContent = `Hoş Geldiniz, ${currentUser.full_name}!`;
-        }
+function generateSiteId(length = 6) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return Array.from({ length }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+}
 
-        // Admin Dashboard Göster
-        function showAdminDashboard() {
-            adminDashboard.classList.remove('hidden');
-            document.getElementById('admin-name').textContent = currentUser.full_name || 'Admin';
-            document.getElementById('admin-type').textContent = currentUser.account_type || 'INDIVIDUAL';
-            document.getElementById('admin-avatar').textContent = (currentUser.full_name || 'A').charAt(0).toUpperCase();
-            
-            const siteLimit = currentUser.account_type === 'COMPANY' ? 5 : 1;
-            document.getElementById('site-limit').textContent = siteLimit;
-            
-            loadSites();
-        }
+document.addEventListener('DOMContentLoaded', () => {
+    const siteIdInput = document.getElementById('site-id');
+    if (siteIdInput) siteIdInput.value = generateSiteId();
+});
 
-        // Siteleri Yükle (Mock - Gerçek API'den çekilmeli)
-        function loadSites() {
-            // Bu fonksiyon gerçek uygulamada API'den siteleri çekmelidir
-            // Şimdilik boş gösteriyoruz
-            userSites = [];
-            updateSitesList();
-        }
+document.getElementById('create-site-form').addEventListener('submit', async e => {
+    e.preventDefault();
 
-        // Site Listesini Güncelle
-        function updateSitesList() {
-            const sitesList = document.getElementById('sites-list');
-            document.getElementById('total-sites').textContent = userSites.length;
+    const siteIdInput = document.getElementById('site-id');
+    const data = {
+        site_id: siteIdInput.value,
+        site_name: document.getElementById('site-name').value,
+        site_address: document.getElementById('site-address').value,
+    };
 
-            if (userSites.length === 0) {
-                sitesList.innerHTML = `
-                    <div class="empty-state">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                        </svg>
-                        <h3>Henüz Site Yok</h3>
-                        <p>Aşağıdaki formu kullanarak ilk sitenizi oluşturun.</p>
-                    </div>
-                `;
-            } else {
-                sitesList.innerHTML = userSites.map(site => `
-                    <div class="site-card">
-                        <h3>${site.site_name}</h3>
-                        <p><strong>Site ID:</strong> ${site.site_id}</p>
-                        <p><strong>Adres:</strong> ${site.site_address}</p>
-                        <span class="badge">Aktif</span>
-                        <div class="site-actions">
-                            <button class="btn-small btn-select" onclick="selectSite('${site.site_id}')">Siteyi Seç</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
+    const response = await apiRequest('/site/create', data, true);
 
-        // Site Oluşturma
-        document.getElementById('create-site-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const data = {
-                site_id: document.getElementById('site-id').value,
-                site_name: document.getElementById('site-name').value,
-                site_address: document.getElementById('site-address').value,
-            };
+    if (response.ok) {
+        showAlert('create-site-alert', 'Site başarıyla oluşturuldu!', false);
+        userSites.push(data);
+        updateSitesList();
+        e.target.reset();
+        siteIdInput.value = generateSiteId();
+    } else {
+        showAlert('create-site-alert', response.data.message || 'Site oluşturulamadı', true);
+    }
+});
 
-            const response = await apiRequest('/site/create', data, true);
+function selectSite(siteId) {
+    showPage(pages.userDashboard);
+    const selectedSite = userSites.find(s => s.site_id === siteId);
+    if (selectedSite) {
+        document.getElementById('welcome-title').textContent = `${selectedSite.site_name} - Yönetim Paneli`;
+    }
+}
 
-            if (response.ok) {
-                showAlert('create-site-alert', 'Site başarıyla oluşturuldu!', false);
-                
-                userSites.push({
-                    site_id: data.site_id,
-                    site_name: data.site_name,
-                    site_address: data.site_address
-                });
-                
-                updateSitesList();
-                this.reset();
-            } else {
-                showAlert('create-site-alert', response.data.message || 'Site oluşturulamadı', true);
-            }
-        });
+// ------------------ LOGOUT ------------------
+function logout() {
+    currentUser = null;
+    currentToken = null;
+    userSites = [];
+    showPage(pages.login);
+    document.getElementById('login-form').reset();
+}
+</script>
 
-        // Site Seçimi
-        function selectSite(siteId) {
-            // Admin olarak site seçtiğinde kullanıcı dashboard'una geçiş
-            adminDashboard.classList.add('hidden');
-            userDashboard.classList.remove('hidden');
-            
-            const selectedSite = userSites.find(s => s.site_id === siteId);
-            if (selectedSite) {
-                document.getElementById('welcome-title').textContent = `${selectedSite.site_name} - Yönetim Paneli`;
-            }
-        }
-
-        // Çıkış Yap
-        function logout() {
-            currentUser = null;
-            currentToken = null;
-            userSites = [];
-            
-            userDashboard.classList.add('hidden');
-            adminDashboard.classList.add('hidden');
-            loginPage.classList.remove('hidden');
-            
-            document.getElementById('login-form').reset();
-        }
-    </script>
 
 </body>
 </html>

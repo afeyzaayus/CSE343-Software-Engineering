@@ -9,6 +9,7 @@ import {
     loginUser      // <-- YENİ EKLENDİ
 } from './authController.js';
 import { adminAuth } from './authMiddleware.js';
+import { getSitesByAdmin } from './authController.js';
 const router = express.Router();
 
 // Not: Gerçek bir uygulamada, /site/create rotasından önce
@@ -40,6 +41,8 @@ router.post('/admin/login', loginAdmin); // <-- YENİ LOGIN ROTASI
  */
 // router.post('/site/create', authMiddleware, createSite); 
 router.post('/site/create', adminAuth, createSite);
+// Backend (örnek Express kodu)
+router.get('/site/admin-sites', adminAuth, getSitesByAdmin);
 
 // ==========================================================
 // KULLANICI (USER) ROTLARI
