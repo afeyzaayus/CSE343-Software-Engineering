@@ -48,6 +48,11 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(frontPath, 'announcements.html'));
 });
 
+// Duyurular sayfası için clean URL (hem .html'li hem .html'siz çalışır)
+app.get('/announcements', (req, res) => {
+  res.sendFile(path.join(frontPath, 'announcements.html'));
+});
+
 // Front klasörünü statik olarak servis et
 app.use(express.static(frontPath, { index: false }));
 

@@ -52,25 +52,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Bu kısım, hangi HTML dosyasında olduğumuza göre ilgili modülü çalıştırır.
     const path = window.location.pathname;
 
-    if (path.includes('dashboard.html')) {
+    if (path.includes('dashboard')) {
         setupDashboard();
     }
-    if (path.includes('announcements.html')) {
+    if (path.includes('announcement')) {
         setupAnnouncements();
     }
-    if (path.includes('payment.html')) {
+    if (path.includes('payment')) {
         setupPayments();
     }
-    if (path.includes('socialfacilities.html')) {
+    if (path.includes('socialfacilities')) {
         setupFacilities();
     }
-    if (path.includes('complaint_request.html')) {
+    if (path.includes('complaint_request')) {
         setupRequests();
     }
-    if (path.includes('residents.html')) {
+    if (path.includes('residents')) {
         setupResidents();
     }
-    if (path.includes('settings.html')) {
+    if (path.includes('settings')) {
         setupSettings();
     }
 });
