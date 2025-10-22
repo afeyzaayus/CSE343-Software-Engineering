@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şikayet/Talep - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="css/complaint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar"> ... </div>
+        <div class="main-content">
+            <div class="header">
+                <h2>Şikayet ve Talepler - Yeşil Vadi Sitesi</h2>
+                <div class="user-info"> ... </div>
+            </div>
+            
+            <div class="complaints-content">
+                <div class="complaint-filters">
+                    <button class="filter-btn" data-filter="all">Tümü</button>
+                    <button class="filter-btn" data-filter="pending">Bekleyen</button>
+                    <button class="filter-btn" data-filter="in-progress">İşlemde</button>
+                    <button class="filter-btn" data-filter="resolved">Çözülen</button>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Şikayet ve Talepler</div>
+                        <button class="btn btn-primary" id="addComplaintBtn">
+                            <i class="fas fa-plus"></i> Yeni Şikayet/Talep
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-container" id="pending-requests-section">
+                    <div class="table-header">
+                        <div class="table-title">Bekleyen Şikayet/Talepler</div>
+                        </div>
+                    <div class="complaints-list" id="pending-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+
+                <div class="table-container" id="inprogress-requests-section">
+                    <div class="table-header">
+                        <div class="table-title">İşlemdeki Şikayet/Talepler</div>
+                    </div>
+                    <div class="complaints-list" id="inprogress-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+
+                <div class="table-container" id="resolved-requests-section">
+                    <div class="table-header">
+                        <div class="table-title">Çözülen Şikayet/Talepler</div>
+                    </div>
+                    <div class="complaints-list" id="resolved-requests-list">
+                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addComplaintModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Yeni Şikayet/Talep Ekle</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="complaintForm">
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

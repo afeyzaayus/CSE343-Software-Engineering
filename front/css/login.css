@@ -1,0 +1,50 @@
+/* Login Screen */
+.login-container {
+    display: flex;
+    min-height: 100vh;
+    background: var(--gradient-primary);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.login-box {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 35px;
+    box-shadow: var(--box-shadow);
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+}
+
+.login-title {
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+/* Site Selection Styles */
+.site-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.site-item {
+    padding: 16px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.site-item:hover {
+    border-color: var(--secondary-color);
+    background: rgba(46, 134, 193, 0.05);
+    transform: translateY(-2px);
+}

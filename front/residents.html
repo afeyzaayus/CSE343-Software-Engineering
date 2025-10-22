@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daire Sahipleri - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar"> ... </div>
+        <div class="main-content">
+            <div class="header">
+                <h2>Daire Sahipleri - Yeşil Vadi Sitesi</h2>
+                <div class="user-info"> ... </div>
+            </div>
+            
+            <div class="residents-content">
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Daire ve Sakin Bilgileri</div>
+                        <button class="btn btn-primary" id="addResidentBtn">
+                            <i class="fas fa-plus"></i> Yeni Daire Ekle
+                        </button>
+                    </div>
+                    <table id="residents-table">
+                        <thead>
+                            <tr>
+                                <th>Daire No</th>
+                                <th>Blok</th>
+                                <th>Ad Soyad</th>
+                                <th>Telefon</th>
+                                <th>E-posta</th>
+                                <th>Yaşayan Kişi Sayısı</th>
+                                <th>Durum</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody id="residents-table-body">
+                            <tr><td colspan="8" style="text-align: center;">Veriler API'den yükleniyor...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addResidentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Yeni Daire Ekle</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="residentForm">
+                <button type="submit" class="btn btn-primary">Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -24,15 +24,16 @@ model Admin {
 }
 
 model Site {
-  id           Int      @id @default(autoincrement())
-  site_id      String   @unique
-  site_name    String
-  site_address String
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  adminId      Int
-  admin        Admin    @relation(fields: [adminId], references: [id])
-  users        User[]
+  id            Int            @id @default(autoincrement())
+  site_id       String         @unique
+  site_name     String
+  site_address  String
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  adminId       Int
+  admin         Admin          @relation(fields: [adminId], references: [id])
+  users         User[]
+  announcements Announcement[]
 
   @@map("sites")
   @@schema("public")
@@ -59,5 +60,20 @@ enum AccountType {
   INDIVIDUAL
   COMPANY
 
+  @@schema("public")
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String   @db.Text
+  start_date  DateTime
+  end_date    DateTime
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  siteId      Int
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("announcements")
   @@schema("public")
 }

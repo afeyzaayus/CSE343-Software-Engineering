@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyurular Test - Basit Versiyon</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        h1 { color: #2c3e50; margin-bottom: 30px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        textarea { min-height: 100px; }
+        .btn { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .btn:hover { background: #2980b9; }
+        .announcements { margin-top: 40px; }
+        .announcement-item { background: #f8f9fa; padding: 15px; margin-bottom: 15px; border-left: 4px solid #3498db; border-radius: 4px; }
+        .announcement-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
+        .announcement-content { color: #555; margin-bottom: 10px; }
+        .announcement-date { font-size: 12px; color: #999; }
+        .error { color: #e74c3c; padding: 10px; background: #fadbd8; border-radius: 4px; margin-bottom: 15px; }
+        .success { color: #27ae60; padding: 10px; background: #d5f4e6; border-radius: 4px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Duyurular Yönetimi (Test)</h1>
+        
+        <div id="message"></div>
+
+        <!-- Site ID Seçimi -->
+        <div class="form-group">
+            <label>Site ID (Test için giriniz):</label>
+            <input type="text" id="siteIdInput" placeholder="Örn: DEMO-SITE-001" value="DEMO-SITE-001">
+        </div>
+
+        <!-- Yeni Duyuru Formu -->
+        <form id="announcementForm">
+            <h2>Yeni Duyuru Ekle</h2>
+            
+            <div class="form-group">
+                <label>Başlık:</label>
+                <input type="text" id="title" required>
+            </div>
+
+            <div class="form-group">
+                <label>İçerik:</label>
+                <textarea id="content" required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Başlangıç Tarihi:</label>
+                <input type="datetime-local" id="startDate" required>
+            </div>
+
+            <div class="form-group">
+                <label>Bitiş Tarihi:</label>
+                <input type="datetime-local" id="endDate" required>
+            </div>
+
+            <button type="submit" class="btn">Duyuru Ekle</button>
+        </form>
+
+        <!-- Duyurular Listesi -->
+        <div class="announcements">
+            <h2>Aktif Duyurular</h2>
+            <div id="activeAnnouncements">
+                <p>Yükleniyor...</p>
+            </div>
+
+            <h2 style="margin-top: 40px;">Geçmiş Duyurular</h2>
+            <div id="pastAnnouncements">
+                <p>Yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let currentSiteId = 'DEMO-SITE-001';
+
+        // Mesaj göster
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.getElementById('message');
+            messageDiv.className = type;
+            messageDiv.textContent = message;
+            setTimeout(() => messageDiv.textContent = '', 3000);
+        }
+
+        // Duyuruları yükle
+        async function loadAnnouncements() {
+            currentSiteId = document.getElementById('siteIdInput').value;
+            
+            try {
+                console.log('Duyurular yükleniyor, Site ID:', currentSiteId);
+                
+                const response = await fetch(`${API_BASE}/sites/${currentSiteId}/announcements`);
+                
+                console.log('Response:', response);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Duyurular yüklenemedi');
+                }
+
+                const data = await response.json();
+                console.log('Duyurular:', data);
+
+                const announcements = data.announcements || data;
+                const active = announcements.active || [];
+                const past = announcements.past || [];
+
+                renderAnnouncements('activeAnnouncements', active);
+                renderAnnouncements('pastAnnouncements', past);
+
+            } catch (error) {
+                console.error('Hata:', error);
+                showMessage('Hata: ' + error.message, 'error');
+            }
+        }
+
+        // Duyuruları render et
+        function renderAnnouncements(containerId, announcements) {
+            const container = document.getElementById(containerId);
+            
+            if (announcements.length === 0) {
+                container.innerHTML = '<p>Duyuru bulunmamaktadır.</p>';
+                return;
+            }
+
+            container.innerHTML = announcements.map(a => `
+                <div class="announcement-item">
+                    <div class="announcement-title">${a.title}</div>
+                    <div class="announcement-content">${a.content}</div>
+                    <div class="announcement-date">
+                        Başlangıç: ${new Date(a.start_date).toLocaleString('tr-TR')} | 
+                        Bitiş: ${new Date(a.end_date).toLocaleString('tr-TR')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Yeni duyuru ekle
+        document.getElementById('announcementForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            currentSiteId = document.getElementById('siteIdInput').value;
+
+            const data = {
+                title: document.getElementById('title').value,
+                content: document.getElementById('content').value,
+                start_date: new Date(document.getElementById('startDate').value).toISOString(),
+                end_date: new Date(document.getElementById('endDate').value).toISOString()
+            };
+
+            try {
+                console.log('Duyuru gönderiliyor:', data);
+
+                const response = await fetch(`${API_BASE}/sites/${currentSiteId}/announcements`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Admin token gerekli ise ekleyin
+                        // 'Authorization': 'Bearer YOUR_TOKEN_HERE'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                console.log('Response:', response);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Duyuru eklenemedi');
+                }
+
+                const result = await response.json();
+                console.log('Sonuç:', result);
+
+                showMessage('Duyuru başarıyla eklendi!');
+                e.target.reset();
+                loadAnnouncements();
+
+            } catch (error) {
+                console.error('Hata:', error);
+                showMessage('Hata: ' + error.message, 'error');
+            }
+        });
+
+        // Site ID değiştiğinde duyuruları yeniden yükle
+        document.getElementById('siteIdInput').addEventListener('change', loadAnnouncements);
+
+        // Sayfa yüklendiğinde duyuruları yükle
+        loadAnnouncements();
+    </script>
+</body>
+</html>

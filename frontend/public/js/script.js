@@ -1,4 +1,5 @@
 const BASE_URL = 'http://localhost:3000/api/auth';
+// NOT: Artık tek sunucu kullanıyoruz (Port 3000), geliştirme sırasında değiştirebilirsiniz
 
 let currentUser = null;
 let currentToken = null;
@@ -75,6 +76,12 @@ document.getElementById('login-form').addEventListener('submit', async e => {
     if (response.ok) {
         currentToken = response.data.token;
         currentUser = response.data.admin || response.data.user;
+        
+        // Token ve kullanıcı bilgilerini localStorage'a kaydet
+        localStorage.setItem('token', currentToken);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        localStorage.setItem('role', loginType);
+        
         showPage(loginType === 'admin' ? pages.adminDashboard : pages.userDashboard);
         loginType === 'admin' ? showAdminDashboard() : showUserDashboard();
     } else {
@@ -193,6 +200,12 @@ function logout() {
     currentUser = null;
     currentToken = null;
     userSites = [];
+    
+    // localStorage'ı temizle
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('role');
+    
     showPage(pages.login);
     document.getElementById('login-form').reset();
 }
