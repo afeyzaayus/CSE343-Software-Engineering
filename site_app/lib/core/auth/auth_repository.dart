@@ -8,51 +8,76 @@ class AuthRepository {
   AuthRepository(this._dio);
   final Dio _dio;
 
+  /// Kullanıcı girişi
   Future<Result<(String accessToken, String refreshToken, User me)>> login(
-      String email, String password) async {
-    if (AppConfig.useMockApi) { /* ...mock kapalı, atla... */ }
+    String email,
+    String password,
+  ) async {
+    if (AppConfig.useMockApi) {
+      /* mock devre dışı */
+    }
+
     try {
-      // 1) login
-      final res = await _dio.post('/api/auth/user/login',
-          data: {'email': email, 'password': password});
+      // 1️⃣ Login isteği
+      final res = await _dio.post(
+        '/api/auth/user/login',
+        data: {'email': email, 'password': password},
+      );
+
       final access = res.data['accessToken'] as String;
       final refresh = res.data['refreshToken'] as String;
       final userId = (res.data['userId'] ?? res.data['id'] ?? '').toString();
 
-      // 2) me (profil)
+      // 2️⃣ Kullanıcı profili
       final meRes = await _dio.get('/api/users/$userId');
       final me = User.fromJson(meRes.data);
 
-      // sakla (controller da saklayabilir ama burada da saklamak pratik)
+      // 3️⃣ Token ve kullanıcı ID’sini kaydet
       await SecureStore.saveTokens(access, refresh);
       await SecureStore.saveUserId(me.id);
+
       return Ok((access, refresh, me));
     } on DioException catch (e) {
       return Err(e.response?.data?['message']?.toString() ?? 'Login failed');
     }
   }
 
+  /// Kullanıcı kaydı (register)
   Future<Result<void>> signup({
-    required String name,
-    required String surname,
+    required String fullName,
     required String email,
+    required String phoneNumber,
     required String password,
-    required String siteCode,
+    required String siteId,
+    String? blockNo,
+    String? apartmentNo,
   }) async {
     if (AppConfig.useMockApi) return Ok(null);
+
     try {
-      await _dio.post('/api/auth/user/register', data: {
-        'name': '$name $surname',
-        'email': email,
-        'password': password,
-        'siteCode': siteCode,
-      });
+      await _dio.post(
+        '/api/auth/user/register',
+        data: {
+          'full_name': fullName,
+          'email': email,
+          'phone_number': phoneNumber,
+          'password': password,
+          'site_id': siteId,
+          'block_no': blockNo,
+          'apartment_no': apartmentNo,
+        },
+      );
       return Ok(null);
     } on DioException catch (e) {
-      return Err(e.response?.data?['message']?.toString() ?? 'Sign up failed');
+      // Backend bazen "error" key’i döner
+      final errMsg = e.response?.data?['error'] ??
+          e.response?.data?['message'] ??
+          'Sign up failed';
+      return Err(errMsg.toString());
     }
   }
 
+  /// Kullanıcı çıkışı
   Future<void> logout() async {
     try {
       await _dio.post('/api/auth/logout');

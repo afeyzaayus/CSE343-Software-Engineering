@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../models/user.dart';
 import '../network/dio_provider.dart';
 import '../result.dart';
@@ -62,26 +61,31 @@ class AuthController extends StateNotifier<AuthState> {
 
   /// POST /api/auth/user/register
   Future<void> signup({
-    required String name,
-    required String surname,
+    required String fullName,
+    required String phoneNumber,
     required String email,
     required String password,
-    required String siteCode,
+    required String siteId,
+    String? blockNo,
+    String? apartmentNo,
   }) async {
     state = state.copyWith(error: null);
 
     final repo = _ref.read(authRepositoryProvider);
+
     final r = await repo.signup(
-      name: name,
-      surname: surname,
+      fullName: fullName,
+      phoneNumber: phoneNumber,
       email: email,
       password: password,
-      siteCode: siteCode,
+      siteId: siteId,
+      blockNo: blockNo,
+      apartmentNo: apartmentNo,
     );
 
     switch (r) {
       case Ok():
-        // Başarılı – UI tarafında Navigator.pop ile Login'e dönüyorsun.
+        // Başarılı – UI tarafında Navigator.pop ile Login'e dön.
         break;
       case Err(message: final m):
         state = state.copyWith(error: m);
