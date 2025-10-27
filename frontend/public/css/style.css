@@ -26,6 +26,7 @@ body {
 .auth-pages {
     display: flex;
     width: 200%;
+    /* Geçiş animasyonu için eklenebilir: transition: transform 0.4s ease-in-out; */
 }
 
 .auth-page {
@@ -61,7 +62,7 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Animasyonsuz geçiş classları */
+/* Animasyonsuz geçiş classları (JS ile yönetilecek) */
 .slide-left {
     transform: translateX(-50%);
 }
@@ -86,12 +87,22 @@ body {
     text-align: center;
 }
 
-.header h1 { font-size: 28px; margin-bottom: 5px; }
-.header p { font-size: 14px; opacity: 0.9; }
+.header h1 { 
+    font-size: 28px; 
+    margin-bottom: 5px; 
+}
+.header p { 
+    font-size: 14px; 
+    opacity: 0.9; 
+}
 
-.content { padding: 40px; }
+.content { 
+    padding: 40px; 
+}
 
-.form-group { margin-bottom: 20px; }
+.form-group { 
+    margin-bottom: 20px; 
+}
 
 label {
     display: block;
@@ -143,7 +154,9 @@ input:focus, select:focus {
     color: #333;
 }
 
-.btn-secondary:hover { background: #e0e0e0; }
+.btn-secondary:hover { 
+    background: #e0e0e0; 
+}
 
 .alert {
     padding: 12px 15px;
@@ -164,21 +177,43 @@ input:focus, select:focus {
     border: 1px solid #cfc;
 }
 
-.hidden { display: none; }
+.hidden { 
+    display: none; 
+}
 
 /* Dashboard Stil */
-.dashboard { max-width: 1200px; width: 100%; }
+.dashboard { 
+    max-width: 1200px; 
+    width: 100%; 
+}
 
-.dashboard .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; }
-.dashboard .header h1 { font-size: 24px; }
+.dashboard .header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 20px 40px; 
+}
+.dashboard .header h1 { 
+    font-size: 24px; 
+}
 
-.user-info { display: flex; align-items: center; gap: 15px; }
+.user-info { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+}
 
 .user-avatar {
-    width: 40px; height: 40px; border-radius: 50%;
-    background: white; color:  #2e86c1;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: bold; font-size: 18px;
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%;
+    background: white; 
+    color: #2e86c1;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-weight: bold; 
+    font-size: 18px;
 }
 
 .logout-btn {
@@ -192,12 +227,16 @@ input:focus, select:focus {
     transition: all 0.3s;
 }
 
-.logout-btn:hover { background: rgba(255, 255, 255, 0.3); }
+.logout-btn:hover { 
+    background: rgba(255, 255, 255, 0.3); 
+}
 
-.dashboard-content { padding: 40px; }
+.dashboard-content { 
+    padding: 40px; 
+}
 
 .welcome-card {
-    background: linear-gradient(135deg,  #2e86c1 0%, #3498db 100%);
+    background: linear-gradient(135deg, #2e86c1 0%, #3498db 100%);
     color: white;
     padding: 40px;
     border-radius: 15px;
@@ -205,8 +244,14 @@ input:focus, select:focus {
     margin-bottom: 30px;
 }
 
-.welcome-card h2 { font-size: 32px; margin-bottom: 10px; }
-.welcome-card p { font-size: 16px; opacity: 0.9; }
+.welcome-card h2 { 
+    font-size: 32px; 
+    margin-bottom: 10px; 
+}
+.welcome-card p { 
+    font-size: 16px; 
+    opacity: 0.9; 
+}
 
 .site-card {
     background: #f8f9fa;
@@ -223,19 +268,47 @@ input:focus, select:focus {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-.site-card h3 { color: #333; margin-bottom: 10px; font-size: 20px; }
-.site-card p { color: #666; margin-bottom: 5px; font-size: 14px; }
+.site-card h3 { 
+    color: #333; 
+    margin-bottom: 10px; 
+    font-size: 20px; 
+}
+.site-card p { 
+    color: #666; 
+    margin-bottom: 5px; 
+    font-size: 14px; 
+}
 .site-card .badge {
-    display: inline-block; padding: 4px 12px;
-    background: #2e86c1; color: white; border-radius: 20px;
-    font-size: 12px; margin-top: 10px;
+    display: inline-block; 
+    padding: 4px 12px;
+    background: #2e86c1; 
+    color: white; 
+    border-radius: 20px;
+    font-size: 12px; 
+    margin-top: 10px;
 }
 
-.site-list { display: grid; gap: 20px; }
+.site-list { 
+    display: grid; 
+    gap: 20px; 
+}
 
-.empty-state { text-align: center; padding: 60px 20px; color: #999; }
-.empty-state svg { width: 120px; height: 120px; margin-bottom: 20px; opacity: 0.3; }
-.empty-state h3 { font-size: 20px; margin-bottom: 10px; color: #666; }
+.empty-state { 
+    text-align: center; 
+    padding: 60px 20px; 
+    color: #999; 
+}
+.empty-state svg { 
+    width: 120px; 
+    height: 120px; 
+    margin-bottom: 20px; 
+    opacity: 0.3; 
+}
+.empty-state h3 { 
+    font-size: 20px; 
+    margin-bottom: 10px; 
+    color: #666; 
+}
 
 .stats {
     display: grid;
@@ -251,8 +324,17 @@ input:focus, select:focus {
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
 }
 
-.stat-card h4 { color: #999; font-size: 14px; margin-bottom: 8px; font-weight: 500; }
-.stat-card .value { font-size: 32px; font-weight: bold; color: #2e86c1; }
+.stat-card h4 { 
+    color: #999; 
+    font-size: 14px; 
+    margin-bottom: 8px; 
+    font-weight: 500; 
+}
+.stat-card .value { 
+    font-size: 32px; 
+    font-weight: bold; 
+    color: #2e86c1; 
+}
 
 .section-title {
     font-size: 20px;
@@ -262,9 +344,15 @@ input:focus, select:focus {
     border-bottom: 2px solid #e0e0e0;
 }
 
-#company-name-group { display: none; }
+#company-name-group { 
+    display: none; 
+}
 
-.site-actions { display: flex; gap: 10px; margin-top: 15px; }
+.site-actions { 
+    display: flex; 
+    gap: 10px; 
+    margin-top: 15px; 
+}
 .btn-small {
     padding: 8px 16px;
     font-size: 14px;
@@ -274,28 +362,108 @@ input:focus, select:focus {
     transition: all 0.3s;
     flex: 1;
 }
-.btn-select { background: #2e86c1; color: white; }
-.btn-select:hover { background: #5568d3; }
+.btn-select { 
+    background: #2e86c1; 
+    color: white; 
+}
+.btn-select:hover { 
+    background: #5568d3; 
+}
 
-.register-type-toggle {
+/* Modal Stilleri */
+.modal {
+    position: fixed; /* Eklendi: Ekranı kaplaması için */
+    top: 0;
+    left: 0;
+    width: 100%;     /* Eklendi: Tam genişlik */
+    height: 100%;    /* Eklendi: Tam yükseklik */
+    
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999; 
+    backdrop-filter: blur(8px);
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    animation: modalSlideIn 0.3s ease-out;
+    position: relative;
+    z-index: 10000;
+}
+
+
+@keyframes modalSlideIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* Modal içeriği */
+.modal-content h2 {
+    margin-bottom: 10px;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.modal-content p {
+    margin-bottom: 20px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.modal-content input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 20px;
+    text-align: center;
+    letter-spacing: 8px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.modal-actions {
     display: flex;
     gap: 10px;
-    margin-top: 5px;
 }
 
-.register-type-option {
+.modal-actions .btn {
     flex: 1;
-    text-align: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    cursor: pointer;
-    background-color: #f0f0f0;
-    transition: all 0.2s;
+    margin-top: 0; /* Butonlardaki varsayılan margin-top'u sıfırla */
 }
 
-.register-type-option.active {
-    background-color: #333;
+.modal-actions .btn-primary {
+    background: #3498db;
     color: white;
-    font-weight: bold;
+}
+
+.modal-actions .btn-primary:hover {
+    background: #2980b9;
+}
+
+.modal-actions .btn-secondary {
+    background: #ecf0f1;
+    color: #7f8c8d;
+}
+
+.modal-actions .btn-secondary:hover {
+    background: #e0e0e0;
 }

@@ -8,11 +8,9 @@
 </head>
 <body>
 
-    <!-- Giriş ve Kayıt Container -->
     <div class="auth-container" id="auth-container">
         <div class="auth-pages" id="auth-pages">
             
-            <!-- Giriş Sayfası -->
             <div id="login-page" class="auth-page">
                 <div class="container">
                     <div class="header">
@@ -37,7 +35,7 @@
                             <div id="user-login-fields">
                                 <div class="form-group">
                                     <label>Telefon Numarası</label>
-                                    <input type="tel" id="login-phone" placeholder="5321234567">
+                                    <input type="tel" id="login-phone" placeholder="+905321234567">
                                 </div>
                             </div>
                             <div id="admin-login-fields" class="hidden">
@@ -56,7 +54,6 @@
                 </div>
             </div>
 
-            <!-- Kayıt Sayfası -->
             <div id="register-page" class="auth-page">
                 <div class="container">
                     <div class="header">
@@ -82,15 +79,11 @@
                                 <label>Tam Ad</label>
                                 <input type="text" id="register-fullname" placeholder="Ad Soyad" required>
                             </div>
-                            <div class="form-group">
-                                <label>E-posta</label>
-                                <input type="email" id="register-email" placeholder="ornek@email.com" required>
-                            </div>
                             
                             <div id="user-register-fields">
                                 <div class="form-group">
                                     <label>Telefon Numarası</label>
-                                    <input type="tel" id="register-phone" placeholder="5321234567">
+                                    <input type="tel" id="register-phone" placeholder="+905321234567">
                                 </div>
                                 <div class="form-group">
                                     <label>Site ID</label>
@@ -107,6 +100,10 @@
                             </div>
 
                             <div id="admin-register-fields" class="hidden">
+                                <div class="form-group">
+                                    <label>E-posta</label>
+                                    <input type="email" id="admin-register-email" placeholder="ornek@email.com">
+                                </div>
                                 <div class="form-group">
                                     <label>Hesap Türü</label>
                                     <select id="register-account-type">
@@ -133,11 +130,10 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
-    <!-- Kullanıcı Dashboard -->
+
     <div id="user-dashboard" class="container dashboard hidden">
         <div class="header">
             <h1>Dashboard</h1>
@@ -166,7 +162,6 @@
         </div>
     </div>
 
-    <!-- Admin Dashboard -->
     <div id="admin-dashboard" class="container dashboard hidden">
         <div class="header">
             <h1>Admin Panel</h1>
@@ -223,6 +218,18 @@
 
                 <button type="submit" class="btn btn-primary">Site Oluştur</button>
             </form>
+        </div>
+    </div>
+    
+    <div class="modal hidden" id="verify-modal">
+        <div class="modal-content">
+            <h2>Telefon Doğrulama</h2>
+            <p>SMS ile gelen 6 haneli kodu girin</p>
+            <input type="text" id="verify-code" maxlength="6" placeholder="******">
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="verify-btn">Doğrula</button>
+                <button class="btn btn-secondary" id="cancel-btn">İptal</button>
+            </div>
         </div>
     </div>
 
