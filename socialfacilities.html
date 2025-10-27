@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sosyal Tesisler - Site Yönetim Sistemi</title>
+    <title>Sosyal Tesisler Yönetimi - Site Yönetim Sistemi</title>
     
     <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/sidebar.css">    
-    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
     <link rel="stylesheet" href="css/facilities.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -22,7 +22,7 @@
                 <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
                 <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
                 <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
-                <li class="active"><a href="sosyal-tesisler.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li class="active"><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
                 <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
                 <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
@@ -31,185 +31,72 @@
         
         <div class="main-content">
             <div class="header">
-                <h2>Sosyal Tesisler - Yeşil Vadi Sitesi</h2>
+                <h2>Sosyal Tesisler - Yönetim Paneli</h2>
                 <div class="user-info">
                     <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
-                    <span>Ahmet Yılmaz</span>
+                    <span>Ahmet Yılmaz (Yönetici)</span>
                 </div>
             </div>
-            
-            <div class="facilities-content">
-                <div class="facility-card">
-                    <div class="facility-header">
-                        <div class="facility-title">
-                            <i class="fas fa-swimming-pool"></i> Yüzme Havuzu
-                        </div>
-                        <span class="status paid">Açık</span>
-                    </div>
-                    
-                    <div class="facility-info">
-                        <div class="facility-hours">
-                            <h4><i class="fas fa-clock"></i> Çalışma Saatleri</h4>
-                            <p><strong>Yaz Dönemi:</strong> 08:00 - 20:00</p>
-                            <p><strong>Kış Dönemi:</strong> 09:00 - 18:00</p>
-                            <p><strong>Hafta Sonu:</strong> 08:00 - 22:00</p>
-                        </div>
-                        
-                        <div class="facility-rules">
-                            <h4><i class="fas fa-list-alt"></i> Kullanım Kuralları</h4>
-                            <ul>
-                                <li>Havuz bone kullanımı zorunludur</li>
-                                <li>12 yaş altı çocuklar ebeveyn gözetiminde</li>
-                                <li>Yemek ve içecek getirilmesi yasaktır</li>
-                                <li>Havuz temizlik günü: Pazartesi</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="facility-gallery">
-                        <div class="gallery-item">Havuz Fotoğrafı 1</div>
-                        <div class="gallery-item">Havuz Fotoğrafı 2</div>
-                        <div class="gallery-item">Havuz Fotoğrafı 3</div>
-                        <div class="gallery-item">+2 Daha</div>
-                    </div>
-                </div>
 
-                <div class="facility-card">
-                    <div class="facility-header">
-                        <div class="facility-title">
-                            <i class="fas fa-dumbbell"></i> Spor Salonu
-                        </div>
-                        <span class="status paid">Açık</span>
-                    </div>
+            <div class="form-card" id="form-card">
+                <h3 id="form-title">Yeni Sosyal Tesis Ekle</h3>
+                <form id="editFacilityForm">
+                    <input type="hidden" id="facilityId">
                     
-                    <div class="facility-info">
-                        <div class="facility-hours">
-                            <h4><i class="fas fa-clock"></i> Çalışma Saatleri</h4>
-                            <p><strong>Hafta İçi:</strong> 06:00 - 23:00</p>
-                            <p><strong>Hafta Sonu:</strong> 08:00 - 22:00</p>
-                            <p><strong>Bayram:</strong> 09:00 - 18:00</p>
-                        </div>
-                        
-                        <div class="facility-rules">
-                            <h4><i class="fas fa-list-alt"></i> Kullanım Kuralları</h4>
-                            <ul>
-                                <li>Spor ayakkabısı zorunludur</li>
-                                <li>Ekipmanları temiz bırakınız</li>
-                                <li>16 yaş altı giriş yasaktır</li>
-                                <li>Ağırlık limitlerine uyunuz</li>
-                            </ul>
-                        </div>
+                    <div class="form-group">
+                        <label for="facilityName">Tesis Adı</label>
+                        <input type="text" id="facilityName" placeholder="Örn: Yüzme Havuzu, Spor Salonu..." required>
                     </div>
-                    
-                    <div class="facility-description">
-                        <h4><i class="fas fa-info-circle"></i> Ekipmanlar</h4>
-                        <p>Koşu bandı, bisiklet, ağırlık seti, dumbell'lar, bench press, leg press machine</p>
-                    </div>
-                </div>
 
-                <div class="facility-card">
-                    <div class="facility-header">
-                        <div class="facility-title">
-                            <i class="fas fa-users"></i> Toplantı Salonu
-                        </div>
-                        <span class="status pending">Rezervasyon Gereklidir</span>
+                    <div class="form-group">
+                        <label for="facilityDescription">Kısa Açıklama/Tanıtım</label>
+                        <textarea id="facilityDescription" rows="2" placeholder="Tesisin genel tanımını girin"></textarea>
                     </div>
-                    
-                    <div class="facility-info">
-                        <div class="facility-hours">
-                            <h4><i class="fas fa-clock"></i> Çalışma Saatleri</h4>
-                            <p><strong>Hafta İçi:</strong> 09:00 - 21:00</p>
-                            <p><strong>Hafta Sonu:</strong> 10:00 - 19:00</p>
-                            <p><strong>Kapasite:</strong> 50 Kişi</p>
-                        </div>
-                        
-                        <div class="facility-rules">
-                            <h4><i class="fas fa-list-alt"></i> Kullanım Kuralları</h4>
-                            <ul>
-                                <li>En az 3 gün önceden rezervasyon</li>
-                                <li>Maksimum 4 saat kullanım</li>
-                                <li>Temiz bırakma zorunluluğu</li>
-                                <li>Gürültü kısıtlaması: 22:00</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="facility-description">
-                        <h4><i class="fas fa-info-circle"></i> Özellikler</h4>
-                        <p>Projeksiyon cihazı, ses sistemi, klima, 50 kişilik oturma, mutfak erişimi</p>
-                    </div>
-                </div>
 
-                <div class="facility-card">
-                    <div class="facility-header">
-                        <div class="facility-title">
-                            <i class="fas fa-child"></i> Çocuk Oyun Parkı
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="facilityStatus">Durum</label>
+                            <select id="facilityStatus" required>
+                                <option value="Açık">Açık</option>
+                                <option value="Kapalı">Kapalı</option>
+                                <option value="Rezervasyon Gereklidir">Rezervasyon Gereklidir</option>
+                                <option value="Bakımda">Bakımda</option>
+                            </select>
                         </div>
-                        <span class="status paid">Açık</span>
+                        <div class="form-group">
+                             </div>
                     </div>
-                    
-                    <div class="facility-info">
-                        <div class="facility-hours">
-                            <h4><i class="fas fa-clock"></i> Çalışma Saatleri</h4>
-                            <p><strong>Yaz:</strong> 07:00 - 21:00</p>
-                            <p><strong>Kış:</strong> 08:00 - 19:00</p>
-                            <p><strong>Yaş Grubu:</strong> 2-12 Yaş</p>
-                        </div>
-                        
-                        <div class="facility-rules">
-                            <h4><i class="fas fa-list-alt"></i> Kullanım Kuralları</h4>
-                            <ul>
-                                <li>Ebeveyn gözetimi zorunludur</li>
-                                <li>Ayakkabı ile oyun alanına girilmez</li>
-                                <li>Yiyecek ve içecek yasaktır</li>
-                                <li>Hava karardıktan sonra kullanılmaz</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="facility-description">
-                        <h4><i class="fas fa-info-circle"></i> Oyun Grupları</h4>
-                        <p>Kaydırak, salıncak, tahterevalli, kum havuzu, tırmanma ağı</p>
-                    </div>
-                </div>
 
-                <div class="facility-card">
-                    <div class="facility-header">
-                        <div class="facility-title">
-                            <i class="fas fa-tree"></i> Bahçe ve Mesire Alanı
-                        </div>
-                        <span class="status paid">Açık</span>
+                    <div class="form-group">
+                        <label for="facilityHours">Çalışma Saatleri (Her satır bir kural, Örn: Yaz Dönemi: 08:00 - 20:00)</label>
+                        <textarea id="facilityHours" rows="4" placeholder="Çalışma saatlerini girin. Her satırda bir kural/dönem belirtin."></textarea>
                     </div>
-                    
-                    <div class="facility-info">
-                        <div class="facility-hours">
-                            <h4><i class="fas fa-clock"></i> Çalışma Saatleri</h4>
-                            <p><strong>Günlük:</strong> 06:00 - 23:00</p>
-                            <p><strong>Mangal Alanı:</strong> 10:00 - 20:00</p>
-                            <p><strong>Kapasite:</strong> 100 Kişi</p>
-                        </div>
-                        
-                        <div class="facility-rules">
-                            <h4><i class="fas fa-list-alt"></i> Kullanım Kuralları</h4>
-                            <ul>
-                                <li>Mangal için rezervasyon gerekli</li>
-                                <li>Çöp toplama zorunluluğu</li>
-                                <li>Ateş güvenlik kurallarına uyunuz</li>
-                                <li>23:00'ten sonra sessizlik</li>
-                            </ul>
-                        </div>
+
+                    <div class="form-group">
+                        <label for="facilityRules">Kullanım Kuralları (Her satır bir kural)</label>
+                        <textarea id="facilityRules" rows="5" placeholder="Kullanım kurallarını alt alta girin."></textarea>
                     </div>
-                    
-                    <div class="facility-gallery">
-                        <div class="gallery-item">Bahçe Fotoğrafı 1</div>
-                        <div class="gallery-item">Bahçe Fotoğrafı 2</div>
-                        <div class="gallery-item">Mangal Alanı</div>
+
+                    <div class="form-group">
+                        <label for="facilityExtraInfo">Ekipmanlar / Özellikler / Notlar</label>
+                        <textarea id="facilityExtraInfo" rows="3" placeholder="Ekipmanları, Özellikleri veya diğer önemli notları giriniz."></textarea>
                     </div>
-                </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> İptal</button>
+                        <button type="submit" class="save-btn" id="save-btn"><i class="fas fa-save"></i> Kaydet</button>
+                    </div>
+                </form>
+            </div>
+
+
+            <h3 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Mevcut Sosyal Tesisler</h3>
+            <div class="facilities-content" id="facilities-list">
+                <p style="text-align: center; color: #777;">Sosyal tesisler yükleniyor...</p>
             </div>
         </div>
     </div>
 
-    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/modules/facilities.js"></script>
 </body>
 </html>

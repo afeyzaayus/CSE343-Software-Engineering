@@ -1,4 +1,3 @@
-// js/modules/auth.js (TAM VE REVİZE EDİLMİŞ VERSİYON)
 
 import { apiCall } from './api.js';
 
