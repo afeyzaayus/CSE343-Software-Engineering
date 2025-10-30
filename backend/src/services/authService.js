@@ -161,7 +161,7 @@ export async function registerAdminService(adminData) {
   const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
   // Doğrulama linki (Backend URL'i kullan)
-  const verificationLink = `${process.env.BASE_URL || 'http://localhost:3000'}/api/auth/verify-email?token=${verificationToken}`;
+  const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
 
 
   // Mail gönder
