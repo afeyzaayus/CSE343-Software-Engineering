@@ -25,25 +25,13 @@
                         
                         <div id="login-alert" class="alert hidden"></div>
                         <form id="login-form">
-                            <div class="form-group">
-                                <label>Kullanıcı Tipi</label>
-                                <select id="login-type">
-                                    <option value="user">Kullanıcı</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
-                            <div id="user-login-fields">
-                                <div class="form-group">
-                                    <label>Telefon Numarası</label>
-                                    <input type="tel" id="login-phone" placeholder="+905321234567">
-                                </div>
-                            </div>
-                            <div id="admin-login-fields" class="hidden">
+                            <div id="admin-login-fields">
                                 <div class="form-group">
                                     <label>E-posta</label>
                                     <input type="email" id="login-email" placeholder="ornek@email.com">
                                 </div>
                             </div>
+
                             <div class="form-group">
                                 <label>Şifre</label>
                                 <input type="password" id="login-password" placeholder="••••••••">
@@ -69,37 +57,10 @@
                         <div id="register-alert" class="alert hidden"></div>
                         <form id="register-form">
                             <div class="form-group">
-                                <label>Hesap Tipi</label>
-                                <select id="register-type">
-                                    <option value="user">Kullanıcı</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label>Tam Ad</label>
                                 <input type="text" id="register-fullname" placeholder="Ad Soyad" required>
                             </div>
-                            
-                            <div id="user-register-fields">
-                                <div class="form-group">
-                                    <label>Telefon Numarası</label>
-                                    <input type="tel" id="register-phone" placeholder="+905321234567">
-                                </div>
-                                <div class="form-group">
-                                    <label>Site ID</label>
-                                    <input type="text" id="register-siteid" placeholder="site-a-01">
-                                </div>
-                                <div class="form-group">
-                                    <label>Blok No</label>
-                                    <input type="text" id="register-block" placeholder="A Blok">
-                                </div>
-                                <div class="form-group">
-                                    <label>Daire No</label>
-                                    <input type="text" id="register-apartment" placeholder="12">
-                                </div>
-                            </div>
-
-                            <div id="admin-register-fields" class="hidden">
+                            <div id="admin-register-fields">
                                 <div class="form-group">
                                     <label>E-posta</label>
                                     <input type="email" id="admin-register-email" placeholder="ornek@email.com">
@@ -133,35 +94,6 @@
         </div>
     </div>
 
-
-    <div id="user-dashboard" class="container dashboard hidden">
-        <div class="header">
-            <h1>Dashboard</h1>
-            <div class="user-info">
-                <div class="user-avatar" id="user-avatar">U</div>
-                <div>
-                    <div style="font-size: 14px; font-weight: 600;" id="user-name">Kullanıcı</div>
-                    <div style="font-size: 12px; opacity: 0.8;" id="user-role">Kullanıcı</div>
-                </div>
-                <button class="logout-btn" onclick="logout()">Çıkış</button>
-            </div>
-        </div>
-        <div class="dashboard-content">
-            <div class="welcome-card">
-                <h2 id="welcome-title">Hoş Geldiniz!</h2>
-                <p>Site yönetim sisteminize başarıyla giriş yaptınız.</p>
-            </div>
-            <div class="empty-state">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                </svg>
-                <h3>Dashboard Hazırlanıyor</h3>
-                <p>Site özellikleriniz yakında burada görünecek.</p>
-            </div>
-        </div>
-    </div>
-
     <div id="admin-dashboard" class="container dashboard hidden">
         <div class="header">
             <h1>Admin Panel</h1>
@@ -173,6 +105,10 @@
                 </div>
                 <button class="logout-btn" onclick="logout()">Çıkış</button>
             </div>
+        </div>
+
+        <div>            
+            <h2 id="admin-welcome-title">     Hoş Geldiniz!</h2>
         </div>
         <div class="dashboard-content">
             <div class="stats">
@@ -218,18 +154,6 @@
 
                 <button type="submit" class="btn btn-primary">Site Oluştur</button>
             </form>
-        </div>
-    </div>
-    
-    <div class="modal hidden" id="verify-modal">
-        <div class="modal-content">
-            <h2>Telefon Doğrulama</h2>
-            <p>SMS ile gelen 6 haneli kodu girin</p>
-            <input type="text" id="verify-code" maxlength="6" placeholder="******">
-            <div class="modal-actions">
-                <button class="btn btn-primary" id="verify-btn">Doğrula</button>
-                <button class="btn btn-secondary" id="cancel-btn">İptal</button>
-            </div>
         </div>
     </div>
 
