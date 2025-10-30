@@ -78,13 +78,16 @@ async function deleteAnnouncement(siteId, announcementId) {
 
 // DOM ile ilişkilendirme ve event listener ekleme
 function setupAnnouncements() {
+    // GEÇICI: Eski siteId'yi temizle (ilk kullanımda bir kez çalışır)
+    sessionStorage.removeItem('siteId');
+    
     // Test için sabit siteId kullan (gerçek uygulamada sessionStorage'dan gelecek)
     let siteId = sessionStorage.getItem('siteId');
     
     if (!siteId) {
         console.warn('Site ID bulunamadı! Test için demo siteId kullanılıyor.');
         // Demo siteId - veritabanında oluşturduğumuz demo site
-        siteId = 'DEMO-SITE-001'; 
+        siteId = 'BACON124'; 
         sessionStorage.setItem('siteId', siteId);
         console.log('✅ Demo Site ID ayarlandı:', siteId);
     } else {
@@ -293,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const siteId = sessionStorage.getItem('siteId') || 'DEMO-SITE-001';
+            const siteId = sessionStorage.getItem('siteId') || 'BACON124';
             const announcementId = document.getElementById('editAnnouncementId').value;
             
             const updateData = {
