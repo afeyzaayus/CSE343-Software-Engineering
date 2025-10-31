@@ -87,7 +87,7 @@ function setupAnnouncements() {
     if (!siteId) {
         console.warn('Site ID bulunamadı! Test için demo siteId kullanılıyor.');
         // Demo siteId - veritabanında oluşturduğumuz demo site
-        siteId = 'BACON124'; 
+        siteId = 'DEMO-SITE-001'; 
         sessionStorage.setItem('siteId', siteId);
         console.log('✅ Demo Site ID ayarlandı:', siteId);
     } else {
