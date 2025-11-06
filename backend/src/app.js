@@ -9,7 +9,7 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 // ==========================================================
 // MIDDLEWARE'LER

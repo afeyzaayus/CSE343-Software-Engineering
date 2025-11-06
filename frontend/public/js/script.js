@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000/api/auth';
+const BASE_URL = 'http://localhost:3000';
 
 let currentUser = null;
 let currentToken = null;
@@ -58,7 +58,7 @@ async function apiRequest(endpoint, data = {}, requiresAuth = false, method = 'P
     if (requiresAuth && currentToken) headers['Authorization'] = `Bearer ${currentToken}`;
 
     try {
-        const response = await fetch(`${BASE_URL}${endpoint}`, {
+        const response = await fetch(`${BASE_URL}/api/auth${endpoint}`, {
             method,
             headers,
             body: method === 'GET' ? undefined : JSON.stringify(data)
@@ -75,16 +75,34 @@ async function apiRequest(endpoint, data = {}, requiresAuth = false, method = 'P
 function toggleLoginFields() {
     document.getElementById('admin-login-fields').classList.remove('hidden');
 }
-
 function toggleRegisterFields() {
     const adminFields = document.getElementById('admin-register-fields');
     adminFields.classList.remove('hidden');
 
-    // Admin alanlarının required durumunu güncelle
+    // Admin alanlarının required durumunu dinamik yapalım
+    const accountTypeSelect = document.getElementById('register-account-type');
+    const companyInput = document.getElementById('register-company');
+
     adminFields.querySelectorAll('input, select').forEach(el => {
-        el.required = true;
+        // email ve password alanları zorunlu kalsın
+        if (el.type === 'email' || el.id === 'register-password' || el.id === 'register-password-confirm') {
+            el.required = true;
+        } else {
+            el.required = false;
+        }
+    });
+
+    // Hesap türü değiştikçe şirket adı zorunlu olsun ya da olmasın
+    accountTypeSelect.addEventListener('change', e => {
+        if (e.target.value === 'COMPANY') {
+            companyInput.required = true;
+        } else {
+            companyInput.required = false;
+            companyInput.value = ''; // temizle
+        }
     });
 }
+
 
 // Sayfa yüklendiğinde admin alanlarını göster
 document.addEventListener('DOMContentLoaded', () => {
