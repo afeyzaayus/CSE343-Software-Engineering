@@ -182,7 +182,7 @@ export async function registerAdminService(adminData) {
       password: hashedPassword,
       account_type,
       company_name: account_type === 'COMPANY' ? company_name : null,
-      isVerified: false,
+      is_verified: false,
       verificationToken,
       tokenExpiry
     }
@@ -212,7 +212,7 @@ export async function verifyEmailService(token) {
   const updatedAdmin = await prisma.admin.update({
     where: { id: admin.id },
     data: {
-      isVerified: true,
+      is_verified: true,
       verificationToken: null,
       tokenExpiry: null
     }
@@ -234,7 +234,7 @@ export async function loginAdminService(loginData) {
       password: true,
       account_type: true,
       company_name: true,
-      isVerified: true
+      is_verified: true
     }
   });
 
@@ -243,7 +243,7 @@ export async function loginAdminService(loginData) {
   }
 
   // Doğrulama kontrolü
-  if (!admin.isVerified) {
+  if (!admin.is_verified) {
     throw new Error('AUTH_ERROR: Hesabınız doğrulanmamış. Lütfen e-postanızı kontrol edin.');
   }
 
