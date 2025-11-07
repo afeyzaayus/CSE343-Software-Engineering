@@ -18,10 +18,10 @@ model User {
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
   siteId                  Int
-  site                    Site      @relation(fields: [siteId], references: [id])
   is_verified             Boolean   @default(false)
-  phone_verification_code String?
   code_expiry             DateTime?
+  phone_verification_code String?
+  site                    Site      @relation(fields: [siteId], references: [id])
 
   @@map("users")
   @@schema("public")
@@ -36,10 +36,12 @@ model Admin {
   company_name      String?
   created_at        DateTime    @default(now())
   updated_at        DateTime    @updatedAt
-  sites_created     Site[]
-  is_verified       Boolean     @default(false)
-  verificationToken String?     @unique
   tokenExpiry       DateTime?
+  verificationToken String?     @unique
+  is_verified       Boolean     @default(false)
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  sites_created     Site[]
 
   @@map("admins")
   @@schema("public")
@@ -53,17 +55,34 @@ model Site {
   created_at      DateTime        @default(now())
   updated_at      DateTime        @updatedAt
   adminId         Int
+  announcements   announcements[]
   admin           Admin           @relation(fields: [adminId], references: [id])
-  announcements   Announcements[]
-  users           User[]
   socialAmenities SocialAmenity[]
+  users           User[]
 
   @@map("sites")
   @@schema("public")
 }
 
-model Announcements {
-  id         Int      @id @default(autoincrement())
+model SocialAmenity {
+  id          String   @id @default(cuid())
+  siteId      Int
+  name        String
+  description String?
+  status      String   @default("Açık")
+  hours       String?
+  rules       String?
+  extra       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("social_amenities")
+  @@schema("public")
+}
+
+model announcements {
+  id         Int      @id(map: "Announcements_pkey") @default(autoincrement())
   title      String
   content    String
   created_at DateTime @default(now())
@@ -71,7 +90,7 @@ model Announcements {
   siteId     Int
   start_date DateTime
   end_date   DateTime
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  sites      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "Announcements_siteId_fkey")
 
   @@schema("public")
 }
@@ -80,23 +99,5 @@ enum AccountType {
   INDIVIDUAL
   COMPANY
 
-  @@schema("public")
-}
-
-model SocialAmenity {
-  id          String   @id @default(cuid())
-  siteId      Int // ← changed from String to Int
-  name        String
-  description String?  @db.Text
-  status      String   @default("Açık")
-  hours       String?  @db.Text
-  rules       String?  @db.Text
-  extra       String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
-
-  @@map("social_amenities")
   @@schema("public")
 }

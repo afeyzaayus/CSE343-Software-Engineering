@@ -7,7 +7,10 @@ import {
   loginUserService,  
   loginAdminService,
   verifyEmailService,
-  verifyPhoneService
+  verifyPhoneService,
+  forgotAdminPasswordService, 
+  resetAdminPasswordService, 
+  setNewPasswordService 
 } from '../services/authService.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -206,7 +209,89 @@ export const loginAdmin = async (req, res) => {
     res.status(status).json({ message: error.message });
   }
 };
+export const forgotAdminPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
 
+    if (!email) {
+      return res.status(400).json({ message: 'E-posta adresi gereklidir.' });
+    }
+
+    const result = await forgotAdminPasswordService(email);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Şifre sıfırlama hatası:', error.message);
+
+    let status = 500;
+    if (error.message.includes('AUTH_ERROR')) status = 404;
+
+    res.status(status).json({ message: error.message });
+  }
+};
+
+// ===== TOKEN DOĞRULAMA (RESET PASSWORD HTML SAYFASI) =====
+export const resetAdminPassword = async (req, res) => {
+  const { token } = req.query; // URL'den token al
+
+  if (!token) {
+    return res.status(400).json({ message: 'Şifre sıfırlama token\'ı bulunamadı.' });
+  }
+
+  try {
+    const result = await resetAdminPasswordService(token);
+
+    // Frontend HTML sayfasına token ve e-posta gönderilebilir
+    res.status(200).json({
+      message: 'Şifre sıfırlama sayfasına yönlendiriliyorsunuz...',
+      token: token,
+      email: result.email
+    });
+  } catch (error) {
+    console.error('Token doğrulama hatası:', error.message);
+
+    let status = 500;
+    if (error.message.includes('TOKEN_INVALID') || error.message.includes('TOKEN_EXPIRED')) {
+      status = 400;
+    }
+
+    res.status(status).json({ message: error.message });
+  }
+};
+
+// ===== YENİ ŞİFRE BELİRLEME =====
+export const setNewPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Tüm alanları doldurun.' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'Şifreler eşleşmiyor.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Şifre en az 6 karakter olmalıdır.' });
+    }
+
+    const result = await setNewPasswordService(token, newPassword);
+
+    res.status(200).json({
+      message: 'Şifreniz başarıyla güncellendi. Giriş yapabilirsiniz.',
+      success: true
+    });
+  } catch (error) {
+    console.error('Şifre güncelleme hatası:', error.message);
+
+    let status = 500;
+    if (error.message.includes('TOKEN_INVALID') || error.message.includes('TOKEN_EXPIRED')) {
+      status = 400;
+    }
+
+    res.status(status).json({ message: error.message });
+  }
+};
 // ===== SİTE OLUŞTURMA =====
 export const createSite = async (req, res) => {
   const adminId = req.admin ? req.admin.id : null;

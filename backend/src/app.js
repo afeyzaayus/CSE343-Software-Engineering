@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import announcementRoutes from './routes/announcementRoutes.js';
 
 // .env dosyasını yükle
 dotenv.config();
@@ -32,6 +33,7 @@ app.get('/', (req, res) => {
 
 // Auth rotalarını bağla
 app.use('/api/auth', authRoutes);
+app.use('/api/sites', announcementRoutes);
 
 // ==========================================================
 // SUNUCUYU BAŞLAT

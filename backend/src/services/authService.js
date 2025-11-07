@@ -258,6 +258,110 @@ export async function loginAdminService(loginData) {
   const { password: _, ...adminData } = admin;
   return adminData;
 }
+export const forgotAdminPasswordService = async (email) => {
+  const admin = await prisma.admin.findUnique({
+    where: { email: email.toLowerCase() }
+  });
+
+  // Kullanıcı bulunmasa bile gizli mesaj döndür (güvenlik için)
+  if (!admin) {
+    return { 
+      message: 'E-postanıza şifre sıfırlama bağlantısı gönderildi!' 
+    };
+  }
+
+  // Token oluştur ve 15 dakika geçerli olsun
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika
+
+  // Token ve süresini DB'ye kaydet
+  await prisma.admin.update({
+    where: { id: admin.id },
+    data: {
+      resetToken: resetToken,
+      resetTokenExpiry: resetTokenExpiry
+    }
+  });
+
+  // HTML şifre sıfırlama linki
+const resetLink = `${process.env.FRONTEND_URL}/reset-password.html?token=${resetToken}`;
+
+  // Mail gönder
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Şifre Sıfırlama Talebi',
+    html: `
+      <p>Merhaba ${admin.full_name},</p>
+      <p>Şifrenizi sıfırlamak için aşağıdaki butona tıklayın. Bu bağlantı 15 dakika geçerlidir:</p>
+      <a href="${resetLink}" style="
+          display: inline-block;
+          padding: 10px 20px;
+          background-color: #007bff;
+          color: white;
+          text-decoration: none;
+          border-radius: 5px;
+          margin-top: 10px;
+      ">Şifreyi Sıfırla</a>
+      <p>Eğer bu isteği siz yapmadıysanız, bu e-postayı görmezden gelebilirsiniz.</p>
+    `
+  });
+
+  return { message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.' };
+};
+// Token doğrulama (verifyEmail gibi)
+export const resetAdminPasswordService = async (token) => {
+  const admin = await prisma.admin.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpiry: {
+        gt: new Date() // Token süresi dolmamış olmalı
+      }
+    }
+  });
+
+  if (!admin) {
+    throw new Error('TOKEN_INVALID: Geçersiz veya süresi dolmuş token.');
+  }
+
+  return {
+    email: admin.email,
+    message: 'Token geçerli.'
+  };
+};
+
+// Yeni şifre belirleme
+export const setNewPasswordService = async (token, newPassword) => {
+  const admin = await prisma.admin.findFirst({
+    where: {
+      resetToken: token,
+      resetTokenExpiry: {
+        gt: new Date()
+      }
+    }
+  });
+
+  if (!admin) {
+    throw new Error('TOKEN_INVALID: Geçersiz veya süresi dolmuş token.');
+  }
+
+  // Şifreyi hashle
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  // Şifreyi güncelle ve token'ı temizle
+  await prisma.admin.update({
+    where: { id: admin.id },
+    data: {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpiry: null
+    }
+  });
+
+  return {
+    message: 'Şifre başarıyla güncellendi.'
+  };
+};
 
 // ===== SİTE OLUŞTURMA =====
 export async function createSiteService(adminId, siteData) {
