@@ -171,7 +171,50 @@ document.getElementById('register-form').addEventListener('submit', async e => {
         showAlert('register-alert', response.data.message || 'Kayıt başarısız', true);
     }
 });
+// Şifremi Unuttum Modal
+document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('forgot-password-modal').classList.remove('hidden');
+});
 
+document.getElementById('cancel-reset-btn').addEventListener('click', () => {
+    document.getElementById('forgot-password-modal').classList.add('hidden');
+    document.getElementById('forgot-password-email').value = '';
+    hideAlert('forgot-password-alert'); // Düzeltildi
+});
+
+document.getElementById('send-reset-btn').addEventListener('click', async () => {
+    const email = document.getElementById('forgot-password-email').value;
+
+    if (!email) {
+        showAlert('forgot-password-alert', 'Lütfen e-posta adresinizi girin.', true); // Düzeltildi
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/admin/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showAlert('forgot-password-alert', data.message || 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi.', false); // Düzeltildi
+            setTimeout(() => {
+                document.getElementById('forgot-password-modal').classList.add('hidden');
+                document.getElementById('forgot-password-email').value = '';
+                hideAlert('forgot-password-alert'); // Düzeltildi
+            }, 3000);
+        } else {
+            showAlert('forgot-password-alert', data.message || 'Bir hata oluştu.', true); // Düzeltildi
+        }
+    } catch (error) {
+        console.error('Şifre sıfırlama hatası:', error);
+        showAlert('forgot-password-alert', 'Sunucuya bağlanılamadı.', true); // Düzeltildi
+    }
+});
 // DASHBOARD
 function showAdminDashboard() {
     if (!currentUser) return;
@@ -239,24 +282,17 @@ document.getElementById('create-site-form').addEventListener('submit', async e =
         showAlert('create-site-alert', response.data.message || 'Site oluşturulamadı', true);
     }
 });
-
+// Site seçme fonksiyonu
 function selectSite(siteId) {
     const selectedSite = userSites.find(s => s.site_id === siteId);
     if (selectedSite) {
-        const title = document.getElementById('admin-welcome-title');
-        if (title) {
-            title.textContent = `${selectedSite.site_name} - Yönetim Paneli`;
-        }
+        // LocalStorage'a kaydet
+        localStorage.setItem('selectedSite', JSON.stringify(selectedSite));
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        // Dashboard sayfasına yönlendir
+        window.location.href = 'dashboard.html';
     }
 }
 
-
-function logout() {
-    currentUser = null;
-    currentToken = null;
-    userSites = [];
-    showPage(pages.auth);
-    document.getElementById('login-form').reset();
-    document.getElementById('register-form').reset();
-    showLogin();
-}
+function logout() { currentUser = null; currentToken = null; userSites = []; showPage(pages.auth); document.getElementById('login-form').reset(); document.getElementById('register-form').reset(); showLogin(); }

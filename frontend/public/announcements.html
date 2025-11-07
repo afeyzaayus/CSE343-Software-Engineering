@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyurular - Site Yönetim Sistemi</title>
+    
+     <link rel="stylesheet" href="css/base.css">      
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="/residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="/payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li class="active"><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="/socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="/complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="/settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h2 id="dashboard-title">Duyurular</h2>
+                <div class="user-info" id="dashboard-user-info"></div>
+            </div>
+
+            <div class="announcements-content">
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Yeni Duyuru Ekle</div>
+                    </div>
+                    <form id="announcementForm">
+                        <div class="form-group">
+                            <label for="announcementTitle">Duyuru Başlığı</label>
+                            <input type="text" id="announcementTitle" placeholder="Duyuru başlığını girin" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcementContent">Duyuru İçeriği</label>
+                            <textarea id="announcementContent" placeholder="Duyuru içeriğini girin" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="announcementDate">Yayın Tarihi</label>
+                                <input type="date" id="announcementDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="announcementExpiry">Son Geçerlilik Tarihi</label>
+                                <input type="date" id="announcementExpiry" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="announcementPriority">Öncelik</label>
+                            <select id="announcementPriority" required>
+                                <option value="normal">Normal</option>
+                                <option value="important">Önemli</option>
+                                <option value="urgent">Acil</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Duyuruyu Yayınla</button>
+                    </form>
+                </div>
+                
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Aktif Duyurular</div>
+                        <div class="table-subtitle">Duyurular yükleniyor...</div> 
+                    </div>
+                    
+                    <div id="current-announcements-list">
+                        <p style="text-align: center; color: #7f8c8d;">Aktif duyuru bulunmamaktadır.</p>
+                    </div>
+                </div>
+
+                <div class="table-container">
+                    <div class="table-header">
+                        <div class="table-title">Geçmiş Duyurular</div>
+                        <div class="table-subtitle">Süresi dolan duyurular</div>
+                    </div>
+                    
+                    <div id="past-announcements-list">
+                         <p style="text-align: center; color: #7f8c8d;">Geçmiş duyuru bulunmamaktadır.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Düzenleme Modalı -->
+    <div id="editModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Duyuru Düzenle</h2>
+                <button onclick="closeEditModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">&times;</button>
+            </div>
+            
+            <form id="editAnnouncementForm">
+                <input type="hidden" id="editAnnouncementId">
+                
+                <div class="form-group">
+                    <label for="editAnnouncementTitle">Duyuru Başlığı</label>
+                    <input type="text" id="editAnnouncementTitle" placeholder="Duyuru başlığını girin" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editAnnouncementContent">Duyuru İçeriği</label>
+                    <textarea id="editAnnouncementContent" placeholder="Duyuru içeriğini girin" required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editAnnouncementDate">Yayın Tarihi</label>
+                        <input type="date" id="editAnnouncementDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAnnouncementExpiry">Son Geçerlilik Tarihi</label>
+                        <input type="date" id="editAnnouncementExpiry" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editAnnouncementPriority">Öncelik</label>
+                    <select id="editAnnouncementPriority" required>
+                        <option value="normal">Normal</option>
+                        <option value="important">Önemli</option>
+                        <option value="urgent">Acil</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" onclick="closeEditModal()" class="btn" style="background: #95a5a6;">İptal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="js/announcements.js"></script>
+</body>
+</html>

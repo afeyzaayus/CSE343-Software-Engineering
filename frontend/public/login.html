@@ -38,6 +38,10 @@
                             </div>
                             <button type="submit" class="btn btn-primary">Giriş Yap</button>
                         </form>
+                          <!-- Forgot Password Link -->
+                        <div class="forgot-password">
+                            <a href="#" id="forgot-password-link">Şifremi Unuttum?</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -107,9 +111,6 @@
             </div>
         </div>
 
-        <div>            
-            <h2 id="admin-welcome-title">     Hoş Geldiniz!</h2>
-        </div>
         <div class="dashboard-content">
             <div class="stats">
                 <div class="stat-card">
@@ -154,6 +155,20 @@
 
                 <button type="submit" class="btn btn-primary">Site Oluştur</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Şifre Sıfırlama</h3>
+            <p>Şifrenizi sıfırlamak için e-posta adresinizi girin:</p>
+            <input type="email" id="forgot-password-email" placeholder="ornek@email.com" required>
+            <div class="modal-actions">
+                <button id="send-reset-btn" class="btn btn-primary">Gönder</button>
+                <button id="cancel-reset-btn" class="btn btn-secondary">İptal</button>
+            </div>
+            <div id="forgot-password-alert" class="alert hidden"></div>
         </div>
     </div>
 

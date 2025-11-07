@@ -414,56 +414,159 @@ input:focus, select:focus {
         transform: translateY(0); 
     }
 }
+/* Forgot Password Link */
+.forgot-password {
+    text-align: center;
+    margin-top: 16px;
+}
 
-/* Modal içeriği */
-.modal-content h2 {
-    margin-bottom: 10px;
-    color: #2c3e50;
+.forgot-password a {
+    color: #2e86c1;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s ease;
+}
+
+.forgot-password a:hover {
+    color: #1f5f8b;
+    text-decoration: underline;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 440px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+.modal-content h3 {
+    margin: 0 0 12px 0;
+    color: #1a202c;
     font-size: 24px;
+    font-weight: 700;
 }
 
 .modal-content p {
-    margin-bottom: 20px;
-    color: #7f8c8d;
+    margin: 0 0 24px 0;
+    color: #4a5568;
     font-size: 14px;
+    line-height: 1.6;
 }
 
-.modal-content input {
+.modal-content input[type="email"] {
     width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 20px;
-    text-align: center;
-    letter-spacing: 8px;
-    font-weight: 600;
-    margin-bottom: 20px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
+
+.modal-content input[type="email"]:focus {
+    outline: none;
+    border-color: #2e86c1;
+    box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.1);
 }
 
 .modal-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
+    margin-top: 24px;
 }
 
 .modal-actions .btn {
     flex: 1;
-    margin-top: 0; /* Butonlardaki varsayılan margin-top'u sıfırla */
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
 .modal-actions .btn-primary {
-    background: #3498db;
+    background: #2e86c1;
     color: white;
 }
 
 .modal-actions .btn-primary:hover {
-    background: #2980b9;
+    background: #1f5f8b;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46, 134, 193, 0.4);
 }
 
 .modal-actions .btn-secondary {
-    background: #ecf0f1;
-    color: #7f8c8d;
+    background: #e2e8f0;
+    color: #4a5568;
 }
 
 .modal-actions .btn-secondary:hover {
-    background: #e0e0e0;
+    background: #cbd5e0;
+}
+
+.modal-content .alert {
+    margin-top: 16px;
+    margin-bottom: 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .modal-content {
+        padding: 24px;
+        max-width: 95%;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .modal-actions .btn {
+        width: 100%;
+    }
 }
