@@ -1,0 +1,166 @@
+/* 
+ * DASHBOARD DUYURU KARTLARI İÇİN CSS
+ * Bu stilleri dashboard.css dosyanıza ekleyin
+ */
+
+/* Duyuru Kartı */
+.announcement-card {
+  background: white;
+  border-left: 4px solid #3498db;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.announcement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Duyuru Header */
+.announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.announcement-header h3 {
+  color: #2c3e50;
+  font-size: 18px;
+  margin: 0;
+  flex: 1;
+}
+
+/* Duyuru Badge (Durum) */
+.announcement-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Duyuru Durumlarına Göre Renkler */
+.announcement-card.urgent,
+.announcement-badge.urgent {
+  border-color: #e74c3c;
+  background-color: #e74c3c;
+  color: white;
+}
+
+.announcement-card.important,
+.announcement-badge.important {
+  border-color: #f39c12;
+  background-color: #f39c12;
+  color: white;
+}
+
+.announcement-card.normal,
+.announcement-badge.normal {
+  border-color: #3498db;
+  background-color: #3498db;
+  color: white;
+}
+
+.announcement-card.past,
+.announcement-badge.past {
+  border-color: #95a5a6;
+  background-color: #95a5a6;
+  color: white;
+  opacity: 0.7;
+}
+
+.announcement-card.planned,
+.announcement-badge.planned {
+  border-color: #9b59b6;
+  background-color: #9b59b6;
+  color: white;
+}
+
+/* Duyuru İçeriği */
+.announcement-content {
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 10px 0;
+}
+
+/* Duyuru Footer */
+.announcement-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.announcement-date {
+  color: #7f8c8d;
+  font-size: 13px;
+}
+
+.announcement-date i {
+  margin-right: 5px;
+}
+
+/* Duyurular Bölümü Header */
+.announcements-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.announcements-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+/* Responsive (Mobil İçin) */
+@media (max-width: 768px) {
+  .announcement-header {
+    flex-direction: column;
+  }
+  
+  .announcement-badge {
+    margin-top: 10px;
+    align-self: flex-start;
+  }
+  
+  .announcements-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .announcements-header .btn {
+    width: 100%;
+  }
+}
+
+/* Yükleniyor Animasyonu */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Boş Durum */
+.empty-announcements {
+  text-align: center;
+  padding: 40px 20px;
+  color: #95a5a6;
+}
+
+.empty-announcements i {
+  font-size: 48px;
+  margin-bottom: 15px;
+  opacity: 0.5;
+}
