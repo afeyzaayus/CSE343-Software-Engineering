@@ -189,11 +189,32 @@ function renderActiveAnnouncements(announcements, siteId) {
         return;
     }
 
-    container.innerHTML = announcements.map(announcement => `
+    container.innerHTML = announcements.map(announcement => {
+        // Duyurunun düzenlenip düzenlenmediğini kontrol et
+        const createdDate = new Date(announcement.created_at);
+        const updatedDate = new Date(announcement.updated_at);
+        const isEdited = updatedDate.getTime() - createdDate.getTime() > 1000; // 1 saniyeden fazla fark varsa düzenlenmiş
+        
+        const editBadge = isEdited ? `
+            <span style="display: inline-block; background: #FFDAB9; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 10px;">
+                ✏️ Düzenlendi: ${updatedDate.toLocaleString('tr-TR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}
+            </span>
+        ` : '';
+
+        return `
         <div class="announcement-item" style="border-left: 4px solid #3498db; padding: 15px; margin-bottom: 15px; background: #f8f9fa; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div style="flex: 1;">
-                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">${announcement.title}</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">
+                        ${announcement.title}
+                        ${editBadge}
+                    </h4>
                     <p style="margin: 0 0 10px 0; color: #7f8c8d;">${announcement.content}</p>
                     <div style="font-size: 12px; color: #95a5a6;">
                         <span><strong>Başlangıç:</strong> ${new Date(announcement.start_date).toLocaleDateString('tr-TR')}</span> | 
@@ -206,7 +227,8 @@ function renderActiveAnnouncements(announcements, siteId) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Geçmiş duyuruları render et
@@ -219,11 +241,32 @@ function renderPastAnnouncements(announcements, siteId) {
         return;
     }
 
-    container.innerHTML = announcements.map(announcement => `
+    container.innerHTML = announcements.map(announcement => {
+        // Duyurunun düzenlenip düzenlenmediğini kontrol et
+        const createdDate = new Date(announcement.created_at);
+        const updatedDate = new Date(announcement.updated_at);
+        const isEdited = updatedDate.getTime() - createdDate.getTime() > 1000; // 1 saniyeden fazla fark varsa düzenlenmiş
+        
+        const editBadge = isEdited ? `
+            <span style="display: inline-block; background: #95a5a6; color: white; padding: 2px 8px; border-radius: 3px; font-size: 11px; margin-left: 10px;">
+                ✏️ Düzenlendi: ${updatedDate.toLocaleString('tr-TR', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                })}
+            </span>
+        ` : '';
+
+        return `
         <div class="announcement-item" style="border-left: 4px solid #95a5a6; padding: 15px; margin-bottom: 15px; background: #ecf0f1; border-radius: 4px; opacity: 0.8;">
             <div style="display: flex; justify-content: space-between; align-items: start;">
                 <div style="flex: 1;">
-                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">${announcement.title}</h4>
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">
+                        ${announcement.title}
+                        ${editBadge}
+                    </h4>
                     <p style="margin: 0 0 10px 0; color: #7f8c8d;">${announcement.content}</p>
                     <div style="font-size: 12px; color: #95a5a6;">
                         <span><strong>Başlangıç:</strong> ${new Date(announcement.start_date).toLocaleDateString('tr-TR')}</span> | 
@@ -235,7 +278,8 @@ function renderPastAnnouncements(announcements, siteId) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 // Global fonksiyonlar (inline onclick için)
