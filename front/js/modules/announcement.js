@@ -87,7 +87,7 @@ function setupAnnouncements() {
     if (!siteId) {
         console.warn('Site ID bulunamadı! Test için demo siteId kullanılıyor.');
         // Demo siteId - veritabanında oluşturduğumuz demo site
-        siteId = 'CUSTOMER'; 
+        siteId = 'A4VTLM'; 
         sessionStorage.setItem('siteId', siteId);
         console.log('✅ Demo Site ID ayarlandı:', siteId);
     } else {
@@ -102,12 +102,20 @@ function setupAnnouncements() {
     // Form submit event'i
     const announcementForm = document.getElementById('announcementForm');
     if (announcementForm) {
+        // Yayın tarihini bugünün tarihi olarak otomatik ayarla
+        const announcementDateInput = document.getElementById('announcementDate');
+        if (announcementDateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            announcementDateInput.value = today;
+        }
+
         announcementForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const title = document.getElementById('announcementTitle').value;
             const content = document.getElementById('announcementContent').value;
-            const startDate = document.getElementById('announcementDate').value;
+            // Yayın tarihi otomatik olarak bugün
+            const startDate = new Date().toISOString().split('T')[0];
             const endDate = document.getElementById('announcementExpiry').value;
             const priority = document.getElementById('announcementPriority').value;
 
@@ -299,10 +307,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const siteId = sessionStorage.getItem('siteId') || 'BACON124';
             const announcementId = document.getElementById('editAnnouncementId').value;
             
+            // Yayın tarihini değiştirmeden gönder (start_date backend'den gelecek)
             const updateData = {
                 title: document.getElementById('editAnnouncementTitle').value,
                 content: document.getElementById('editAnnouncementContent').value,
-                start_date: new Date(document.getElementById('editAnnouncementDate').value).toISOString(),
+                // start_date gönderilmiyor - backend mevcut değeri koruyacak
                 end_date: new Date(document.getElementById('editAnnouncementExpiry').value).toISOString(),
                 priority: document.getElementById('editAnnouncementPriority').value
             };

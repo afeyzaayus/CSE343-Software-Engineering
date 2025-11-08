@@ -16,14 +16,15 @@ export async function createAnnouncementService(announcementData) {
     }
 
     // 2. Tarih doğrulama
-    const startDate = new Date(start_date);
+    // start_date yoksa veya geçmişte ise bugünün tarihini kullan
+    const startDate = start_date ? new Date(start_date) : new Date();
     const endDate = new Date(end_date);
 
     if (startDate >= endDate) {
         throw new Error('ANNOUNCEMENT_ERROR: Başlangıç tarihi bitiş tarihinden önce olmalıdır.');
     }
 
-    // 3. Yeni duyuru oluşturma
+    // 3. Yeni duyuru oluşturma (start_date her zaman bugün veya gelecek olacak)
     const newAnnouncement = await prisma.announcement.create({
         data: {
             title,
@@ -118,7 +119,8 @@ export async function getAnnouncementByIdService(announcementId, site_id) {
 
 // ===== DUYURU GÜNCELLEME =====
 export async function updateAnnouncementService(announcementId, site_id, updateData) {
-    const { title, content, start_date, end_date } = updateData;
+    const { title, content, end_date } = updateData;
+    // NOT: start_date güncellenmesine izin verilmiyor (güvenlik)
 
     // 1. Site kontrolü
     const site = await prisma.site.findUnique({
@@ -141,22 +143,22 @@ export async function updateAnnouncementService(announcementId, site_id, updateD
         throw new Error('ANNOUNCEMENT_ERROR: Duyuru bulunamadı veya bu siteye ait değil.');
     }
 
-    // 3. Tarih doğrulama (eğer tarihler güncelleniyorsa)
-    if (start_date && end_date) {
-        const startDate = new Date(start_date);
+    // 3. Tarih doğrulama (end_date güncelleniyorsa)
+    if (end_date) {
         const endDate = new Date(end_date);
+        const startDate = new Date(existingAnnouncement.start_date);
 
         if (startDate >= endDate) {
             throw new Error('ANNOUNCEMENT_ERROR: Başlangıç tarihi bitiş tarihinden önce olmalıdır.');
         }
     }
 
-    // 4. Güncelleme verilerini hazırla
+    // 4. Güncelleme verilerini hazırla (start_date asla güncellenmez)
     const dataToUpdate = {};
     if (title) dataToUpdate.title = title;
     if (content) dataToUpdate.content = content;
-    if (start_date) dataToUpdate.start_date = new Date(start_date);
     if (end_date) dataToUpdate.end_date = new Date(end_date);
+    // start_date güncellenmez!
 
     // 5. Duyuruyu güncelle
     const updatedAnnouncement = await prisma.announcement.update({

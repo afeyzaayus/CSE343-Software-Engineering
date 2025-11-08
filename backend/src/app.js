@@ -56,9 +56,6 @@ app.get('/announcements', (req, res) => {
 // Front klasörünü statik olarak servis et
 app.use(express.static(frontPath, { index: false }));
 
-// Frontend statik dosyalarını da servis et (eski dosyalar için)
-app.use(express.static(frontendPath, { index: false }));
-
 // Tüm diğer route'lar için
 app.get('*', (req, res) => {
   // Eğer /api ile başlıyorsa 404 döndür
@@ -66,7 +63,7 @@ app.get('*', (req, res) => {
     return res.status(404).json({ message: 'API endpoint bulunamadı' });
   }
   // Değilse duyurular sayfasını gönder
-  res.sendFile(path.join(frontendPath, 'announcements.html'));
+  res.sendFile(path.join(frontPath, 'announcements.html'));
 });
 
 // --- SUNUCUYU BAŞLATMA ---
