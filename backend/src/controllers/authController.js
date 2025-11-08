@@ -10,7 +10,9 @@ import {
   verifyPhoneService,
   forgotAdminPasswordService, 
   resetAdminPasswordService, 
-  setNewPasswordService 
+  setNewPasswordService,
+  forgotUserPasswordService,
+  resetUserPasswordService
 } from '../services/authService.js';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
@@ -107,6 +109,58 @@ export const loginUser = async (req, res) => {
     res.status(status).json({ message: error.message });
   }
 };
+
+// ===== USER ŞİFREMİ UNUTTUM =====
+export const forgotUserPassword = async (req, res) => {
+  const { phone_number } = req.body;
+
+  if (!phone_number) {
+    return res.status(400).json({ message: 'Telefon numarası gereklidir.' });
+  }
+
+  try {
+    const result = await forgotUserPasswordService(phone_number);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Şifre sıfırlama kodu hatası:', error.message);
+
+    let status = 500;
+    if (error.message.includes('SMS_ERROR')) status = 400;
+
+    res.status(status).json({ message: error.message });
+  }
+};
+
+// ===== USER YENİ ŞİFRE BELİRLEME =====
+export const resetUserPassword = async (req, res) => {
+  const { phone_number, code, newPassword, confirmPassword } = req.body;
+
+  if (!phone_number || !code || !newPassword || !confirmPassword) {
+    return res.status(400).json({ message: 'Tüm alanları doldurun.' });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ message: 'Şifreler eşleşmiyor.' });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({ message: 'Şifre en az 6 karakter olmalıdır.' });
+  }
+
+  try {
+    const result = await resetUserPasswordService(phone_number, code, newPassword);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Yeni şifre belirleme hatası:', error.message);
+
+    let status = 500;
+    if (error.message.includes('AUTH_ERROR') || error.message.includes('USER_ERROR')) status = 400;
+
+    res.status(status).json({ message: error.message });
+  }
+};
+
+
 // ===== ADMIN KAYDI =====
 export const registerAdmin = async (req, res) => {
   const { full_name, email, password, account_type, company_name } = req.body;

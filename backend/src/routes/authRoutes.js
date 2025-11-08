@@ -47,4 +47,6 @@ router.post('/user/verify-phone', verifyPhone);
 router.post('/user/register', registerUser);
 router.post('/user/login', loginUser);
 
+
+router.post('/auth/forgot-user-password', forgotUserPassword); router.post('/auth/reset-user-password', resetUserPassword);
 export default router;

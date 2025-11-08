@@ -22,7 +22,9 @@ model User {
   code_expiry             DateTime?
   phone_verification_code String?
   site                    Site      @relation(fields: [siteId], references: [id])
-
+  reset_code             String?
+  reset_code_expiry      DateTime?
+  
   @@map("users")
   @@schema("public")
 }

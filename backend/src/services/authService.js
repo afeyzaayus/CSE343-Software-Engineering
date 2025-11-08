@@ -143,6 +143,79 @@ export async function loginUserService(loginData) {
   return userData;
 }
 
+// ===== USER ŞİFREMİ UNUTTUM =====
+export async function forgotUserPasswordService(phone_number) {
+  const user = await prisma.user.findUnique({
+    where: { phone_number }
+  });
+
+  // Güvenlik gereği kullanıcı yoksa bile aynı mesaj döndürülür
+  if (!user) {
+    return { message: 'Telefon numaranıza doğrulama kodu gönderildi.' };
+  }
+
+  // 6 haneli doğrulama kodu oluştur (örneğin SMS ile gönderilecek)
+  const resetCode = crypto.randomInt(100000, 999999).toString();
+  const resetCodeExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 dakika geçerli
+
+  // Kodu veritabanına kaydet
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      reset_code: resetCode,
+      reset_code_expiry: resetCodeExpiry
+    }
+  });
+
+  // SMS gönder (Twilio)
+  try {
+    await twilioClient.messages.create({
+      body: `Site Yönetimi: Şifre sıfırlama kodunuz ${resetCode}. Kod 5 dakika geçerlidir.`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phone_number
+    });
+  } catch (err) {
+    console.error('SMS gönderilemedi:', err);
+    throw new Error('SMS_ERROR: Kod gönderilemedi, lütfen daha sonra deneyin.');
+  }
+
+  return { message: 'Doğrulama kodu telefonunuza gönderildi.' };
+}
+
+// ===== USER YENİ ŞİFRE BELİRLEME =====
+export async function resetUserPasswordService(phone_number, code, newPassword) {
+  const user = await prisma.user.findUnique({
+    where: { phone_number }
+  });
+
+  if (!user) throw new Error('USER_ERROR: Kullanıcı bulunamadı.');
+
+  if (user.reset_code !== code) {
+    throw new Error('AUTH_ERROR: Geçersiz doğrulama kodu.');
+  }
+
+  const now = new Date();
+  if (now > new Date(user.reset_code_expiry)) {
+    throw new Error('AUTH_ERROR: Kodun süresi dolmuş.');
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      password: hashedPassword,
+      reset_code: null,
+      reset_code_expiry: null
+    }
+  });
+
+  return { message: 'Şifreniz başarıyla güncellendi.' };
+}
+
+
+
+
 // ===== ADMIN KAYDI (DOĞRULAMA GEREKİYOR) =====
 export async function registerAdminService(adminData) {
   const { full_name, email, password, account_type, company_name } = adminData;
