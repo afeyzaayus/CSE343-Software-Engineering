@@ -58,24 +58,11 @@ model User {
   is_verified             Boolean   @default(false)
   code_expiry             DateTime?
   phone_verification_code String?
+  reset_code              String?
+  reset_code_expiry       DateTime?
   site                    Site      @relation(fields: [siteId], references: [id])
 
   @@map("users")
-  @@schema("public")
-}
-
-model Announcement {
-  id         Int      @id @default(autoincrement())
-  title      String
-  content    String   @db.Text
-  created_at DateTime @default(now()) @map("created_at")
-  updated_at DateTime @updatedAt @map("updated_at")
-  siteId     Int
-  start_date DateTime
-  end_date   DateTime
-  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
-
-  @@map("Announcements")
   @@schema("public")
 }
 
@@ -92,6 +79,21 @@ model social_amenities {
   updatedAt   DateTime
   sites       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
+  @@schema("public")
+}
+
+model Announcement {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String   @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  siteId     Int
+  start_date DateTime
+  end_date   DateTime
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("announcements")
   @@schema("public")
 }
 
