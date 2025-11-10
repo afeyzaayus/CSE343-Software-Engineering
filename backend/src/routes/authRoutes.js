@@ -49,7 +49,8 @@ router.post('/user/verify-phone', verifyPhone);
 router.post('/user/register', registerUser);
 router.post('/user/login', loginUser);
 
+// authController.js
+router.post('/user/forgot-password', forgotUserPassword);
+router.post('/user/reset-password', resetUserPassword);
 
-router.post('/auth/forgot-user-password', forgotUserPassword); 
-router.post('/auth/reset-user-password', resetUserPassword);
 export default router;

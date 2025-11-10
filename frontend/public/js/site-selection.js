@@ -24,7 +24,7 @@ function checkAuth() {
     
     try {
         currentUser = JSON.parse(userDataString);
-        showAdminDashboard();
+        showSiteSelection();
     } catch (error) {
         console.error('Kullanıcı verileri okunamadı:', error);
         window.location.href = 'login.html';
@@ -64,8 +64,8 @@ async function apiRequest(endpoint, data = {}, requiresAuth = false, method = 'P
     }
 }
 
-// DASHBOARD
-function showAdminDashboard() {
+// Site Selection Dashboard
+function showSiteSelection() {
     if (!currentUser) return;
     document.getElementById('admin-name').textContent = currentUser.full_name || 'Admin';
     document.getElementById('admin-type').textContent = currentUser.account_type || 'INDIVIDUAL';
@@ -148,9 +148,9 @@ function selectSite(siteId) {
     }
 }
 
-// Çıkış fonksiyonu
+// Çıkış fonksiyonu - Tamamen çıkış yapar
 function logout() {
-    // LocalStorage'ı temizle
+    // LocalStorage'ı tamamen temizle
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
     localStorage.removeItem('selectedSite');
