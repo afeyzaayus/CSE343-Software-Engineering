@@ -147,3 +147,34 @@ tr:hover {
     display: flex;
     gap: 8px;
 }
+
+/* Düzenle ve Sil butonları */
+.btn-edit {
+    background-color: #3498db; /* Mavi */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.btn-edit:hover {
+    background-color: #2980b9;
+}
+
+.btn-delete {
+    background-color: #e74c3c; /* Kırmızı */
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+
+.btn-delete:hover {
+    background-color: #c0392b;
+}

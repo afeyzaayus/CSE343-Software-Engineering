@@ -6,7 +6,7 @@ import {
     updateAnnouncement,
     deleteAnnouncement
 } from '../controllers/announcementController.js';
-import { adminAuth } from '..//middleware/authMiddleware.js';
+import { adminAuth } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 

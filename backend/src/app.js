@@ -1,52 +1,73 @@
+// server.js veya index.js
+
 import express from 'express';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.js';
-import cors from 'cors';
-import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// Dosya yolunu güncelledik: authRoutes'un ./auth/authRoutes.js konumunda olduğunu varsayıyoruz
+import authRoutes from './routes/authRoutes.js'
 import announcementRoutes from './routes/announcementRoutes.js';
+import cors from 'cors';
 
-// .env dosyasını yükle
+// ES module için __dirname alternatifi
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// .env dosyasındaki değişkenleri yükle
 dotenv.config();
 
-const prisma = new PrismaClient();
 const app = express();
-const PORT = process.env.PORT;
+// PORT değişkenini .env dosyasından al, yoksa 3000 kullan
+const PORT = process.env.PORT || 3000;
 
-// ==========================================================
-// MIDDLEWARE'LER
-// ==========================================================
+// --- MİDDLEWARE'LER ---
 
-// JSON body parser
+// Gelen isteklerin JSON gövdesini (body) parse etmek için
 app.use(express.json());
 
-// CORS - Tüm kaynaklardan gelen isteklere izin ver
+// Tüm kaynaklardan gelen isteklere izin verir (Geliştirme için önemlidir, CORS hatasını önler)
 app.use(cors());
 
-// ==========================================================
-// ROTA TANIMLARI
-// ==========================================================
+// --- ROTA TANIMLARI ---
 
-// Ana rota
-app.get('/', (req, res) => {
-  res.send('API is running... 🚀');
-});
-
-// Auth rotalarını bağla
+// API rotalarını ÖNCE tanımla (öncelik sırası önemli!)
+// /api/auth yolu altındaki tüm kimlik doğrulama rotalarını bağla
+// Örn: /api/auth/admin/register
 app.use('/api/auth', authRoutes);
+
+// /api/sites yolu altındaki tüm duyuru rotalarını bağla
+// Örn: /api/sites/{siteId}/announcements
 app.use('/api/sites', announcementRoutes);
 
-// ==========================================================
-// SUNUCUYU BAŞLAT
-// ==========================================================
+// Frontend klasörü yolları
+const frontPath = path.join(__dirname, '..', '..', 'front');
+const frontendPath = path.join(__dirname, '..', '..', 'frontend', 'public');
 
-app.listen(PORT, () => {
-  console.log(`✅ Server is running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+// Ana sayfa route'u - Front klasöründeki duyurular sayfasına yönlendir (ÖNCE tanımla!)
+app.get('/', (req, res) => {
+  res.sendFile(path.join(frontPath, 'announcements.html'));
 });
 
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
-  await prisma.$disconnect();
-  process.exit(0);
+// Duyurular sayfası için clean URL (hem .html'li hem .html'siz çalışır)
+app.get('/announcements', (req, res) => {
+  res.sendFile(path.join(frontPath, 'announcements.html'));
+});
+
+// Front klasörünü statik olarak servis et
+app.use(express.static(frontPath, { index: false }));
+
+// Tüm diğer route'lar için
+app.get('*', (req, res) => {
+  // Eğer /api ile başlıyorsa 404 döndür
+  if (req.url.startsWith('/api')) {
+    return res.status(404).json({ message: 'API endpoint bulunamadı' });
+  }
+  // Değilse duyurular sayfasını gönder
+  res.sendFile(path.join(frontPath, 'announcements.html'));
+});
+
+// --- SUNUCUYU BAŞLATMA ---
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT} 🚀`);
 });

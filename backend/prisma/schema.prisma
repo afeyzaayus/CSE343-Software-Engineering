@@ -8,27 +8,6 @@ datasource db {
   schemas  = ["public"]
 }
 
-model User {
-  id                      Int       @id @default(autoincrement())
-  full_name               String
-  phone_number            String?   @unique
-  password                String
-  block_no                String?
-  apartment_no            String?
-  created_at              DateTime  @default(now())
-  updated_at              DateTime  @updatedAt
-  siteId                  Int
-  is_verified             Boolean   @default(false)
-  code_expiry             DateTime?
-  phone_verification_code String?
-  site                    Site      @relation(fields: [siteId], references: [id])
-  reset_code             String?
-  reset_code_expiry      DateTime?
-  
-  @@map("users")
-  @@schema("public")
-}
-
 model Admin {
   id                Int         @id @default(autoincrement())
   full_name         String
@@ -50,24 +29,45 @@ model Admin {
 }
 
 model Site {
-  id              Int             @id @default(autoincrement())
-  site_id         String          @unique
-  site_name       String
-  site_address    String
-  created_at      DateTime        @default(now())
-  updated_at      DateTime        @updatedAt
-  adminId         Int
-  announcements   announcements[]
-  admin           Admin           @relation(fields: [adminId], references: [id])
-  socialAmenities SocialAmenity[]
-  users           User[]
+  id               Int                @id @default(autoincrement())
+  site_id          String             @unique
+  site_name        String
+  site_address     String
+  created_at       DateTime           @default(now())
+  updated_at       DateTime           @updatedAt
+  adminId          Int
+  announcements    Announcement[]
+  admin            Admin              @relation(fields: [adminId], references: [id])
+  social_amenities social_amenities[]
+  users            User[]
 
   @@map("sites")
   @@schema("public")
 }
 
-model SocialAmenity {
-  id          String   @id @default(cuid())
+model User {
+  id                      Int       @id @default(autoincrement())
+  full_name               String
+  phone_number            String?   @unique
+  password                String
+  block_no                String?
+  apartment_no            String?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  siteId                  Int
+  is_verified             Boolean   @default(false)
+  code_expiry             DateTime?
+  phone_verification_code String?
+  reset_code              String?
+  reset_code_expiry       DateTime?
+  site                    Site      @relation(fields: [siteId], references: [id])
+
+  @@map("users")
+  @@schema("public")
+}
+
+model social_amenities {
+  id          String   @id
   siteId      Int
   name        String
   description String?
@@ -76,24 +76,24 @@ model SocialAmenity {
   rules       String?
   extra       String?
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  updatedAt   DateTime
+  sites       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
-  @@map("social_amenities")
   @@schema("public")
 }
 
-model announcements {
-  id         Int      @id(map: "Announcements_pkey") @default(autoincrement())
+model Announcement {
+  id         Int      @id @default(autoincrement())
   title      String
-  content    String
+  content    String   @db.Text
   created_at DateTime @default(now())
-  updated_at DateTime
+  updated_at DateTime @updatedAt
   siteId     Int
   start_date DateTime
   end_date   DateTime
-  sites      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade, map: "Announcements_siteId_fkey")
+  site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
+  @@map("announcements")
   @@schema("public")
 }
 
