@@ -103,3 +103,27 @@ enum AccountType {
 
   @@schema("public")
 }
+
+model Complaint {
+  id          Int       @id @default(autoincrement())
+  title       String
+  content     String    @db.Text
+  status      Status    @default(PENDING)
+  siteId      Int
+  userId      Int
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+  site        Site      @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("complaints")
+  @@schema("public")
+}
+
+enum Status {
+  PENDING    // Kullanıcı oluşturdu, admin cevaplamadı
+  IN_PROGRESS // Admin işlemde
+  RESOLVED   // Admin cevapladı
+  REJECTED   // Admin reddetti
+  @@schema("public")
+}

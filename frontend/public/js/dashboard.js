@@ -1,24 +1,28 @@
+// ===============================
+// Dashboard.js
+// ===============================
 const BASE_URL = 'http://localhost:3000';
+const API_BASE = '/api/sites';
 
-// LocalStorage'dan admin ve site bilgilerini al
+// Kullanıcı ve site bilgilerini al
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
+const token = localStorage.getItem('authToken');
+const siteId = selectedSite?.site_id;
 
-document.addEventListener('DOMContentLoaded', () => {
+// ===============================
+// Sayfa yüklendiğinde çalışacak
+// ===============================
+document.addEventListener('DOMContentLoaded', async () => {
     if (!currentUser || !selectedSite) {
-        // Kullanıcı veya site seçimi yoksa site seçim sayfasına yönlendir
         window.location.href = 'site-selection.html';
         return;
     }
 
-    // Dashboard başlığı
+    // Başlık ve kullanıcı bilgisi
     const dashboardTitle = document.getElementById('dashboard-title');
-    if (dashboardTitle) {
-        dashboardTitle.textContent = `Ana Sayfa - ${selectedSite.site_name}`;
-    }
-
-    // Sağ üst köşe admin bilgisi
     const userInfo = document.getElementById('dashboard-user-info');
+    if (dashboardTitle) dashboardTitle.textContent = `Ana Sayfa - ${selectedSite.site_name}`;
     if (userInfo) {
         userInfo.innerHTML = `
             <div class="user-avatar">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
@@ -29,100 +33,103 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Logout işlemi - site-selection.html'e yönlendir
+    // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            // Sadece selectedSite'ı temizle, currentUser ve token kalsın
             localStorage.removeItem('selectedSite');
-            // Site seçim sayfasına yönlendir
             window.location.href = 'site-selection.html';
         });
     }
 
     // Dashboard verilerini yükle
-    loadDashboardData();
+    await loadDashboardData();
 });
 
-// Dashboard verilerini API'den çek
-async function loadDashboardData() {
+// ===============================
+// API yardımcı fonksiyon
+// ===============================
+async function apiRequest(endpoint) {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
     try {
-        const token = localStorage.getItem('authToken');
-        if (!token) {
-            console.error('Token bulunamadı');
-            return;
-        }
-
-        const headers = {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-        };
-
-        // Örnek API çağrıları
-        const occupancyRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/occupancy`, { headers });
-        const duesRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/dues`, { headers });
-        const announcementsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements`, { headers });
-        const requestsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/requests`, { headers });
-
-        // JSON
-        const occupancy = occupancyRes.ok ? (await occupancyRes.json()).percentage || '--' : '--';
-        const dues = duesRes.ok ? (await duesRes.json()).percentage || '--' : '--';
-        const announcements = announcementsRes.ok ? (await announcementsRes.json()).count || '--' : '--';
-        const requests = requestsRes.ok ? (await requestsRes.json()).count || '--' : '--';
-
-        // Kartlara yaz
-        const occupancyValue = document.getElementById('occupancy-value');
-        const duesValue = document.getElementById('dues-value');
-        const announcementValue = document.getElementById('announcement-value');
-        const requestsValue = document.getElementById('requests-value');
-
-        if (occupancyValue) occupancyValue.textContent = occupancy + '%';
-        if (duesValue) duesValue.textContent = dues + '%';
-        if (announcementValue) announcementValue.textContent = announcements;
-        if (requestsValue) requestsValue.textContent = requests;
-
-        // Duyurular bölümünü güncelle
-        await loadRecentAnnouncements(token);
-
+        const res = await fetch(`${BASE_URL}${endpoint}`, { headers });
+        const data = await res.json();
+        return { ok: res.ok, data };
     } catch (err) {
-        console.error('Dashboard verisi yüklenemedi:', err);
+        console.error('API hatası:', err);
+        return { ok: false, data: { message: 'Bağlantı hatası' } };
     }
 }
 
-// Son duyuruları yükle
-async function loadRecentAnnouncements(token) {
+// ===============================
+// Dashboard verilerini çek
+// ===============================
+async function loadDashboardData() {
     try {
-        const response = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements/recent?limit=3`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
+        const [occupancy, dues, announcements, requests] = await Promise.all([
+            apiRequest(`${API_BASE}/${siteId}/occupancy`),
+            apiRequest(`${API_BASE}/${siteId}/dues`),
+            apiRequest(`${API_BASE}/${siteId}/announcements`),
+            apiRequest(`${API_BASE}/${siteId}/requests`)
+        ]);
 
-        if (response.ok) {
-            const data = await response.json();
-            const announcementsContainer = document.getElementById('current-announcements');
-            
-            if (announcementsContainer) {
-                if (data.announcements && data.announcements.length > 0) {
-                    announcementsContainer.innerHTML = data.announcements.map(announcement => `
-                        <div class="announcement-item">
-                            <div class="announcement-title">${announcement.title}</div>
-                            <div class="announcement-date">${new Date(announcement.date).toLocaleDateString('tr-TR')}</div>
-                            <div class="announcement-preview">${announcement.content.substring(0, 100)}...</div>
-                        </div>
-                    `).join('');
-                } else {
-                    announcementsContainer.innerHTML = '<p style="text-align: center; padding: 15px; color: #7f8c8d;">Henüz duyuru bulunmuyor.</p>';
-                }
-            }
-        }
-    } catch (err) {
-        console.error('Duyurular yüklenemedi:', err);
-        const announcementsContainer = document.getElementById('current-announcements');
-        if (announcementsContainer) {
-            announcementsContainer.innerHTML = '<p style="text-align: center; padding: 15px; color: #e74c3c;">Duyurular yüklenirken bir hata oluştu.</p>';
-        }
+        // Kart değerleri
+        document.querySelector('#occupancy-card .card-value').textContent =
+            occupancy.ok ? `${occupancy.data.percentage || 0}%` : '--%';
+        document.querySelector('#dues-card .card-value').textContent =
+            dues.ok ? `${dues.data.percentage || 0}%` : '--%';
+        document.querySelector('#announcement-card .card-value').textContent =
+            announcements.ok ? (announcements.data.count || 0) : '--';
+        document.querySelector('#requests-card .card-value').textContent =
+            requests.ok ? (requests.data.count || 0) : '--';
+
+        // Son duyuruları yükle
+        await loadRecentAnnouncements();
+
+    } catch (error) {
+        console.error('Dashboard yüklenemedi:', error);
     }
+}
+
+// ===============================
+// Son 3 duyuruyu göster
+// ===============================
+async function loadRecentAnnouncements() {
+    const announcementsContainer = document.getElementById('current-announcements');
+    announcementsContainer.innerHTML = `<p style="text-align:center;padding:15px;color:#7f8c8d;">Yükleniyor...</p>`;
+
+    const res = await apiRequest(`${API_BASE}/${siteId}/announcements/recent?limit=3`);
+
+    if (!res.ok || !res.data || !res.data.announcements) {
+        announcementsContainer.innerHTML = `<p style="text-align:center;padding:15px;color:#e74c3c;">Duyurular yüklenemedi.</p>`;
+        return;
+    }
+
+    const list = res.data.announcements;
+    if (list.length === 0) {
+        announcementsContainer.innerHTML = `<p style="text-align:center;padding:15px;color:#7f8c8d;">Henüz duyuru yok.</p>`;
+        return;
+    }
+
+    announcementsContainer.innerHTML = list.map(a => {
+        const colors = { normal: '#3498db', important: '#f39c12', urgent: '#e74c3c' };
+        const color = colors[a.priority] || '#3498db';
+        return `
+        <div class="announcement-item" style="border-left:4px solid ${color};padding:12px;margin-bottom:10px;background:#f8f9fa;border-radius:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-weight:600;color:#2c3e50;">${a.title}</div>
+                    <div style="font-size:12px;color:#7f8c8d;">${new Date(a.start_date).toLocaleDateString('tr-TR')} - ${new Date(a.end_date).toLocaleDateString('tr-TR')}</div>
+                    <div style="margin-top:5px;color:#34495e;">${a.content.substring(0, 100)}${a.content.length > 100 ? '...' : ''}</div>
+                </div>
+                <span style="font-size:11px;padding:3px 8px;background:${color};color:white;border-radius:3px;">
+                    ${a.priority === 'urgent' ? 'ACİL' : a.priority === 'important' ? 'ÖNEMLİ' : 'NORMAL'}
+                </span>
+            </div>
+        </div>`;
+    }).join('');
 }
