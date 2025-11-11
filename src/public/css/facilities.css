@@ -1,0 +1,319 @@
+/* Tesis Kartları - Mevcut Sosyal Tesisler Listesi */
+.facility-card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.facility-card:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Yönetici Ekle/Düzenle Form Kartı - Duyurular Sayfası Görünümü */
+.form-card {
+    background: white;
+    border-radius: 8px; /* Varsayılan border radius */
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Daha hafif gölge */
+    border: 1px solid #e0e0e0;
+}
+
+.form-card h3 {
+    font-size: 1.4rem;
+    color: var(--primary-color, #3498db);
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-card input[type="text"],
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 12px 15px; /* Daha kalın padding */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-card input[type="text"]:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    border-color: var(--primary-color, #3498db);
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.2);
+}
+
+.form-card textarea {
+    resize: vertical;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Form Aksiyon Butonları */
+.form-actions {
+    display: flex;
+    justify-content: flex-end; /* Butonları sağa hizala */
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.save-btn {
+    background-color: var(--primary-color, #3498db); /* Görseldeki butona uyduruldu */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #2980b9;
+}
+
+.cancel-btn {
+    background-color: #95a5a6;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+    background-color: #7f8c8d;
+}
+
+
+/* Mevcut Tesis Kartları için başlık ve aksiyonlar */
+.facility-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.facility-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.facility-title i {
+    color: #3498db;
+}
+
+/* Yöneticinin aksiyon butonları ve durum */
+.facility-actions-admin {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status.paid {
+    background-color: #27ae60;
+    color: white;
+}
+
+.status.pending {
+    background-color: #f39c12;
+    color: white;
+}
+
+.status.unpaid {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.edit-btn, .delete-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.edit-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.edit-btn:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+.delete-btn {
+    background-color: #e74c3c;
+    color: white;
+}
+
+.delete-btn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+/* Tesis bilgileri (açıklama, saatler, kurallar) */
+.facility-card > p {
+    color: #555;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    font-size: 1rem;
+}
+
+.facility-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.facility-hours, .facility-rules {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.facility-hours h4, .facility-rules h4 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.facility-hours h4 i, .facility-rules h4 i {
+    color: #3498db;
+}
+
+.facility-hours p, .facility-rules ul {
+    color: #555;
+    line-height: 1.8;
+    margin: 0;
+    padding: 0;
+}
+
+.facility-rules ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.facility-rules li {
+    padding: 5px 0;
+    padding-left: 20px;
+    position: relative;
+}
+
+.facility-rules li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.facility-description {
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4f8;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+}
+
+.facility-description h4 {
+    color: #2c3e50;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.facility-description h4 i {
+    color: #3498db;
+}
+
+.facility-description p {
+    color: #555;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Mevcut Tesis Kartları için yönetim butonlarını daha kart içine alalım */
+.facility-actions-admin {
+    position: static; /* Kartın içine al */
+    gap: 5px;
+}
+.facility-header {
+    flex-direction: column;
+    align-items: flex-start;
+}
+.facility-title {
+    margin-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+/* Yöneticinin aksiyon butonlarını ve durumu yan yana gösteren satır */
+.facility-header > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-end; /* Sağ tarafa hizala */
+}
+/* Durum ve butonlar için daha iyi bir hizalama */
+.facility-actions-admin {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

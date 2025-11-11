@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id            Int             @id @default(autoincrement())
+  site_id       String          @unique
+  site_name     String
+  site_address  String
+  created_at    DateTime        @default(now())
+  updated_at    DateTime
+  adminId       Int
+  announcements announcements[]
+  admins        admins          @relation(fields: [adminId], references: [id])
+  users         users[]
+  socialAmenities SocialAmenity[]
+  @@map("sites")
+}
+
+model admins {
+  id                Int         @id @default(autoincrement())
+  full_name         String
+  email             String      @unique
+  password          String
+  account_type      AccountType
+  company_name      String?
+  created_at        DateTime    @default(now())
+  updated_at        DateTime
+  isVerified        Boolean?    @default(false)
+  tokenExpiry       DateTime?
+  verificationToken String?     @unique
+  sites             Site[]
+}
+
+model announcements {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  created_at DateTime @default(now())
+  updated_at DateTime
+  siteId     Int
+  start_date DateTime
+  end_date   DateTime
+  sites      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id                      Int       @id @default(autoincrement())
+  full_name               String
+  phone_number            String?   @unique
+  password                String
+  block_no                String?
+  apartment_no            String?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime
+  siteId                  Int
+  is_verified             Boolean?  @default(false)
+  code_expiry             DateTime?
+  phone_verification_code String?
+  apartment               String?
+  email                   String?   @unique
+  role                    UserRole  @default(USER)
+  vehicle                 String?
+  sites                   Site      @relation(fields: [siteId], references: [id])
+}
+
+enum AccountType {
+  INDIVIDUAL
+  COMPANY
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+model SocialAmenity {
+  id          String   @id @default(cuid())
+  siteId      Int      // ← changed from String to Int
+  name        String
+  description String?  @db.Text
+  status      String   @default("Açık")
+  hours       String?  @db.Text
+  rules       String?  @db.Text
+  extra       String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site        Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@map("social_amenities")
+}
+
