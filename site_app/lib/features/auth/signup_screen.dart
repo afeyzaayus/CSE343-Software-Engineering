@@ -20,6 +20,23 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final blockNo = TextEditingController();
   final apartmentNo = TextEditingController();
 
+  // Dialog içindeki kod alanı için controller
+  final _otpController = TextEditingController(); 
+
+  @override
+  void dispose() {
+    // Controller'ları temizlemek iyi bir pratiktir
+    fullname.dispose();
+    email.dispose();
+    phone.dispose();
+    pass.dispose();
+    siteId.dispose();
+    blockNo.dispose();
+    apartmentNo.dispose();
+    _otpController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
@@ -81,31 +98,27 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
+              
+              // --- KAYIT OL BUTONU ---
               FilledButton(
                 onPressed: () async {
                   if (_f.currentState!.validate()) {
-/*                     // Site ID'yi sayıya dönüştür
-                    final int? parsedSiteId = int.tryParse(siteId.text);
-
-                    if (parsedSiteId == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Site ID must be a number')),
-                      );
-                      return;
-                    } */
-
-                    await ref.read(authStateProvider.notifier).signup(
+                    
+                    // 1. Controller'ı çağır ve sonucu bekle (bool dönecek)
+                    final success = await ref.read(authStateProvider.notifier).signup(
                           fullName: fullname.text,
                           email: email.text,
                           phoneNumber: phone.text,
                           password: pass.text,
                           siteId: siteId.text,
                           blockNo: blockNo.text.isNotEmpty ? blockNo.text : null,
-                          apartmentNo:
-                              apartmentNo.text.isNotEmpty ? apartmentNo.text : null,
+                          apartmentNo: apartmentNo.text.isNotEmpty ? apartmentNo.text : null,
                         );
 
-                    if (context.mounted) Navigator.pop(context);
+                    // 2. Eğer başarılıysa (ve ekran hala açıksa) Dialog'u göster
+                    if (success && context.mounted) {
+                      _showOtpDialog();
+                    }
                   }
                 },
                 child: const Text('Create Account'),
@@ -113,6 +126,72 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // --- OTP DIALOG PENCERESİ ---
+  void _showOtpDialog() {
+    _otpController.clear(); // Her açılışta temizle
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Dışarı tıklayınca kapanmasın
+      builder: (ctx) => AlertDialog(
+        title: const Text("Telefon Doğrulama"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("${phone.text} numarasına gelen kodu giriniz:"),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _otpController,
+              keyboardType: TextInputType.number,
+              maxLength: 6, // Kod uzunluğu (Backend'e göre ayarla)
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: "Kodu giriniz",
+                counterText: "", // Altındaki sayacı gizle
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx), // İptal
+            child: const Text("İptal"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // Dialog içindeki Onayla butonu
+              final authNotifier = ref.read(authStateProvider.notifier);
+              
+              // Verify isteği at
+              final isVerified = await authNotifier.verifyOtp(
+                phone.text, 
+                _otpController.text
+              );
+
+              if (isVerified && context.mounted) {
+                Navigator.pop(ctx); // Dialog'u kapat
+                Navigator.pop(context); // Sign Up ekranını kapat (Geri dön)
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text("Hesabınız doğrulandı! Giriş yapabilirsiniz."),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } else {
+                // Hata mesajı (Controller state.error'a yazar ama biz Snackbar gösterelim)
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(content: Text("Hatalı kod veya işlem başarısız.")),
+                );
+              }
+            },
+            child: const Text("Onayla"),
+          ),
+        ],
       ),
     );
   }

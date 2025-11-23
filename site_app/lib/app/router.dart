@@ -13,14 +13,18 @@ import '../features/social/social_screen.dart';
 import '../features/profile/profile_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final auth = ref.watch(authStateProvider);
 
-  return GoRouter(
+  // Sadece 'isLoggedIn' değişirse router'ı yeniden oluştur.
+  final isLoggedIn = ref.watch(authStateProvider.select((state) => state.isLoggedIn));
+
+return GoRouter(
     initialLocation: '/login',
     redirect: (ctx, state) {
-      final loggedIn = auth.isLoggedIn;
+      final loggedIn = isLoggedIn; 
+      
       final loggingIn =
           state.matchedLocation == '/login' || state.matchedLocation == '/signup';
+
       if (!loggedIn && !loggingIn) return '/login';
       if (loggedIn && loggingIn) return '/home';
       return null;
