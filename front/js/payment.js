@@ -6,62 +6,76 @@ const SITE_ID = 1; // Gerçek uygulamada sessionStorage'dan gelecek
 
 // Sayfa yüklendiğinde çalışacak
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadResidents();
-    await loadPayments();
+    await loadData();
     setupEventListeners();
 });
 
-// Site sakinlerini yükle
-async function loadResidents() {
+// Tüm verileri yükle ve tabloları doldur
+async function loadData() {
     try {
-        const response = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}/residents`);
-
-        if (!response.ok) throw new Error('Site sakinleri yüklenemedi');
-
-        const result = await response.json();
-        const residents = result.data;
-
-        // Dropdown'ı doldur
-        const selectElement = document.getElementById('paymentApartment');
-        selectElement.innerHTML = '<option value="">Daire seçin</option>';
-        
-        residents.forEach(resident => {
-            const option = document.createElement('option');
-            option.value = resident.id;
-            option.textContent = `${resident.block_no}-${resident.apartment_no} - ${resident.full_name}`;
-            option.dataset.blockNo = resident.block_no;
-            option.dataset.apartmentNo = resident.apartment_no;
-            option.dataset.fullName = resident.full_name;
-            option.dataset.phone = resident.phone_number;
-            selectElement.appendChild(option);
-        });
-
-        // Ödemeyenleri tabloya ekle
-        populateUnpaidTable(residents);
-        
-    } catch (error) {
-        console.error('Site sakinleri yükleme hatası:', error);
-        alert('Site sakinleri yüklenirken bir hata oluştu.');
-    }
-}
-
-// Ödemeleri yükle
-async function loadPayments() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}`);
-
-        if (!response.ok) throw new Error('Ödemeler yüklenemedi');
-
-        const result = await response.json();
-        const payments = result.data;
+        // Hem sakinleri hem ödemeleri paralel yükle
+        const [residents, payments] = await Promise.all([
+            fetchResidents(),
+            fetchPayments()
+        ]);
 
         // Ödeme yapanları tabloya ekle
         populatePaidTable(payments);
-        
+
+        // Ödeme yapmayanları bul ve tabloya ekle
+        const paidUserIds = new Set(payments.map(p => p.userId));
+        const unpaidResidents = residents.filter(r => !paidUserIds.has(r.id));
+        populateUnpaidTable(unpaidResidents);
+
+        // Dropdown'ı doldur (sadece ödeme yapmayanlar)
+        populateResidentDropdown(unpaidResidents);
+
     } catch (error) {
-        console.error('Ödemeler yükleme hatası:', error);
-        alert('Ödemeler yüklenirken bir hata oluştu.');
+        console.error('Veri yükleme hatası:', error);
+        alert('Veriler yüklenirken bir hata oluştu.');
     }
+}
+
+// Site sakinlerini API'den çek
+async function fetchResidents() {
+    const response = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}/residents`);
+    if (!response.ok) throw new Error('Site sakinleri yüklenemedi');
+    const result = await response.json();
+    return result.data;
+}
+
+// Ödemeleri API'den çek
+async function fetchPayments() {
+    const response = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}`);
+    if (!response.ok) throw new Error('Ödemeler yüklenemedi');
+    const result = await response.json();
+    return result.data;
+}
+
+// Dropdown'ı site sakinleriyle doldur
+function populateResidentDropdown(residents) {
+    const selectElement = document.getElementById('paymentApartment');
+    selectElement.innerHTML = '<option value="">Daire seçin</option>';
+    
+    if (residents.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Tüm sakinler ödeme yaptı!';
+        option.disabled = true;
+        selectElement.appendChild(option);
+        return;
+    }
+    
+    residents.forEach(resident => {
+        const option = document.createElement('option');
+        option.value = resident.id;
+        option.textContent = `${resident.block_no}-${resident.apartment_no} - ${resident.full_name}`;
+        option.dataset.blockNo = resident.block_no;
+        option.dataset.apartmentNo = resident.apartment_no;
+        option.dataset.fullName = resident.full_name;
+        option.dataset.phone = resident.phone_number;
+        selectElement.appendChild(option);
+    });
 }
 
 // Ödeme yapanları tabloya ekle
@@ -93,11 +107,6 @@ function populatePaidTable(payments) {
             <td>${paymentDate}</td>
             <td>${payment.amount} TL</td>
             <td><span class="status paid">${paymentMethodText}</span></td>
-            <td>
-                <button class="btn btn-primary" onclick="viewReceipt(${payment.id})">
-                    <i class="fas fa-receipt"></i>
-                </button>
-            </td>
         `;
         
         tbody.appendChild(tr);
@@ -109,30 +118,37 @@ function populatePaidTable(payments) {
 }
 
 // Ödemeyenleri tabloya ekle (Tüm sakinler - Ödeme yapanlar)
-function populateUnpaidTable(allResidents) {
-    // Bu fonksiyon ödeme yapmayanları göstermek için güncellenecek
-    // Şimdilik tüm sakinleri gösteriyoruz
+function populateUnpaidTable(unpaidResidents) {
     const tbody = document.querySelector('#unpaid-section tbody');
     tbody.innerHTML = '';
 
-    allResidents.forEach(resident => {
+    if (unpaidResidents.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tüm site sakinleri ödeme yaptı! 🎉</td></tr>';
+        return;
+    }
+
+    // Mevcut ayın son günü
+    const today = new Date();
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDayFormatted = lastDayOfMonth.toLocaleDateString('tr-TR');
+
+    unpaidResidents.forEach(resident => {
         const tr = document.createElement('tr');
         
         tr.innerHTML = `
             <td>${resident.block_no}-${resident.apartment_no}</td>
             <td>${resident.full_name}</td>
             <td>${resident.phone_number || 'Yok'}</td>
-            <td>-</td>
+            <td>${lastDayFormatted}</td>
             <td><span class="status unpaid">Ödeme bekleniyor</span></td>
-            <td>
-                <button class="btn btn-success" onclick="openPaymentModal(${resident.id})">
-                    <i class="fas fa-check"></i> Ödeme Al
-                </button>
-            </td>
         `;
         
         tbody.appendChild(tr);
     });
+
+    // Başlık güncelle
+    document.querySelector('#unpaid-section .table-subtitle').textContent = 
+        `${unpaidResidents.length} kişi ödeme yapmadı`;
 }
 
 // Event listener'ları ayarla
@@ -211,7 +227,7 @@ async function handlePaymentSubmit(e) {
         document.getElementById('paymentForm').reset();
         
         // Tabloları yeniden yükle
-        await loadPayments();
+        await loadData();
 
     } catch (error) {
         console.error('Ödeme kaydetme hatası:', error);
