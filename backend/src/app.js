@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 // Dosya yolunu güncelledik: authRoutes'un ./auth/authRoutes.js konumunda olduğunu varsayıyoruz
 import authRoutes from './auth/authRoutes.js'; 
 import announcementRoutes from './announcements/announcementRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import cors from 'cors';
 
 // ES module için __dirname alternatifi
@@ -38,6 +39,9 @@ app.use('/api/auth', authRoutes);
 // /api/sites yolu altındaki tüm duyuru rotalarını bağla
 // Örn: /api/sites/{siteId}/announcements
 app.use('/api/sites', announcementRoutes);
+
+// /api/payments yolu altındaki tüm ödeme rotalarını bağla
+app.use('/api/payments', paymentRoutes);
 
 // Frontend klasörü yolları
 const frontPath = path.join(__dirname, '..', '..', 'front');

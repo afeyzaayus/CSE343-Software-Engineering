@@ -61,6 +61,7 @@ model User {
   reset_code              String?
   reset_code_expiry       DateTime?
   site                    Site      @relation(fields: [siteId], references: [id])
+  payments                Payment[]
 
   @@map("users")
   @@schema("public")
@@ -94,6 +95,31 @@ model Announcement {
   site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@map("announcements")
+  @@schema("public")
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  amount         Float
+  payment_date   DateTime
+  payment_method PaymentMethod
+  description    String?
+  created_at     DateTime      @default(now())
+  userId         Int
+  siteId         Int
+  user           User          @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+  @@schema("public")
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  BANK_TRANSFER
+  CHECK
+  OTHER
+
   @@schema("public")
 }
 

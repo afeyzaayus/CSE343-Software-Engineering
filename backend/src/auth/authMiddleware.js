@@ -52,3 +52,29 @@ export const adminAuth = async (req, res, next) => {
         return res.status(401).json({ message: 'Yetkilendirme Başarısız: Token sağlanmadı.' });
     }
 };
+
+// Genel Authentication Middleware (Admin veya User için)
+export const authenticateToken = async (req, res, next) => {
+    let token;
+
+    // Token'ı Header'dan Al
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+
+            // Token'ı Doğrula
+            const decoded = jwt.verify(token, JWT_SECRET);
+
+            // Decoded bilgileri req'e ekle
+            req.user = decoded;
+
+            next();
+
+        } catch (error) {
+            console.error('JWT Doğrulama Hatası:', error.message);
+            return res.status(401).json({ message: 'Yetkilendirme Başarısız: Token geçersiz veya süresi dolmuş.' });
+        }
+    } else {
+        return res.status(401).json({ message: 'Yetkilendirme Başarısız: Token sağlanmadı.' });
+    }
+};
