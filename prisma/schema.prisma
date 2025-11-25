@@ -73,6 +73,7 @@ model Announcements {
   site       Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
 
   @@schema("public")
+  @@map("announcements")
 }
 
 enum AccountType {

@@ -4,12 +4,13 @@ const prisma = new PrismaClient();
 
 /**
  * Dashboard için tüm istatistikleri hesaplar
+ * @param {string} siteId - Site'ın unique string ID'si (örn: "ABCDEF")
  */
 export const getDashboardStatistics = async (siteId) => {
   try {
-    // 1. SİTE BİLGİSİ
+    // 1. SİTE BİLGİSİ (site_id ile - STRING)
     const site = await prisma.site.findUnique({
-      where: { id: siteId },
+      where: { site_id: siteId },  // ← site_id kullan (unique string)
       include: {
         admin: {
           select: {
@@ -25,24 +26,24 @@ export const getDashboardStatistics = async (siteId) => {
       throw new Error('Site bulunamadı');
     }
 
-    // 2. DAİRE SAYISI (User tablosundan)
+    // 2. DAİRE SAYISI (User tablosundan) - site'ın integer id'sini kullan
     const totalApartments = await prisma.user.count({
-      where: { siteId: siteId }
+      where: { siteId: site.id }  // ← İlişki integer id ile
     });
 
     // 3. AKTİF DUYURULAR
     const now = new Date();
-    const activeAnnouncementsCount = await prisma.announcements.count({
+    const activeAnnouncementsCount = await prisma.announcements.count({  // ← ÇOĞUL
       where: {
-        siteId: siteId,
+        siteId: site.id,  // ← İlişki integer id ile
         start_date: { lte: now },
         end_date: { gte: now }
       }
     });
 
     // 4. SON 3 DUYURU
-    const recentAnnouncements = await prisma.announcements.findMany({
-      where: { siteId: siteId },
+    const recentAnnouncements = await prisma.announcements.findMany({  // ← ÇOĞUL
+      where: { siteId: site.id },  // ← İlişki integer id ile
       orderBy: { created_at: 'desc' },
       take: 3,
       select: {
@@ -77,7 +78,7 @@ export const getDashboardStatistics = async (siteId) => {
       // Aktif Duyurular
       announcements: {
         active: activeAnnouncementsCount,
-        total: await prisma.announcements.count({ where: { siteId } })
+        total: await prisma.announcements.count({ where: { siteId: site.id } })  // ← ÇOĞUL + integer id
       },
 
       // Bekleyen Talepler (Placeholder)
@@ -117,11 +118,12 @@ export const getDashboardStatistics = async (siteId) => {
 
 /**
  * Admin bilgisini getirir (Sağ üst köşe için)
+ * @param {string} siteId - Site'ın unique string ID'si
  */
 export const getAdminInfo = async (siteId) => {
   try {
     const site = await prisma.site.findUnique({
-      where: { id: siteId },
+      where: { site_id: siteId },  // ← site_id kullan (string)
       include: {
         admin: {
           select: {
@@ -152,13 +154,24 @@ export const getAdminInfo = async (siteId) => {
 
 /**
  * Son duyuruları getirir
+ * @param {string} siteId - Site'ın unique string ID'si
+ * @param {number} limit - Kaç duyuru getirileceği (default: 3)
  */
 export const getRecentAnnouncements = async (siteId, limit = 3) => {
   try {
-    const announcements = await prisma.announcements.findMany({
-      where: { siteId: siteId },
+    // Önce site'ı bul (integer id almak için)
+    const site = await prisma.site.findUnique({
+      where: { site_id: siteId },  // ← site_id kullan (string)
+      select: { id: true }
+    });
+
+    if (!site) {
+      throw new Error('Site bulunamadı');
+    }
+
+    const announcements = await prisma.announcements.findMany({  // ← ÇOĞUL
+      where: { siteId: site.id },  // ← İlişki integer id ile
       orderBy: { created_at: 'desc' },
-      
       take: limit,
       select: {
         id: true,
@@ -185,7 +198,12 @@ export const getRecentAnnouncements = async (siteId, limit = 3) => {
   }
 };
 
-// HELPER FUNCTION: Duyuru durumunu hesapla
+/**
+ * HELPER FUNCTION: Duyuru durumunu hesapla
+ * @param {Date} start_date - Duyuru başlangıç tarihi
+ * @param {Date} end_date - Duyuru bitiş tarihi
+ * @returns {string} - Durum: Acil, Önemli, Normal, Planlanan, Geçmiş
+ */
 function getAnnouncementStatus(start_date, end_date) {
   const now = new Date();
   const start = new Date(start_date);

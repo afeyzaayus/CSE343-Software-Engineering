@@ -7,11 +7,12 @@ import * as dashboardService from './dashboardService.js';
 export const getDashboard = async (req, res) => {
   try {
     console.log('--- YENİ İSTEK GELDİ ---');
-    console.log('Backend"e gelen ham parametre (req.params.siteId):', req.params.siteId);
-    const siteId = parseInt(req.params.siteId);
+    console.log('Backend\'e gelen site_id:', req.params.siteId);
+    
+    const siteId = req.params.siteId;  // ← String olarak al (parseInt YOK!)
 
-    // Validasyon
-    if (isNaN(siteId)) {
+    // Validasyon - string boş mu kontrol et
+    if (!siteId || siteId.trim() === '') {
       return res.status(400).json({ 
         success: false,
         error: 'Geçersiz site ID' 
@@ -45,14 +46,14 @@ export const getDashboard = async (req, res) => {
 };
 
 /**
- * Admin bilgisini getirir
+ * Admin bilgisini getirir (Opsiyonel - Şu an kullanılmıyor)
  * GET /api/sites/:siteId/admin-info
  */
 export const getAdminInfo = async (req, res) => {
   try {
-    const siteId = parseInt(req.params.siteId);
+    const siteId = req.params.siteId;  // ← String
 
-    if (isNaN(siteId)) {
+    if (!siteId || siteId.trim() === '') {
       return res.status(400).json({ 
         success: false,
         error: 'Geçersiz site ID' 
@@ -85,15 +86,15 @@ export const getAdminInfo = async (req, res) => {
 };
 
 /**
- * Son duyuruları getirir
+ * Son duyuruları getirir (Opsiyonel - Şu an kullanılmıyor)
  * GET /api/sites/:siteId/announcements/recent
  */
 export const getRecentAnnouncements = async (req, res) => {
   try {
-    const siteId = parseInt(req.params.siteId);
+    const siteId = req.params.siteId;  // ← String
     const limit = parseInt(req.query.limit) || 3;
 
-    if (isNaN(siteId)) {
+    if (!siteId || siteId.trim() === '') {
       return res.status(400).json({ 
         success: false,
         error: 'Geçersiz site ID' 

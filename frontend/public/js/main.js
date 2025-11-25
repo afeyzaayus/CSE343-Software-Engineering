@@ -3,14 +3,17 @@
 // API Base URL (backend adresinizi buraya yazın)
 const API_BASE_URL = 'http://localhost:3000/api';
 
-// Site ID'sini localStorage'dan veya URL'den al
-let currentSiteId = localStorage.getItem('currentSiteId') || 1 ;
+// Site ID'sini localStorage'dan veya default 'ABCDEF' olarak al
+// NOT: Site ID STRING olmalı, veritabanındaki site_id alanı (örn: "ABCDEF", "XYZ123")
+let currentSiteId = localStorage.getItem('currentSiteId') || 'ABCDEF';
 
 /**
  * Sayfa yüklendiğinde çalışır
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Dashboard yükleniyor...');
+  console.log('🚀 Dashboard yükleniyor...');
+  console.log('📍 Site ID:', currentSiteId);
+  console.log('🔗 API URL:', `${API_BASE_URL}/sites/${currentSiteId}/dashboard`);
   
   // Dashboard verilerini yükle
   await loadDashboard();
@@ -23,14 +26,20 @@ async function loadDashboard() {
   try {
     showLoading();
     
+    console.log('📡 API isteği gönderiliyor...');
+    
     // API'den dashboard verilerini al
     const response = await fetch(`${API_BASE_URL}/sites/${currentSiteId}/dashboard`);
     
+    console.log('📥 Response alındı:', response.status, response.statusText);
+    
     if (!response.ok) {
-      throw new Error('Dashboard verileri alınamadı');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
     }
     
     const result = await response.json();
+    console.log('✅ Veri başarıyla alındı:', result);
     
     if (!result.success) {
       throw new Error(result.error || 'Bir hata oluştu');
@@ -44,9 +53,10 @@ async function loadDashboard() {
     updateRecentAnnouncements(data.recent_announcements);
     
     hideLoading();
+    console.log('✨ Dashboard başarıyla yüklendi!');
     
   } catch (error) {
-    console.error('Dashboard yükleme hatası:', error);
+    console.error('❌ Dashboard yükleme hatası:', error);
     showError('Dashboard verileri yüklenirken bir hata oluştu: ' + error.message);
   }
 }
@@ -55,6 +65,8 @@ async function loadDashboard() {
  * Site bilgilerini günceller (Üst kısım)
  */
 function updateSiteInfo(siteInfo) {
+  console.log('🏢 Site bilgileri güncelleniyor:', siteInfo);
+  
   // Sayfa başlığını güncelle
   const headerTitle = document.querySelector('.header h2');
   if (headerTitle) {
@@ -64,8 +76,9 @@ function updateSiteInfo(siteInfo) {
   // Admin bilgisini güncelle
   const userInfo = document.querySelector('.user-info');
   if (userInfo) {
+    const initials = getInitials(siteInfo.admin_name);
     userInfo.innerHTML = `
-      <div class="user-avatar">${getInitials(siteInfo.admin_name)}</div>
+      <div class="user-avatar">${initials}</div>
       <span>${siteInfo.admin_name}</span>
     `;
   }
@@ -75,6 +88,8 @@ function updateSiteInfo(siteInfo) {
  * İstatistik kartlarını günceller
  */
 function updateStatistics(stats) {
+  console.log('📊 İstatistikler güncelleniyor:', stats);
+  
   // 1. Daire Doluluk Oranı
   const occupancyCard = document.getElementById('occupancy-card');
   if (occupancyCard) {
@@ -108,9 +123,14 @@ function updateStatistics(stats) {
  * Son duyuruları günceller
  */
 function updateRecentAnnouncements(announcements) {
+  console.log('📢 Duyurular güncelleniyor:', announcements.length, 'duyuru');
+  
   const container = document.getElementById('current-announcements');
   
-  if (!container) return;
+  if (!container) {
+    console.warn('⚠️ Duyuru container bulunamadı!');
+    return;
+  }
   
   if (announcements.length === 0) {
     container.innerHTML = '<p style="text-align: center; padding: 20px; color: #7f8c8d;">Henüz duyuru bulunmamaktadır.</p>';
@@ -145,6 +165,7 @@ function updateRecentAnnouncements(announcements) {
 
 // İsmin baş harflerini al (Avatar için)
 function getInitials(name) {
+  if (!name) return '??';
   return name
     .split(' ')
     .map(word => word[0])
@@ -176,17 +197,28 @@ function formatDate(dateString) {
 function showLoading() {
   const announcementsContainer = document.getElementById('current-announcements');
   if (announcementsContainer) {
-    announcementsContainer.innerHTML = '<p style="text-align: center; padding: 20px;">Yükleniyor...</p>';
+    announcementsContainer.innerHTML = `
+      <p style="text-align: center; padding: 20px;">
+        <i class="fas fa-spinner fa-spin"></i> Yükleniyor...
+      </p>
+    `;
   }
+  
+  // Kartları da loading yap
+  document.querySelectorAll('.card-value').forEach(el => el.textContent = '--');
+  document.querySelectorAll('.card-footer').forEach(el => el.textContent = 'Yükleniyor...');
 }
 
 // Loading gizle
 function hideLoading() {
   // Loading animasyonu kaldırıldı, veriler yüklendi
+  console.log('✅ Loading tamamlandı');
 }
 
 // Hata mesajı göster
 function showError(message) {
+  console.error('🔴 Hata gösteriliyor:', message);
+  
   const announcementsContainer = document.getElementById('current-announcements');
   if (announcementsContainer) {
     announcementsContainer.innerHTML = `
@@ -198,17 +230,13 @@ function showError(message) {
   
   // İstatistik kartlarını sıfırla
   document.querySelectorAll('.card-value').forEach(el => el.textContent = '--');
-  document.querySelectorAll('.card-footer').forEach(el => el.textContent = '--');
+  document.querySelectorAll('.card-footer').forEach(el => el.textContent = 'Hata');
 }
 
 // Site ID'sini değiştir (Site seçimi için)
 function changeSite(siteId) {
-  currentSiteId = siteId;
-  localStorage.setItem('currentSiteId', siteId);
+  console.log('🔄 Site değiştiriliyor:', siteId);
+  currentSiteId = siteId;  // ← String olarak ata
+  localStorage.setItem('currentSiteId', currentSiteId);
   loadDashboard();
-}
-
-// Export (eğer module olarak kullanılıyorsa)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { loadDashboard, changeSite };
 }
