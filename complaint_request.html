@@ -28,6 +28,7 @@
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
+
         <div class="main-content">
             <div class="header">
                 <h2>Şikayet ve Talepler - Yeşil Vadi Sitesi</h2>
@@ -35,63 +36,49 @@
             </div>
             
             <div class="complaints-content">
+                <!-- Filtre Butonları -->
                 <div class="complaint-filters">
                     <button class="filter-btn" data-filter="all">Tümü</button>
                     <button class="filter-btn" data-filter="pending">Bekleyen</button>
-                    <button class="filter-btn" data-filter="in-progress">İşlemde</button>
+                    <button class="filter-btn" data-filter="inprogress">İşlemde</button>
                     <button class="filter-btn" data-filter="resolved">Çözülen</button>
                 </div>
 
-                <div class="table-container">
-                    <div class="table-header">
-                        <div class="table-title">Şikayet ve Talepler</div>
-                        <button class="btn btn-primary" id="addComplaintBtn">
-                            <i class="fas fa-plus"></i> Yeni Şikayet/Talep
-                        </button>
-                    </div>
-                </div>
-
+                <!-- Bekleyen Talepler -->
                 <div class="table-container" id="pending-requests-section">
                     <div class="table-header">
                         <div class="table-title">Bekleyen Şikayet/Talepler</div>
-                        </div>
+                    </div>
                     <div class="complaints-list" id="pending-requests-list">
-                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                        <p style="text-align:center; color:#7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
 
+                <!-- İşlemdeki Talepler -->
                 <div class="table-container" id="inprogress-requests-section">
                     <div class="table-header">
                         <div class="table-title">İşlemdeki Şikayet/Talepler</div>
                     </div>
                     <div class="complaints-list" id="inprogress-requests-list">
-                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                        <p style="text-align:center; color:#7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
 
+                <!-- Çözülen Talepler -->
                 <div class="table-container" id="resolved-requests-section">
                     <div class="table-header">
                         <div class="table-title">Çözülen Şikayet/Talepler</div>
                     </div>
                     <div class="complaints-list" id="resolved-requests-list">
-                        <p style="text-align: center; color: #7f8c8d;">Veriler yükleniyor...</p>
+                        <p style="text-align:center; color:#7f8c8d;">Veriler yükleniyor...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal" id="addComplaintModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Yeni Şikayet/Talep Ekle</div>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="complaintForm">
-                <button type="submit" class="btn btn-primary">Kaydet</button>
-            </form>
-        </div>
-    </div>
+    <!-- Modal (İhtiyaç Yok, kaldırabilirsiniz) -->
+    <!-- <div class="modal" id="addComplaintModal"> ... </div> -->
 
     <script type="module" src="js/main.js"></script>
 </body>

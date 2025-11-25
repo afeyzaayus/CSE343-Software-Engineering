@@ -27,6 +27,7 @@
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
+
         <div class="main-content">
             <div class="header">
                 <h2>Daire Sahipleri - Yeşil Vadi Sitesi</h2>
@@ -34,13 +35,23 @@
             </div>
             
             <div class="residents-content">
-                <div class="table-container">
-                    <div class="table-header">
-                        <div class="table-title">Daire ve Sakin Bilgileri</div>
+                <div class="table-header">
+                    <div class="table-title">Daire ve Sakin Bilgileri</div>
                         <button class="btn btn-primary" id="addResidentBtn">
                             <i class="fas fa-plus"></i> Yeni Daire Ekle
                         </button>
-                    </div>
+                </div>
+
+                <!-- Blok filtreleme -->
+                <div class="filter-container" style="margin:10px 0;">
+                    <label for="blockFilter">Blok Seçin:</label>
+                    <select id="blockFilter">
+                        <option value="">Tüm Bloklar</option>
+                        <!-- JS ile dinamik eklenecek -->
+                    </select>
+                </div>
+
+                <div class="table-container">
                     <table id="residents-table">
                         <thead>
                             <tr>
@@ -48,12 +59,13 @@
                                 <th>Blok</th>
                                 <th>Ad Soyad</th>
                                 <th>Telefon</th>
-                                <th>E-posta</th>
+                                <th>Araç Plakası</th>
                                 <th>Yaşayan Kişi Sayısı</th>
                                 <th>Durum</th>
                                 <th>İşlemler</th>
                             </tr>
                         </thead>
+
                         <tbody id="residents-table-body">
                             <tr><td colspan="8" style="text-align: center;">Veriler API'den yükleniyor...</td></tr>
                         </tbody>
@@ -63,17 +75,47 @@
         </div>
     </div>
 
-    <div class="modal" id="addResidentModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Yeni Daire Ekle</div>
-                <button class="close-btn">&times;</button>
-            </div>
-            <form id="residentForm">
+<!-- Yeni Daire Ekle Modal -->
+<div id="addApartmentModal" class="modal-overlay">
+    <div class="modal-box">
+        <h2>Yeni Daire Ekle</h2>
+
+        <form id="addApartmentForm">
+            <label>Blok:</label>
+            <select name="block" required>
+                <option value="A">A Blok</option>
+                <option value="B">B Blok</option>
+                <option value="C">C Blok</option>
+            </select>
+
+            <label>Daire No:</label>
+            <input type="number" name="doorNo" required min="1">
+
+            <label>Ad Soyad:</label>
+            <input type="text" name="name" required>
+
+            <label>Telefon:</label>
+            <input type="text" name="phone">
+
+            <label>Araç Plakası:</label>
+            <input type="text" name="plate">
+
+            <label>Yaşayan Kişi Sayısı:</label>
+            <input type="number" name="peopleCount" required min="0">
+
+            <label>Durum:</label>
+            <select name="status">
+                <option value="active">Kiracı</option>
+                <option value="empty">Ev Sahibi</option>
+            </select>
+
+            <div class="modal-buttons">
                 <button type="submit" class="btn btn-primary">Kaydet</button>
-            </form>
-        </div>
+                <button type="button" class="btn btn-secondary" id="closeAddModal">İptal</button>
+            </div>
+        </form>
     </div>
+</div>
 
     <script type="module" src="js/main.js"></script>
 </body>

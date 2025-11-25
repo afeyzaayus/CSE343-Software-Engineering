@@ -22,6 +22,16 @@
     border-color: var(--secondary-color);
 }
 
+.filter-btn:hover {
+    background-color: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+.complaint-filters {
+    flex-wrap: wrap;
+}
+
 .complaint-item {
     background: white;
     border-radius: var(--border-radius);
