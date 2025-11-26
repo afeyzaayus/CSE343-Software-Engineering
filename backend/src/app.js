@@ -1,16 +1,25 @@
 import express from 'express';
 import dotenv from 'dotenv';
-import authRoutes from './routes/authRoutes.js';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
-import announcementRoutes from './routes/announcementRoutes.js';
+
+// Auth Routes
+import adminRoutes from './modules/auth/routes/admin.routes.js';
+import userRoutes from './modules/auth/routes/user.routes.js';
+import passwordResetRoutes from './modules/auth/routes/passwordReset.routes.js';
+
+// Module Routes
+import companyRoutes from './modules/company/routes/company.routes.js';
+import accountRoutes from './modules/account/account.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import announcementRoutes from './modules/announcement/announcement.routes.js';
 
 // .env dosyasını yükle
 dotenv.config();
 
 const prisma = new PrismaClient();
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 // ==========================================================
 // MIDDLEWARE'LER
@@ -22,31 +31,115 @@ app.use(express.json());
 // CORS - Tüm kaynaklardan gelen isteklere izin ver
 app.use(cors());
 
+// Request logger (development)
+if (process.env.NODE_ENV === 'development') {
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.path}`);
+    next();
+  });
+}
+
 // ==========================================================
 // ROTA TANIMLARI
 // ==========================================================
 
 // Ana rota
 app.get('/', (req, res) => {
-  res.send('API is running... 🚀');
+  res.json({
+    success: true,
+    message: 'API is running... 🚀',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
-// Auth rotalarını bağla
-app.use('/api/auth', authRoutes);
-app.use('/api/sites', announcementRoutes);
+// Health check
+app.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({
+      success: true,
+      status: 'healthy',
+      database: 'connected',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(503).json({
+      success: false,
+      status: 'unhealthy',
+      database: 'disconnected',
+      error: error.message
+    });
+  }
+});
+
+// API rotaları
+
+// Auth rotaları
+app.use('/api/auth/admin', adminRoutes);
+app.use('/api/auth/user', userRoutes);
+app.use('/api/auth/password-reset', passwordResetRoutes);
+
+// Module rotaları
+app.use('/api/company', companyRoutes);
+app.use('/api/accounts', accountRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/announcements', announcementRoutes);
+
+// ==========================================================
+// HATA YÖNETİMİ
+// ==========================================================
+
+// 404 - Route bulunamadı
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route bulunamadı',
+    path: req.path
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err);
+  
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Sunucu hatası',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
 
 // ==========================================================
 // SUNUCUYU BAŞLAT
 // ==========================================================
 
 app.listen(PORT, () => {
+  console.log('='.repeat(50));
   console.log(`✅ Server is running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔗 Base URL: http://localhost:${PORT}`);
+  console.log(`💾 Database: ${prisma ? 'Connected' : 'Disconnected'}`);
+  console.log('='.repeat(50));
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down gracefully...');
   await prisma.$disconnect();
+  console.log('✅ Database disconnected');
   process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 SIGTERM received, shutting down...');
+  await prisma.$disconnect();
+  process.exit(0);
+});
+
+// Unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+export default app;
