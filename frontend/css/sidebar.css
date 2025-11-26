@@ -1,0 +1,98 @@
+/* Sidebar Styles */
+.sidebar {
+    width: 280px;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 20px 0;
+    box-shadow: var(--box-shadow);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 100;
+}
+
+.logo {
+    text-align: center;
+    padding: 20px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 15px;
+}
+
+.logo h1 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, #fff, #e8f4f8);
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-links {
+    list-style: none;
+    padding: 0 15px;
+}
+
+.nav-links li {
+    padding: 12px 18px;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.nav-links li:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-left: 4px solid var(--secondary-color);
+    transform: translateX(5px);
+}
+
+.nav-links li.active {
+    background: rgba(255, 255, 255, 0.2);
+    border-left: 4px solid var(--secondary-color);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.nav-links li a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+.nav-links li a i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Sidebar Responsive Styles */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+    }
+    
+    .nav-links {
+        display: flex;
+        overflow-x: auto;
+        padding: 10px;
+    }
+    
+    .nav-links li {
+        border-left: none;
+        border-bottom: 4px solid transparent;
+        white-space: nowrap;
+        margin-bottom: 0;
+        margin-right: 10px;
+        font-size: 0.85rem;
+    }
+    
+    .nav-links li:hover, .nav-links li.active {
+        border-left: none;
+        border-bottom: 4px solid var(--secondary-color);
+        transform: translateY(-2px);
+    }
+}
