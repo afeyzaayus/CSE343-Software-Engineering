@@ -7,7 +7,7 @@ export async function createPaymentService(paymentData) {
   const { userId, siteId, amount, payment_date, payment_method, description } = paymentData;
 
   // Kullanıcının site'ye ait olup olmadığını kontrol et
-  const user = await prisma.user.findFirst({
+  const user = await prisma.users.findFirst({
     where: {
       id: userId,
       siteId: siteId
@@ -19,7 +19,7 @@ export async function createPaymentService(paymentData) {
   }
 
   // Ödemeyi oluştur
-  const payment = await prisma.payment.create({
+  const payment = await prisma.payments.create({
     data: {
       userId,
       siteId,
@@ -29,18 +29,32 @@ export async function createPaymentService(paymentData) {
       description
     },
     include: {
-      user: {
+      users: {
         select: {
           id: true,
           full_name: true,
-          block_no: true,
-          apartment_no: true
+          apartment_no: true,
+          blocks: {
+            select: {
+              block_name: true
+            }
+          }
         }
       }
     }
   });
 
-  return payment;
+  // Response formatını düzenle
+  return {
+    ...payment,
+    user: {
+      id: payment.users.id,
+      full_name: payment.users.full_name,
+      block_no: payment.users.blocks?.block_name || '-',
+      apartment_no: payment.users.apartment_no || '-'
+    },
+    users: undefined
+  };
 }
 
 // ===== TÜM ÖDEMELERİ GETIRME (Site bazında) =====
@@ -64,16 +78,20 @@ export async function getPaymentsBySiteService(siteId, filters = {}) {
     where.payment_method = payment_method;
   }
 
-  const payments = await prisma.payment.findMany({
+  const payments = await prisma.payments.findMany({
     where,
     include: {
-      user: {
+      users: {
         select: {
           id: true,
           full_name: true,
           phone_number: true,
-          block_no: true,
-          apartment_no: true
+          apartment_no: true,
+          blocks: {
+            select: {
+              block_name: true
+            }
+          }
         }
       }
     },
@@ -82,21 +100,36 @@ export async function getPaymentsBySiteService(siteId, filters = {}) {
     }
   });
 
-  return payments;
+  // Response formatını düzenle
+  return payments.map(payment => ({
+    ...payment,
+    user: {
+      id: payment.users.id,
+      full_name: payment.users.full_name,
+      phone_number: payment.users.phone_number,
+      block_no: payment.users.blocks?.block_name || '-',
+      apartment_no: payment.users.apartment_no || '-'
+    },
+    users: undefined
+  }));
 }
 
 // ===== TEK BİR ÖDEME DETAYI =====
 export async function getPaymentByIdService(paymentId) {
-  const payment = await prisma.payment.findUnique({
+  const payment = await prisma.payments.findUnique({
     where: { id: parseInt(paymentId) },
     include: {
-      user: {
+      users: {
         select: {
           id: true,
           full_name: true,
           phone_number: true,
-          block_no: true,
-          apartment_no: true
+          apartment_no: true,
+          blocks: {
+            select: {
+              block_name: true
+            }
+          }
         }
       }
     }
@@ -106,12 +139,23 @@ export async function getPaymentByIdService(paymentId) {
     throw new Error('NOT_FOUND: Ödeme bulunamadı.');
   }
 
-  return payment;
+  // Response formatını düzenle
+  return {
+    ...payment,
+    user: {
+      id: payment.users.id,
+      full_name: payment.users.full_name,
+      phone_number: payment.users.phone_number,
+      block_no: payment.users.blocks?.block_name || '-',
+      apartment_no: payment.users.apartment_no || '-'
+    },
+    users: undefined
+  };
 }
 
 // ===== KULLANICININ TÜM ÖDEMELERİ =====
 export async function getUserPaymentsService(userId) {
-  const payments = await prisma.payment.findMany({
+  const payments = await prisma.payments.findMany({
     where: { userId: parseInt(userId) },
     orderBy: {
       payment_date: 'desc'
@@ -135,10 +179,10 @@ export async function getPaymentStatsService(siteId, filters = {}) {
   }
 
   // Toplam ödeme sayısı
-  const totalPayments = await prisma.payment.count({ where });
+  const totalPayments = await prisma.payments.count({ where });
 
   // Toplam tutar
-  const totalAmount = await prisma.payment.aggregate({
+  const totalAmount = await prisma.payments.aggregate({
     where,
     _sum: {
       amount: true
@@ -146,7 +190,7 @@ export async function getPaymentStatsService(siteId, filters = {}) {
   });
 
   // Ödeme yöntemine göre dağılım
-  const paymentsByMethod = await prisma.payment.groupBy({
+  const paymentsByMethod = await prisma.payments.groupBy({
     by: ['payment_method'],
     where,
     _count: {
@@ -166,21 +210,30 @@ export async function getPaymentStatsService(siteId, filters = {}) {
 
 // ===== SİTE SAKİNLERİNİ GETIRME =====
 export async function getResidentsBySiteService(siteId) {
-  const residents = await prisma.user.findMany({
+  const residents = await prisma.users.findMany({
     where: { siteId: parseInt(siteId) },
     select: {
       id: true,
       full_name: true,
       phone_number: true,
-      block_no: true,
       apartment_no: true,
-      is_verified: true
+      blocks: {
+        select: {
+          block_name: true
+        }
+      }
     },
     orderBy: [
-      { block_no: 'asc' },
       { apartment_no: 'asc' }
     ]
   });
 
-  return residents;
+  // block_name'i düz alana dönüştür
+  return residents.map(r => ({
+    id: r.id,
+    full_name: r.full_name,
+    phone_number: r.phone_number,
+    block_no: r.blocks?.block_name || '-',
+    apartment_no: r.apartment_no || '-'
+  }));
 }
