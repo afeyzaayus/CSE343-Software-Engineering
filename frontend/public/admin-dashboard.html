@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/admin-dashboard.css">
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header">
+        <h1>🏢 Site Yönetim Paneli</h1>
+        <div class="user-section">
+            <div class="user-avatar" id="userAvatar">Y</div>
+            <div class="user-info">
+                <div class="admin-name" id="userName">Admin Adı</div>
+                <div class="admin-type" id="userType">Hesap Tipi</div>
+            </div>
+            <button class="logout-btn" onclick="logout()">Çıkış</button>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- İstatistikler -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-icon">🏢</div>
+                <div class="stat-info">
+                    <div class="value" id="totalSites">0</div>
+                    <h4>Mevcut Site</h4>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <div class="value" id="totalEmployees">0</div>
+                    <h4>Çalışanlar</h4>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🎯</div>
+                <div class="stat-info">
+                    <div class="value" id="pendingInvites">0</div>
+                    <h4>Bekleyen Davet</h4>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-info">
+                    <div class="value" id="siteLimit">∞</div>
+                    <h4>Site Limiti</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Şirket Kodu Banner -->
+        <div class="company-code-banner" id="companyCodeBanner" style="display: none;">
+            <div class="banner-content">
+                <div class="banner-icon">🔑</div>
+                <div class="banner-text">
+                    <h3>Şirket Kodunuz</h3>
+                    <p id="companyCodeDesc">Bu kodu çalışanlarınızla paylaşarak onları sisteme davet edebilirsiniz</p>
+                </div>
+                <div class="banner-code">
+                    <span id="companyCode">-</span>
+                    <button class="btn-copy-code" onclick="copyCompanyCode()">📋 Kopyala</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigasyon -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('sites')">
+                <span>🏠</span>
+                Siteler
+            </button>
+            <button class="tab-btn" onclick="switchTab('employees')">
+                <span>👥</span>
+                Çalışanlar
+            </button>
+        </div>
+
+        <!-- Siteler Tab -->
+        <div id="sitesTab" class="tab-content active">
+            <div class="section-header">
+                <h2 class="section-title">Site Yönetimi</h2>
+                <button class="create-site-btn" id="createSiteBtn" onclick="openCreateModal()">
+                    <span>+</span>
+                    Yeni Site Oluştur
+                </button>
+            </div>
+
+            <div class="site-list" id="siteList">
+                <!-- Site kartları buraya gelecek -->
+            </div>
+        </div>
+
+        <!-- Çalışanlar Tab -->
+        <div id="employeesTab" class="tab-content">
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <h3>Çalışanlar Bölümü</h3>
+                <p>Çalışan yönetimi ve davet sistemi yakında aktif olacak</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Site Modal -->
+<div class="modal" id="createModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>🏗️ Yeni Site Oluştur</h3>
+            <button class="modal-close" onclick="closeCreateModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="createSiteForm">
+                <div class="form-group">
+                    <label>Site ID *</label>
+                    <input type="text" id="siteId" placeholder="Örn: SITE001" required>
+                </div>
+                <div class="form-group">
+                    <label>Site Adı *</label>
+                    <input type="text" id="siteName" placeholder="Örn: Yeşil Vadi Sitesi" required>
+                </div>
+                <div class="form-group">
+                    <label>Site Adresi *</label>
+                    <input type="text" id="siteAddress" placeholder="Örn: Kadıköy, İstanbul" required>
+                </div>
+                <div class="form-group">
+                    <label>Blok Sayısı</label>
+                    <input type="number" id="blockCount" placeholder="Örn: 5" min="1" value="1">
+                </div>
+                <div class="form-group">
+                    <label>Daire Sayısı (Her Blokta)</label>
+                    <input type="number" id="apartmentCount" placeholder="Örn: 20" min="1" value="10">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary">✨ Site Oluştur</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast hidden" id="toast"></div>
+
+<script src="js/admin-dashboard.js"></script>
+
+</body>
+</html>

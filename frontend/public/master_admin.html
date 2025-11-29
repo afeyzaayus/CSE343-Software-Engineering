@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SitePortal Panel</title>
+    <title>Superadmin Portal</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -37,6 +37,9 @@
         .header h1 {
             color: #667eea;
             font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .user-info {
@@ -49,7 +52,7 @@
             width: 45px;
             height: 45px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -98,10 +101,6 @@
             color: #28a745;
         }
 
-        .stat-card .change.negative {
-            color: #dc3545;
-        }
-
         .main-panel {
             background: white;
             border-radius: 15px;
@@ -121,6 +120,21 @@
         .panel-header h2 {
             color: #333;
             font-size: 24px;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #5568d3;
         }
 
         .filters {
@@ -152,7 +166,7 @@
         }
 
         .filter-select:focus, .search-input:focus {
-            border-color: #2e86c1;
+            border-color: #667eea;
         }
 
         .search-input {
@@ -243,12 +257,21 @@
         }
 
         .btn-view {
-            background: #2e86c1;
+            background: #667eea;
             color: white;
         }
 
         .btn-view:hover {
-            background: #2e86c1;
+            background: #5568d3;
+        }
+
+        .btn-edit {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: #138496;
         }
 
         .btn-suspend {
@@ -353,17 +376,108 @@
             flex: 1;
         }
 
-        .site-list {
-            list-style: none;
-            padding: 10px 0;
+        .form-group {
+            margin-bottom: 20px;
         }
 
-        .site-item {
-            padding: 8px 12px;
-            background: #f8f9fa;
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #666;
             margin-bottom: 8px;
-            border-radius: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-save {
+            flex: 1;
+            background: #28a745;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-save:hover {
+            background: #218838;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-cancel:hover {
+            background: #5a6268;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            display: none;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            background: #28a745;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
         }
 
         @media (max-width: 768px) {
@@ -384,12 +498,12 @@
                 min-width: 100%;
             }
 
-            .table-container {
-                overflow-x: scroll;
+            .action-buttons {
+                flex-direction: column;
             }
 
-            table {
-                min-width: 800px;
+            .btn {
+                width: 100%;
             }
         }
     </style>
@@ -398,13 +512,13 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🛡️ SitePortal Panel</h1>
+            <h1>🛡️ Superadmin Portal</h1>
             <div class="user-info">
                 <div>
-                    <div style="font-weight: 600;">Master Admin</div>
+                    <div style="font-weight: 600;">Super Admin</div>
                     <div style="font-size: 12px; color: #666;">admin@system.com</div>
                 </div>
-                <div class="user-avatar">MA</div>
+                <div class="user-avatar">SA</div>
             </div>
         </div>
 
@@ -412,33 +526,23 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <h3>Toplam Hesaplar</h3>
-                <div class="number" id="totalAccounts">248</div>
-                <div class="change">↗ +12 bu ay</div>
+                <div class="number" id="totalAccounts">-</div>
+                <div class="change">Yükleniyor...</div>
             </div>
             <div class="stat-card">
                 <h3>Aktif Hesaplar</h3>
-                <div class="number" id="activeAccounts">231</div>
-                <div class="change">↗ 93.1%</div>
+                <div class="number" id="activeAccounts">-</div>
+                <div class="change" id="activePercentage">-</div>
             </div>
             <div class="stat-card">
                 <h3>Askıya Alınmış</h3>
-                <div class="number" id="suspendedAccounts">12</div>
-                <div class="change negative">↘ -3 bu ay</div>
+                <div class="number" id="suspendedAccounts">-</div>
+                <div class="change" id="suspendedChange">-</div>
             </div>
             <div class="stat-card">
-                <h3>Toplam Şirketler</h3>
-                <div class="number" id="totalCompanies">48</div>
-                <div class="change">↗ +5 bu ay</div>
-            </div>
-            <div class="stat-card">
-                <h3>Toplam Siteler</h3>
-                <div class="number" id="totalSites">156</div>
-                <div class="change">↗ +18 bu ay</div>
-            </div>
-            <div class="stat-card">
-                <h3>Mobil Kullanıcılar</h3>
-                <div class="number" id="mobileUsers">3,842</div>
-                <div class="change">↗ +234 bu ay</div>
+                <h3>Bu Ay Yeni</h3>
+                <div class="number" id="newThisMonth">-</div>
+                <div class="change">Son 30 gün</div>
             </div>
         </div>
 
@@ -446,12 +550,13 @@
         <div class="main-panel">
             <div class="panel-header">
                 <h2>Hesap Yönetimi</h2>
+                <button class="refresh-btn" onclick="refreshData()">🔄 Yenile</button>
             </div>
 
             <!-- Filters -->
             <div class="filters">
                 <div class="filter-group">
-                    <label>Hesap Durumu</label>
+                    <label>Durum</label>
                     <select class="filter-select" id="statusFilter">
                         <option value="">Tümü</option>
                         <option value="ACTIVE">Aktif</option>
@@ -463,15 +568,21 @@
                     <label>Hesap Tipi</label>
                     <select class="filter-select" id="typeFilter">
                         <option value="">Tümü</option>
-                        <option value="MASTER_ADMIN">Master Admin</option>
-                        <option value="COMPANY_MANAGER">Şirket Yöneticisi</option>
-                        <option value="COMPANY_EMPLOYEE">Şirket Çalışanı</option>
-                        <option value="SITE_USER">Mobil Kullanıcı</option>
+                        <option value="INDIVIDUAL">Bireysel</option>
+                        <option value="CORPORATE">Kurumsal</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Silinmiş Hesaplar</label>
+                    <select class="filter-select" id="deletedFilter">
+                        <option value="false">Gösterme</option>
+                        <option value="true">Sadece Silinmişler</option>
+                        <option value="all">Tümü</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label>Arama</label>
-                    <input type="text" class="search-input" id="searchInput" placeholder="İsim veya email ile ara...">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Email, ad veya şirket ara...">
                 </div>
             </div>
 
@@ -481,365 +592,397 @@
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Ad Soyad</th>
+                            <th>Hesap Bilgileri</th>
                             <th>Email</th>
-                            <th>Hesap Tipi</th>
+                            <th>Tip</th>
                             <th>Durum</th>
-                            <th>Son Giriş</th>
-                            <th>Kayıt Tarihi</th>
+                            <th>Oluşturma Tarihi</th>
                             <th>İşlemler</th>
                         </tr>
                     </thead>
                     <tbody id="accountsTableBody">
-                        <!-- Data will be inserted here by JavaScript -->
+                        <tr>
+                            <td colspan="7" class="loading">Veriler yükleniyor...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Detail Modal -->
     <div class="modal" id="detailModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Hesap Detayları</h3>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+                <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
             </div>
-            <div id="modalBody">
-                <!-- Details will be inserted here -->
+            <div id="detailModalBody"></div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Hesap Düzenle</h3>
+                <button class="close-btn" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div id="editModalBody">
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="editFullName" placeholder="Ad Soyad">
+                </div>
+                <div class="form-group">
+                    <label>Şirket Adı (Opsiyonel)</label>
+                    <input type="text" id="editCompanyName" placeholder="Şirket Adı">
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn-cancel" onclick="closeModal('editModal')">İptal</button>
+                    <button class="btn-save" onclick="saveEdit()">Kaydet</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Sample Data
-        const accountsData = [
-            {
-                id: 1,
-                full_name: "Ahmet Yılmaz",
-                email: "ahmet@abcyonetim.com",
-                account_type: "COMPANY_MANAGER",
-                account_status: "ACTIVE",
-                last_login: "2024-11-22 14:30",
-                created_at: "2024-01-15",
-                company_name: "ABC Yönetim A.Ş.",
-                sites: ["Sunrise Rezidans", "Golden Park", "Blue Marina"],
-                employees: 12
-            },
-            {
-                id: 2,
-                full_name: "Ayşe Demir",
-                email: "ayse@xyzsite.com",
-                account_type: "COMPANY_MANAGER",
-                account_status: "ACTIVE",
-                last_login: "2024-11-22 09:15",
-                created_at: "2024-02-20",
-                company_name: "XYZ Site Yönetimi",
-                sites: ["Park Residence", "Sea View"],
-                employees: 8
-            },
-            {
-                id: 3,
-                full_name: "Mehmet Kaya",
-                email: "mehmet@abc.com",
-                account_type: "COMPANY_EMPLOYEE",
-                account_status: "ACTIVE",
-                last_login: "2024-11-21 16:45",
-                created_at: "2024-03-10",
-                company_name: "ABC Yönetim A.Ş.",
-                assigned_sites: ["Sunrise Rezidans", "Golden Park"]
-            },
-            {
-                id: 4,
-                full_name: "Zeynep Arslan",
-                email: "zeynep@test.com",
-                account_type: "COMPANY_MANAGER",
-                account_status: "SUSPENDED",
-                last_login: "2024-11-10 11:20",
-                created_at: "2024-04-05",
-                company_name: "Test Yönetim Ltd.",
-                sites: ["Garden City"],
-                employees: 3
-            },
-            {
-                id: 5,
-                full_name: "Ali Yıldız",
-                email: "ali@demo.com",
-                account_type: "COMPANY_EMPLOYEE",
-                account_status: "ACTIVE",
-                last_login: "2024-11-22 13:00",
-                created_at: "2024-05-12",
-                company_name: "XYZ Site Yönetimi",
-                assigned_sites: ["Sea View"]
-            },
-            {
-                id: 6,
-                full_name: "Fatma Şahin",
-                email: "fatma@example.com",
-                account_type: "SITE_USER",
-                account_status: "ACTIVE",
-                last_login: "2024-11-22 15:30",
-                created_at: "2024-06-18",
-                site_name: "Sunrise Rezidans",
-                site_id: "SITE-001-ABC123",
-                block_no: "A",
-                apartment_no: "12"
-            },
-            {
-                id: 7,
-                full_name: "Can Yılmaz",
-                email: "can@example.com",
-                account_type: "SITE_USER",
-                account_status: "ACTIVE",
-                last_login: "2024-11-22 10:15",
-                created_at: "2024-07-22",
-                site_name: "Golden Park",
-                site_id: "SITE-002-ABC456",
-                block_no: "B",
-                apartment_no: "5"
-            },
-            {
-                id: 8,
-                full_name: "Elif Demir",
-                email: "elif@example.com",
-                account_type: "SITE_USER",
-                account_status: "SUSPENDED",
-                last_login: "2024-11-15 08:45",
-                created_at: "2024-08-10",
-                site_name: "Park Residence",
-                site_id: "SITE-003-XYZ789",
-                block_no: "C",
-                apartment_no: "23"
-            }
-        ];
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
 
-        let filteredData = [...accountsData];
+    <script>
+        const API_BASE = 'http://localhost:3000/api/accounts';
+        const AUTH_TOKEN = localStorage.getItem('adminToken') || 'your-admin-token-here';
+
+        let accountsData = [];
+        let currentEditId = null;
+
+        // API Headers
+        function getHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                //'Authorization': `Bearer ${AUTH_TOKEN}`
+            };
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Load Dashboard Stats
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/stats`, {
+                    headers: getHeaders()
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const stats = result.data;
+
+                    document.getElementById('totalAccounts').textContent = stats.total_accounts;
+                    document.getElementById('activeAccounts').textContent = stats.active_accounts;
+                    document.getElementById('suspendedAccounts').textContent = stats.suspended_accounts;
+                    document.getElementById('newThisMonth').textContent = stats.new_this_month;
+
+                    const activePercent = ((stats.active_accounts / stats.total_accounts) * 100).toFixed(1);
+                    document.getElementById('activePercentage').textContent = `↗ ${activePercent}%`;
+                }
+            } catch (error) {
+                console.error('Stats yükleme hatası:', error);
+            }
+        }
+
+        // Load Accounts
+        async function loadAccounts() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const deletedFilter = document.getElementById('deletedFilter').value;
+            const searchTerm = document.getElementById('searchInput').value;
+
+            const params = new URLSearchParams();
+            if (statusFilter) params.append('status', statusFilter);
+            if (typeFilter) params.append('type', typeFilter);
+            if (deletedFilter) params.append('deleted', deletedFilter);
+            if (searchTerm) params.append('search', searchTerm);
+
+            try {
+                const response = await fetch(`${API_BASE}?${params.toString()}`, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getHeaders()
+                    }
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    accountsData = result.data || [];
+                    renderTable();
+                } else {
+                    showNotification('Hesaplar yüklenirken hata oluştu', 'error');
+                }
+            } catch (error) {
+                showNotification('Bağlantı hatası', 'error');
+                console.error('Hesaplar yükleme hatası:', error);
+            }
+        }
 
         // Render Table
-        function renderTable(data) {
+        function renderTable() {
             const tbody = document.getElementById('accountsTableBody');
-            tbody.innerHTML = '';
+            
+            if (accountsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">Hesap bulunamadı</td></tr>';
+                return;
+            }
 
-            data.forEach(account => {
-                const row = document.createElement('tr');
-                
-                const statusClass = `status-${account.account_status.toLowerCase()}`;
+            tbody.innerHTML = accountsData.map(account => {
+                const statusClass = `status-${account.status.toLowerCase()}`;
                 const statusText = {
                     'ACTIVE': 'Aktif',
                     'SUSPENDED': 'Askıya Alınmış',
                     'DELETED': 'Silinmiş'
-                }[account.account_status];
+                }[account.status] || account.status;
 
                 const typeText = {
-                    'MASTER_ADMIN': 'Master Admin',
-                    'COMPANY_MANAGER': 'Şirket Yöneticisi',
-                    'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
-                    'SITE_USER': 'Mobil Kullanıcı'
-                }[account.account_type];
+                    'INDIVIDUAL': 'Bireysel',
+                    'CORPORATE': 'Kurumsal'
+                }[account.account_type] || account.account_type;
 
-                row.innerHTML = `
-                    <td>${account.id}</td>
-                    <td><strong>${account.full_name}</strong></td>
-                    <td>${account.email}</td>
-                    <td><span class="account-type">${typeText}</span></td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${account.last_login}</td>
-                    <td>${account.created_at}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-view" onclick="viewDetails(${account.id})">Görüntüle</button>
-                            ${account.account_status === 'ACTIVE' ? 
-                                `<button class="btn btn-suspend" onclick="suspendAccount(${account.id})">Askıya Al</button>` :
-                                `<button class="btn btn-activate" onclick="activateAccount(${account.id})">Aktifleştir</button>`
-                            }
-                            ${account.account_status !== 'DELETED' ?
-                                `<button class="btn btn-delete" onclick="deleteAccount(${account.id})">Sil</button>` : ''
-                            }
-                        </div>
-                    </td>
+                const date = new Date(account.created_at).toLocaleDateString('tr-TR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                return `
+                    <tr>
+                        <td>${account.id}</td>
+                        <td>
+                            <strong>${account.full_name || 'İsimsiz'}</strong>
+                            ${account.company_name ? `<br><small style="color: #666;">${account.company_name}</small>` : ''}
+                        </td>
+                        <td>${account.email}</td>
+                        <td><span class="account-type">${typeText}</span></td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${date}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="btn btn-view" onclick="viewDetails(${account.id})">👁️</button>
+                                <button class="btn btn-edit" onclick="editAccount(${account.id})">✏️</button>
+                                ${account.status === 'ACTIVE' ? 
+                                    `<button class="btn btn-suspend" onclick="updateStatus(${account.id}, 'SUSPENDED')">⏸️</button>` :
+                                    account.status === 'SUSPENDED' ?
+                                    `<button class="btn btn-activate" onclick="updateStatus(${account.id}, 'ACTIVE')">▶️</button>` : ''
+                                }
+                                ${account.status !== 'DELETED' ?
+                                    `<button class="btn btn-delete" onclick="updateStatus(${account.id}, 'DELETED')">🗑️</button>` : ''
+                                }
+                            </div>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(row);
-            });
+            }).join('');
         }
 
         // View Details
-        function viewDetails(id) {
+        async function viewDetails(id) {
+            try {
+                const response = await fetch(`${API_BASE}/${id}`, {
+                    headers: getHeaders()
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    const account = result.data;
+
+                    const typeText = {
+                        'INDIVIDUAL': 'Bireysel',
+                        'CORPORATE': 'Kurumsal'
+                    }[account.account_type] || account.account_type;
+
+                    const statusText = {
+                        'ACTIVE': 'Aktif',
+                        'SUSPENDED': 'Askıya Alınmış',
+                        'DELETED': 'Silinmiş'
+                    }[account.status] || account.status;
+
+                    const createdDate = new Date(account.created_at).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    const updatedDate = account.updated_at ? new Date(account.updated_at).toLocaleDateString('tr-TR', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    }) : '-';
+
+                    document.getElementById('detailModalBody').innerHTML = `
+                        <div class="detail-row">
+                            <div class="detail-label">ID:</div>
+                            <div class="detail-value">${account.id}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Email:</div>
+                            <div class="detail-value"><strong>${account.email}</strong></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Ad Soyad:</div>
+                            <div class="detail-value">${account.full_name || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Şirket Adı:</div>
+                            <div class="detail-value">${account.company_name || '-'}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Hesap Tipi:</div>
+                            <div class="detail-value">${typeText}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Durum:</div>
+                            <div class="detail-value"><span class="status-badge status-${account.status.toLowerCase()}">${statusText}</span></div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Oluşturma:</div>
+                            <div class="detail-value">${createdDate}</div>
+                        </div>
+                        <div class="detail-row">
+                            <div class="detail-label">Son Güncelleme:</div>
+                            <div class="detail-value">${updatedDate}</div>
+                        </div>
+                    `;
+
+                    document.getElementById('detailModal').classList.add('active');
+                }
+            } catch (error) {
+                showNotification('Detaylar yüklenirken hata oluştu', 'error');
+                console.error('Detay yükleme hatası:', error);
+            }
+        }
+
+        // Edit Account
+        function editAccount(id) {
             const account = accountsData.find(a => a.id === id);
-            const modal = document.getElementById('detailModal');
-            const modalBody = document.getElementById('modalBody');
+            if (!account) return;
 
-            const typeText = {
-                'MASTER_ADMIN': 'Master Admin',
-                'COMPANY_MANAGER': 'Şirket Yöneticisi',
-                'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
-                'SITE_USER': 'Mobil Kullanıcı'
-            }[account.account_type];
-
-            const statusText = {
-                'ACTIVE': 'Aktif',
-                'SUSPENDED': 'Askıya Alınmış',
-                'DELETED': 'Silinmiş'
-            }[account.account_status];
-
-            let detailsHTML = `
-                <div class="detail-row">
-                    <div class="detail-label">ID:</div>
-                    <div class="detail-value">${account.id}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Ad Soyad:</div>
-                    <div class="detail-value"><strong>${account.full_name}</strong></div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Email:</div>
-                    <div class="detail-value">${account.email}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Hesap Tipi:</div>
-                    <div class="detail-value">${typeText}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Durum:</div>
-                    <div class="detail-value"><span class="status-badge status-${account.account_status.toLowerCase()}">${statusText}</span></div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Son Giriş:</div>
-                    <div class="detail-value">${account.last_login}</div>
-                </div>
-                <div class="detail-row">
-                    <div class="detail-label">Kayıt Tarihi:</div>
-                    <div class="detail-value">${account.created_at}</div>
-                </div>
-            `;
-
-            if (account.company_name) {
-                detailsHTML += `
-                    <div class="detail-row">
-                        <div class="detail-label">Şirket:</div>
-                        <div class="detail-value">${account.company_name}</div>
-                    </div>
-                `;
-            }
-
-            if (account.sites) {
-                detailsHTML += `
-                    <div class="detail-row">
-                        <div class="detail-label">Siteler:</div>
-                        <div class="detail-value">
-                            <ul class="site-list">
-                                ${account.sites.map(site => `<li class="site-item">${site}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Çalışan Sayısı:</div>
-                        <div class="detail-value">${account.employees}</div>
-                    </div>
-                `;
-            }
-
-            if (account.assigned_sites) {
-                detailsHTML += `
-                    <div class="detail-row">
-                        <div class="detail-label">Erişebildiği Siteler:</div>
-                        <div class="detail-value">
-                            <ul class="site-list">
-                                ${account.assigned_sites.map(site => `<li class="site-item">${site}</li>`).join('')}
-                            </ul>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Mobil kullanıcı detayları
-            if (account.account_type === 'SITE_USER') {
-                detailsHTML += `
-                    <div class="detail-row">
-                        <div class="detail-label">Site:</div>
-                        <div class="detail-value">${account.site_name}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Site ID:</div>
-                        <div class="detail-value">${account.site_id}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Blok No:</div>
-                        <div class="detail-value">${account.block_no}</div>
-                    </div>
-                    <div class="detail-row">
-                        <div class="detail-label">Daire No:</div>
-                        <div class="detail-value">${account.apartment_no}</div>
-                    </div>
-                `;
-            }
-
-            modalBody.innerHTML = detailsHTML;
-            modal.classList.add('active');
+            currentEditId = id;
+            document.getElementById('editFullName').value = account.full_name || '';
+            document.getElementById('editCompanyName').value = account.company_name || '';
+            document.getElementById('editModal').classList.add('active');
         }
 
-        function closeModal() {
-            document.getElementById('detailModal').classList.remove('active');
-        }
+        // Save Edit
+        async function saveEdit() {
+            if (!currentEditId) return;
 
-        function suspendAccount(id) {
-            if (confirm('Bu hesabı askıya almak istediğinizden emin misiniz?')) {
-                const account = accountsData.find(a => a.id === id);
-                account.account_status = 'SUSPENDED';
-                applyFilters();
-                alert('Hesap askıya alındı!');
+            const fullName = document.getElementById('editFullName').value.trim();
+            const companyName = document.getElementById('editCompanyName').value.trim();
+
+            try {
+                const response = await fetch(`${API_BASE}/${currentEditId}`, {
+                    method: 'PUT',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        full_name: fullName,
+                        company_name: companyName
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('Hesap başarıyla güncellendi');
+                    closeModal('editModal');
+                    await loadAccounts();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.message || 'Güncelleme başarısız', 'error');
+                }
+            } catch (error) {
+                showNotification('Bağlantı hatası', 'error');
+                console.error('Güncelleme hatası:', error);
             }
         }
 
-        function activateAccount(id) {
-            if (confirm('Bu hesabı aktifleştirmek istediğinizden emin misiniz?')) {
-                const account = accountsData.find(a => a.id === id);
-                account.account_status = 'ACTIVE';
-                applyFilters();
-                alert('Hesap aktifleştirildi!');
+        // Update Status
+        async function updateStatus(id, newStatus) {
+            const messages = {
+                'SUSPENDED': 'Bu hesabı askıya almak istediğinizden emin misiniz?',
+                'ACTIVE': 'Bu hesabı aktifleştirmek istediğinizden emin misiniz?',
+                'DELETED': 'Bu hesabı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!'
+            };
+
+            if (!confirm(messages[newStatus])) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/${id}/status`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    const statusMessages = {
+                        'SUSPENDED': 'Hesap askıya alındı',
+                        'ACTIVE': 'Hesap aktifleştirildi',
+                        'DELETED': 'Hesap silindi'
+                    };
+                    showNotification(statusMessages[newStatus]);
+                    await loadAccounts();
+                    await loadStats();
+                } else {
+                    const error = await response.json();
+                    showNotification(error.message || 'İşlem başarısız', 'error');
+                }
+            } catch (error) {
+                showNotification('Bağlantı hatası', 'error');
+                console.error('Durum güncelleme hatası:', error);
             }
         }
 
-        function deleteAccount(id) {
-            if (confirm('Bu hesabı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!')) {
-                const account = accountsData.find(a => a.id === id);
-                account.account_status = 'DELETED';
-                applyFilters();
-                alert('Hesap silindi!');
-            }
+        // Close Modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            currentEditId = null;
         }
 
-        // Filters
-        function applyFilters() {
-            const statusFilter = document.getElementById('statusFilter').value;
-            const typeFilter = document.getElementById('typeFilter').value;
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-
-            filteredData = accountsData.filter(account => {
-                const matchStatus = !statusFilter || account.account_status === statusFilter;
-                const matchType = !typeFilter || account.account_type === typeFilter;
-                const matchSearch = !searchTerm || 
-                    account.full_name.toLowerCase().includes(searchTerm) ||
-                    account.email.toLowerCase().includes(searchTerm);
-
-                return matchStatus && matchType && matchSearch;
-            });
-
-            renderTable(filteredData);
+        // Refresh Data
+        async function refreshData() {
+            await loadStats();
+            await loadAccounts();
+            showNotification('Veriler yenilendi');
         }
 
-        document.getElementById('statusFilter').addEventListener('change', applyFilters);
-        document.getElementById('typeFilter').addEventListener('change', applyFilters);
-        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        // Event Listeners
+        document.getElementById('statusFilter').addEventListener('change', loadAccounts);
+        document.getElementById('typeFilter').addEventListener('change', loadAccounts);
+        document.getElementById('deletedFilter').addEventListener('change', loadAccounts);
+        document.getElementById('searchInput').addEventListener('input', loadAccounts);
 
-        // Close modal on outside click
+        // Close modals on outside click
         document.getElementById('detailModal').addEventListener('click', (e) => {
             if (e.target.id === 'detailModal') {
-                closeModal();
+                closeModal('detailModal');
             }
         });
 
-        // Initial render
-        renderTable(accountsData);
+        document.getElementById('editModal').addEventListener('click', (e) => {
+            if (e.target.id === 'editModal') {
+                closeModal('editModal');
+            }
+        });
+
+        // Initial Load
+        loadStats();
+        loadAccounts();
     </script>
 </body>
 </html>
