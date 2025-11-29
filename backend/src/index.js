@@ -36,7 +36,9 @@ export {
   resetUserPasswordService,
   forgotAdminPasswordService,
   resetAdminPasswordService,
-  setNewPasswordService
+  setNewPasswordService,
+  changeUserPasswordService,
+  changeAdminPasswordService
 } from './modules/auth/service/passwordReset.service.js';
 export {
   registerIndividualService,

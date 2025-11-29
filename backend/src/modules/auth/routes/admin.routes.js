@@ -29,6 +29,8 @@ router.post('/register/company-manager', registerCompanyManager);
  */
 router.get('/verify-email', verifyEmail);
 
+
+
 /**
  * @route   POST /api/auth/admin/login
  * @desc    Admin girişi (bireysel veya şirket yöneticisi)

@@ -65,10 +65,12 @@ export async function sendEmployeeInvitationEmail(email, company_name, invite_co
   });
 }
 
-/**
- * Admin şifre sıfırlama maili
- */
 export async function sendPasswordResetEmail(email, full_name, resetLink) {
+  if (!email) {
+    console.warn('sendPasswordResetEmail: Alıcı e-posta adresi tanımlı değil, e-posta gönderilmedi.');
+    return;
+  }
+
   return await transporter.sendMail({
     from: process.env.EMAIL_USER,
     to: email,

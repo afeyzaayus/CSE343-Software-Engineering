@@ -15,26 +15,20 @@ export function generateBlockNames(count) {
 /**
  * Site için blokları otomatik oluştur
  */
-export async function createBlocksForSite(site_id, block_count, transaction = null) {
-  const prismaClient = transaction || prisma;
-  
-  if (!block_count || block_count <= 0) {
-    return [];
-  }
+// siteId artık Int olacak
+export async function createBlocksForSite(siteId, blockCount, prismaTx) {
+  if (!blockCount || blockCount <= 0) return [];
 
-  const blockNames = generateBlockNames(block_count);
   const blocks = [];
-
-  for (const blockName of blockNames) {
-    const block = await prismaClient.block.create({
+  for (let i = 1; i <= blockCount; i++) {
+    const block = await prismaTx.blocks.create({
       data: {
-        block_name: blockName,
-        site_id: site_id
+        site_id: siteId,       // <-- Artık Int
+        block_name: String.fromCharCode(64 + i) // A, B, C
       }
     });
     blocks.push(block);
   }
-
   return blocks;
 }
 

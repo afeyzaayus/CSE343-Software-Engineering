@@ -17,16 +17,12 @@ export async function createSiteService(adminId, siteData) {
   const existingSite = await prisma.site.findUnique({ where: { site_id } });
   if (existingSite) throw new Error('SITE_ERROR: Bu Site ID zaten kullanılıyor.');
 
-  // Admin kontrolü
   const admin = await prisma.admin.findUnique({
     where: { id: adminId },
     include: {
-      sites_created: {
-        where: { deleted_at: null }
-      },
-      companies_managed: {
-        where: { deleted_at: null }
-      }
+      sites_created: { where: { deleted_at: null } },
+      company: true,
+      company_employees: true
     }
   });
 
@@ -34,14 +30,11 @@ export async function createSiteService(adminId, siteData) {
   if (admin.deleted_at) throw new Error('AUTH_ERROR: Hesabınız silinmiş.');
   if (admin.account_status !== 'ACTIVE') throw new Error('AUTH_ERROR: Hesabınız aktif değil.');
 
-  let company = null;
   let companyId = null;
 
-  // COMPANY_MANAGER ise şirkete bağla
   if (admin.account_type === 'COMPANY_MANAGER') {
-    company = admin.companies_managed[0];
-    if (!company) throw new Error('COMPANY_ERROR: Şirket bulunamadı.');
-    companyId = company.id;
+    if (!admin.company) throw new Error('COMPANY_ERROR: Şirket bulunamadı.');
+    companyId = admin.company.id;
   }
 
   // Transaction ile Site ve Blokları birlikte oluştur
@@ -56,12 +49,12 @@ export async function createSiteService(adminId, siteData) {
         apartment_count: apartment_count || null,
         site_status: 'ACTIVE',
         adminId: admin.id,
-        company_id: companyId
+        company_id: companyId  // ← Site modelinde company_id (snake_case)
       }
     });
 
     // Eğer block_count varsa blokları otomatik oluştur
-    const blocks = await createBlocksForSite(site_id, block_count, tx);
+    const blocks = await createBlocksForSite(newSite.id, block_count, tx);
 
     return { newSite, blocks };
   });
@@ -72,6 +65,181 @@ export async function createSiteService(adminId, siteData) {
     blocks: result.blocks,
     blockCount: result.blocks.length
   };
+}
+
+/**
+ * Site listesi getir (Admin'e göre filtreleme)
+ */
+export async function getSitesService(adminId, filters) {
+  const admin = await prisma.admin.findUnique({
+    where: { id: adminId },
+    include: {
+      company: true
+    }
+  });
+
+  if (!admin) throw new Error("AUTH_ERROR: Admin bulunamadı.");
+  if (admin.deleted_at) throw new Error('AUTH_ERROR: Hesabınız silinmiş.');
+  if (admin.account_status !== 'ACTIVE') throw new Error('AUTH_ERROR: Hesabınız aktif değil.');
+
+  let sites = [];
+
+  // 1. INDIVIDUAL → sadece kendi oluşturdukları
+  if (admin.account_type === "INDIVIDUAL") {
+    sites = await prisma.site.findMany({
+      where: {
+        adminId: admin.id,
+        deleted_at: null
+      },
+      include: {
+        admin: {
+          select: {
+            full_name: true,
+            email: true
+          }
+        },
+        _count: {
+          select: {
+            blocks: true,
+            users: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+  }
+
+  // 2. COMPANY_MANAGER → şirketine bağlı tüm siteler
+  else if (admin.account_type === "COMPANY_MANAGER") {
+    if (!admin.companyId) {
+      throw new Error("COMPANY_ERROR: Admin bir şirkete bağlı değil.");
+    }
+
+    sites = await prisma.site.findMany({
+      where: {
+        company_id: admin.companyId,  // ← Admin'den companyId, Site'de company_id
+        deleted_at: null
+      },
+      include: {
+        admin: {
+          select: {
+            full_name: true,
+            email: true
+          }
+        },
+        companies: {  // ← Site modelinde relation adı 'companies'
+          select: {
+            company_name: true,
+            company_code: true
+          }
+        },
+        _count: {
+          select: {
+            blocks: true,
+            users: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+  }
+
+  // 3. COMPANY_EMPLOYEE → şirketine bağlı tüm siteler
+  else if (admin.account_type === "COMPANY_EMPLOYEE") {
+    const employeeRecord = await prisma.company_employee.findFirst({
+      where: {
+        admin_id: admin.id,
+        deleted_at: null
+      },
+      include: {
+        company: true
+      }
+    });
+
+    if (!employeeRecord) {
+      throw new Error("AUTH_ERROR: Çalışan kaydı bulunamadı.");
+    }
+
+    sites = await prisma.site.findMany({
+      where: {
+        company_id: employeeRecord.company_id,
+        deleted_at: null
+      },
+      include: {
+        admin: {
+          select: {
+            full_name: true,
+            email: true
+          }
+        },
+        companies: {  // ← Site modelinde relation adı 'companies'
+          select: {
+            company_name: true,
+            company_code: true
+          }
+        },
+        _count: {
+          select: {
+            blocks: true,
+            users: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+  }
+
+  // 4. SUPER_ADMIN → Tüm siteler
+  else if (admin.account_type === "SUPER_ADMIN") {
+    sites = await prisma.site.findMany({
+      where: { deleted_at: null },
+      include: {
+        admin: {
+          select: {
+            full_name: true,
+            email: true
+          }
+        },
+        companies: {  // ← Site modelinde relation adı 'companies'
+          select: {
+            company_name: true,
+            company_code: true
+          }
+        },
+        _count: {
+          select: {
+            blocks: true,
+            users: true
+          }
+        }
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
+  }
+
+  // Filtreleme
+  if (filters.status) {
+    sites = sites.filter(s => s.site_status === filters.status);
+  }
+
+  if (filters.search) {
+    const q = filters.search.toLowerCase();
+    sites = sites.filter(s =>
+      s.site_name.toLowerCase().includes(q) ||
+      s.site_id.toLowerCase().includes(q) ||
+      (s.site_address && s.site_address.toLowerCase().includes(q))
+    );
+  }
+
+  return sites;
 }
 
 /**
@@ -88,12 +256,36 @@ export async function updateSiteService(adminId, site_id, updateData) {
   });
 
   if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
+  if (site.deleted_at) throw new Error('SITE_ERROR: Bu site silinmiş.');
 
   // Yetki kontrolü
-  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
-  if (site.adminId !== adminId && admin.account_type !== 'SUPER_ADMIN') {
+  const admin = await prisma.admin.findUnique({ 
+    where: { id: adminId },
+    include: {
+      company: true
+    }
+  });
+
+  if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
+
+  // COMPANY_EMPLOYEE düzenleyemez
+  if (admin.account_type === 'COMPANY_EMPLOYEE') {
+    throw new Error('AUTH_ERROR: Şirket çalışanları site düzenleyemez.');
+  }
+
+  // INDIVIDUAL sadece kendi sitelerini düzenleyebilir
+  if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
     throw new Error('AUTH_ERROR: Bu siteyi güncelleme yetkiniz yok.');
   }
+
+  // COMPANY_MANAGER sadece şirketinin sitelerini düzenleyebilir
+  if (admin.account_type === 'COMPANY_MANAGER') {
+    if (!admin.companyId || site.company_id !== admin.companyId) {
+      throw new Error('AUTH_ERROR: Bu siteyi güncelleme yetkiniz yok.');
+    }
+  }
+
+  // SUPER_ADMIN her şeyi düzenleyebilir
 
   await prisma.$transaction(async (tx) => {
     // Site bilgilerini güncelle
@@ -118,101 +310,57 @@ export async function updateSiteService(adminId, site_id, updateData) {
 }
 
 /**
- * Site listesi getir (Admin'e göre filtreleme)
+ * Site silme (soft delete)
  */
-export async function getSitesService(adminId, filters = {}) {
-  const { status, search } = filters;
+export async function deleteSiteService(adminId, site_id) {
+  const site = await prisma.site.findUnique({
+    where: { site_id }
+  });
 
-  const admin = await prisma.admin.findUnique({
+  if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
+  if (site.deleted_at) throw new Error('SITE_ERROR: Bu site zaten silinmiş.');
+
+  // Yetki kontrolü
+  const admin = await prisma.admin.findUnique({ 
     where: { id: adminId },
     include: {
-      companies_managed: {
-        where: { deleted_at: null }
-      }
+      company: true
     }
   });
 
   if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
 
-  let where = { deleted_at: null };
+  // COMPANY_EMPLOYEE silemez
+  if (admin.account_type === 'COMPANY_EMPLOYEE') {
+    throw new Error('AUTH_ERROR: Şirket çalışanları site silemez.');
+  }
 
-  // COMPANY_MANAGER sadece kendi şirketinin sitelerini görebilir
+  // INDIVIDUAL sadece kendi sitelerini silebilir
+  if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
+    throw new Error('AUTH_ERROR: Bu siteyi silme yetkiniz yok.');
+  }
+
+  // COMPANY_MANAGER sadece şirketinin sitelerini silebilir
   if (admin.account_type === 'COMPANY_MANAGER') {
-    const company = admin.companies_managed[0];
-    if (!company) throw new Error('COMPANY_ERROR: Şirket bulunamadı.');
-    where.company_id = company.id;
-  }
-  // INDIVIDUAL sadece kendi oluşturduğu siteleri görebilir
-  else if (admin.account_type === 'INDIVIDUAL') {
-    where.adminId = adminId;
-  }
-  // COMPANY_EMPLOYEE atandığı siteleri görebilir
-  else if (admin.account_type === 'COMPANY_EMPLOYEE') {
-    const employee = await prisma.companyEmployee.findUnique({
-      where: { admin_id: adminId },
-      include: {
-        assigned_sites: {
-          select: { site_id: true }
-        }
-      }
-    });
-    
-    if (employee && employee.assigned_sites.length > 0) {
-      where.site_id = {
-        in: employee.assigned_sites.map(s => s.site_id)
-      };
-    } else {
-      return []; // Atanmış site yoksa boş döner
+    if (!admin.companyId || site.company_id !== admin.companyId) {
+      throw new Error('AUTH_ERROR: Bu siteyi silme yetkiniz yok.');
     }
   }
 
-  // Filtreler
-  if (status) where.site_status = status;
-  if (search) {
-    where.OR = [
-      { site_name: { contains: search, mode: 'insensitive' } },
-      { site_id: { contains: search, mode: 'insensitive' } }
-    ];
-  }
+  // SUPER_ADMIN her şeyi silebilir
 
-  const sites = await prisma.site.findMany({
-    where,
-    include: {
-      admin: {
-        select: {
-          full_name: true,
-          email: true
-        }
-      },
-      company: {
-        select: {
-          company_name: true,
-          company_code: true
-        }
-      },
-      blocks: {
-        where: { deleted_at: null },
-        select: {
-          id: true,
-          block_name: true
-        }
-      },
-      _count: {
-        select: {
-          users: true
-        }
-      }
-    },
-    orderBy: {
-      created_at: 'desc'
+  await prisma.site.update({
+    where: { site_id },
+    data: {
+      deleted_at: new Date()
     }
   });
 
-  return sites;
+  return { message: 'Site başarıyla silindi.' };
 }
 
 /**
- * Tek bir site detayı getir
+ * Tek bir site detayı getir (bloklar, kullanıcılar dahil)
  */
 export async function getSiteByIdService(adminId, site_id) {
   const site = await prisma.site.findUnique({
@@ -221,10 +369,11 @@ export async function getSiteByIdService(adminId, site_id) {
       admin: {
         select: {
           full_name: true,
-          email: true
+          email: true,
+          account_type: true
         }
       },
-      company: {
+      companies: {  // ← Site modelinde relation adı 'companies'
         select: {
           company_name: true,
           company_code: true
@@ -232,7 +381,14 @@ export async function getSiteByIdService(adminId, site_id) {
       },
       blocks: {
         where: { deleted_at: null },
-        orderBy: { block_name: 'asc' }
+        orderBy: { block_name: 'asc' },
+        include: {
+          _count: {
+            select: {
+              users: true
+            }
+          }
+        }
       },
       users: {
         where: { deleted_at: null },
@@ -243,54 +399,59 @@ export async function getSiteByIdService(adminId, site_id) {
           block_no: true,
           apartment_no: true,
           account_status: true
-        }
+        },
+        orderBy: [
+          { block_no: 'asc' },
+          { apartment_no: 'asc' }
+        ]
       }
     }
   });
 
   if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
+  if (site.deleted_at) throw new Error('SITE_ERROR: Bu site silinmiş.');
 
   // Yetki kontrolü
-  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
-  
+  const admin = await prisma.admin.findUnique({ 
+    where: { id: adminId },
+    include: {
+      company: true
+    }
+  });
+
+  if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
+
+  // INDIVIDUAL sadece kendi sitelerini görebilir
   if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
     throw new Error('AUTH_ERROR: Bu siteyi görüntüleme yetkiniz yok.');
   }
 
-  if (admin.account_type === 'COMPANY_MANAGER') {
-    const company = await prisma.company.findFirst({
-      where: { admin_id: adminId, deleted_at: null }
-    });
-    if (!company || site.company_id !== company.id) {
+  // COMPANY_MANAGER ve COMPANY_EMPLOYEE şirketlerinin sitelerini görebilir
+  if (admin.account_type === 'COMPANY_MANAGER' || admin.account_type === 'COMPANY_EMPLOYEE') {
+    let companyId = admin.companyId;
+
+    // COMPANY_EMPLOYEE ise company_employee tablosundan şirket ID'sini al
+    if (admin.account_type === 'COMPANY_EMPLOYEE') {
+      const employeeRecord = await prisma.company_employee.findFirst({
+        where: {
+          admin_id: admin.id,
+          deleted_at: null
+        }
+      });
+
+      if (!employeeRecord) {
+        throw new Error('AUTH_ERROR: Çalışan kaydı bulunamadı.');
+      }
+
+      companyId = employeeRecord.company_id;
+    }
+
+    if (!companyId || site.company_id !== companyId) {
       throw new Error('AUTH_ERROR: Bu siteyi görüntüleme yetkiniz yok.');
     }
   }
 
+  // SUPER_ADMIN her şeyi görebilir
+
   return site;
-}
-
-/**
- * Site silme (soft delete)
- */
-export async function deleteSiteService(adminId, site_id) {
-  const site = await prisma.site.findUnique({
-    where: { site_id }
-  });
-
-  if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
-
-  // Yetki kontrolü
-  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
-  if (site.adminId !== adminId && admin.account_type !== 'SUPER_ADMIN') {
-    throw new Error('AUTH_ERROR: Bu siteyi silme yetkiniz yok.');
-  }
-
-  await prisma.site.update({
-    where: { site_id },
-    data: {
-      deleted_at: new Date()
-    }
-  });
-
-  return { message: 'Site başarıyla silindi.' };
 }

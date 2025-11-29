@@ -2,12 +2,14 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Auth Routes
 import adminRoutes from './modules/auth/routes/admin.routes.js';
 import userRoutes from './modules/auth/routes/user.routes.js';
 import passwordResetRoutes from './modules/auth/routes/passwordReset.routes.js';
-
+import siteRoutes from './modules/site/routes/site.routes.js';
 // Module Routes
 import companyRoutes from './modules/company/routes/company.routes.js';
 import accountRoutes from './modules/account/account.routes.js';
@@ -21,10 +23,15 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const frontendPublicPath = path.join(__dirname, '..', '..', 'frontend', 'public');
+app.use(express.static(frontendPublicPath));
 // ==========================================================
 // MIDDLEWARE'LER
 // ==========================================================
-
+app.use(express.static('public'));
 // JSON body parser
 app.use(express.json());
 
@@ -79,7 +86,7 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth/admin', adminRoutes);
 app.use('/api/auth/user', userRoutes);
 app.use('/api/auth/password-reset', passwordResetRoutes);
-
+app.use('/api/sites', siteRoutes);
 // Module rotaları
 app.use('/api/company', companyRoutes);
 app.use('/api/accounts', accountRoutes);

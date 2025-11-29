@@ -11,18 +11,13 @@ const SALT_ROUNDS = 10;
  */
 export async function registerIndividualService({ full_name, email, password }) {
   try {
-    const existingAdmin = await prisma.admin.findUnique({
-      where: { email }
-    });
-
-    if (existingAdmin) {
-      throw new Error('Bu e-posta adresi zaten kullanımda.');
-    }
+    const existingAdmin = await prisma.admin.findUnique({ where: { email } });
+    if (existingAdmin) throw new Error('Bu e-posta adresi zaten kullanımda.');
 
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
+    const verificationLink = `${process.env.BASE_URL}/api/auth/admin/verify-email?token=${verificationToken}`;
 
     const newAdmin = await prisma.admin.create({
       data: {
@@ -55,10 +50,7 @@ export async function registerIndividualService({ full_name, email, password }) 
       console.error('E-posta gönderme hatası:', emailError);
     }
 
-    return {
-      admin: newAdmin,
-      emailSent
-    };
+    return { admin: newAdmin, emailSent };
 
   } catch (error) {
     console.error('registerIndividual service hatası:', error);
@@ -68,28 +60,37 @@ export async function registerIndividualService({ full_name, email, password }) 
 
 /**
  * Şirket Yöneticisi Kaydı
- * company_code frontend'den gelecek
  */
 export async function registerCompanyManagerService(adminData) {
   const { full_name, email, password, company_name, company_code } = adminData;
 
-  // Validation
   validateCompanyCode(company_code, 4);
 
-  // E-posta çakışması kontrolü
   const existingAdmin = await prisma.admin.findUnique({ where: { email } });
   if (existingAdmin) throw new Error('AUTH_ERROR: Bu e-posta adresi zaten kayıtlı.');
 
-  // Şirket kodu çakışması kontrolü
-  const existingCompany = await prisma.company.findUnique({ where: { company_code } });
-  if (existingCompany) throw new Error('COMPANY_ERROR: Bu şirket kodu zaten kullanılıyor.');
+  // Eğer şirket zaten varsa onu bağlayacağız
+  let company = await prisma.companies.findUnique({ where: { company_code } });
+
+  // Şirket yoksa oluştur
+  if (!company) {
+    company = await prisma.companies.create({
+      data: {
+        company_name,
+        company_code,
+        account_status: 'ACTIVE',
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    });
+  }
 
   const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
   const verificationToken = crypto.randomBytes(32).toString('hex');
   const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  const verificationLink = `${process.env.BASE_URL}/api/auth/verify-email?token=${verificationToken}`;
+  const verificationLink = `${process.env.BASE_URL}/api/auth/admin/verify-email?token=${verificationToken}`;
 
-  // Admin oluştur
+  // Admini oluştur ve şirketi bağla
   const newAdmin = await prisma.admin.create({
     data: {
       full_name,
@@ -97,26 +98,40 @@ export async function registerCompanyManagerService(adminData) {
       password: hashedPassword,
       account_type: 'COMPANY_MANAGER',
       account_status: 'ACTIVE',
-      company_name,
       is_verified: false,
       verificationToken,
-      tokenExpiry
-    }
+      tokenExpiry,
+      created_at: new Date(),
+      updated_at: new Date(),
+      company_name,
+      company_code,
+      companyId: company.id
+    },
+    include: { company: true }
   });
 
-  // Mail gönder
-  await sendCompanyManagerVerificationEmail(
-    email, 
-    full_name, 
-    company_name, 
-    company_code, 
-    verificationLink
-  );
+  // Aktivasyon maili gönder
+  try {
+    await sendCompanyManagerVerificationEmail(
+      email,
+      full_name,
+      newAdmin.company_name,
+      newAdmin.company_code,
+      verificationLink
+    );
+  } catch (err) {
+    console.error('E-posta gönderilemedi:', err);
+  }
 
   return {
     message: 'Kayıt tamamlandı. Hesabınızı aktifleştirmek için e-postanızı kontrol edin.',
-    adminId: newAdmin.id,
-    company_code
+    admin: {
+      id: newAdmin.id,
+      name: newAdmin.full_name,
+      role: newAdmin.account_type,
+      company_name: newAdmin.company_name,
+      company_code: newAdmin.company_code
+    }
   };
 }
 
@@ -125,19 +140,12 @@ export async function registerCompanyManagerService(adminData) {
  */
 export async function verifyEmailService(token) {
   const admin = await prisma.admin.findFirst({
-    where: {
-      verificationToken: token,
-      tokenExpiry: {
-        gt: new Date()
-      }
-    }
+    where: { verificationToken: token, tokenExpiry: { gt: new Date() } }
   });
 
-  if (!admin) {
-    throw new Error('TOKEN_INVALID: Geçersiz veya süresi dolmuş doğrulama token\'ı.');
-  }
+  if (!admin) throw new Error('TOKEN_INVALID: Geçersiz veya süresi dolmuş token.');
 
-  const updatedAdmin = await prisma.admin.update({
+  return await prisma.admin.update({
     where: { id: admin.id },
     data: {
       is_verified: true,
@@ -146,16 +154,12 @@ export async function verifyEmailService(token) {
       last_login: new Date()
     }
   });
-
-  return updatedAdmin;
 }
 
 /**
  * Admin girişi
  */
-export async function loginAdminService(loginData) {
-  const { email, password } = loginData;
-
+export async function loginAdminService({ email, password }) {
   const admin = await prisma.admin.findUnique({
     where: { email },
     select: {
@@ -166,6 +170,7 @@ export async function loginAdminService(loginData) {
       account_type: true,
       account_status: true,
       company_name: true,
+      company_code: true,
       is_verified: true,
       deleted_at: true
     }
@@ -179,10 +184,7 @@ export async function loginAdminService(loginData) {
   const isPasswordValid = await bcrypt.compare(password, admin.password);
   if (!isPasswordValid) throw new Error('AUTH_ERROR: E-posta veya şifre hatalı.');
 
-  await prisma.admin.update({
-    where: { id: admin.id },
-    data: { last_login: new Date() }
-  });
+  await prisma.admin.update({ where: { id: admin.id }, data: { last_login: new Date() } });
 
   const { password: _, ...adminData } = admin;
   return adminData;

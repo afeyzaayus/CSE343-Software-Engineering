@@ -2,69 +2,47 @@ import express from 'express';
 import {
   forgotUserPassword,
   resetUserPassword,
+  changeUserPassword,
   forgotAdminPassword,
-  resetAdminPassword,
-  setNewPassword
+  validateResetToken,
+  setNewPassword,
+  changePasswordWithLogin
 } from '../controller/passwordReset.controller.js';
+
 import { verifyUserToken } from '../middleware/userAuth.middleware.js';
 import { verifyAdminToken } from '../middleware/adminAuth.middleware.js';
 
 const router = express.Router();
 
-// ==================== Mobil Kullanıcı Şifre Sıfırlama ====================
+// =========================================================
+// MOBİL KULLANICI – Şifre Sıfırlama
+// =========================================================
+router.post('/user/forgot-password', forgotUserPassword); // SMS ile kod gönder
+router.post('/user/reset-password', resetUserPassword);    // Kod ile şifre sıfırlama
+router.post('/user/change-password', verifyUserToken, changeUserPassword); // login ile değişim
 
-/**
- * @route   POST /api/auth/password-reset/user/forgot-password
- * @desc    Mobil kullanıcı şifre sıfırlama talebi (SMS kodu gönder)
- * @access  Public
- * @body    { phone_number: string, site_id: string }
- */
-router.post('/user/forgot-password', forgotUserPassword);
+// =========================================================
+// ADMİN – Şifre Sıfırlama
+// =========================================================
+router.post('/admin/forgot-password', forgotAdminPassword);   // Email link gönder
+router.get('/admin/verify-token/:token', validateResetToken); // Token doğrulama
+router.post('/admin/set-new-password', setNewPassword);        // Token ile yeni şifre
 
-/**
- * @route   POST /api/auth/password-reset/user/reset-password
- * @desc    Mobil kullanıcı şifre sıfırlama (SMS kodu ile)
- * @access  Public
- * @body    { phone_number: string, code: string, new_password: string, password_confirm: string }
- */
-router.post('/user/reset-password', resetUserPassword);
-
-// ==================== Admin Şifre Sıfırlama ====================
-
-/**
- * @route   POST /api/auth/password-reset/admin/forgot-password
- * @desc    Admin şifre sıfırlama talebi (E-posta linki gönder)
- * @access  Public
- * @body    { email: string }
- */
-router.post('/admin/forgot-password', forgotAdminPassword);
-
-/**
- * @route   POST /api/auth/password-reset/admin/reset-password
- * @desc    Admin şifre sıfırlama (Token ile)
- * @access  Public
- * @body    { token: string, new_password: string, password_confirm: string }
- */
-router.post('/admin/reset-password', resetAdminPassword);
-
-// ==================== Giriş Yapmış Kullanıcı İçin Şifre Değiştirme ====================
-
-/**
- * @route   POST /api/auth/password-reset/set-new-password
- * @desc    Giriş yapmış kullanıcı/admin için şifre değiştirme
- * @access  Private (User veya Admin token gerekli)
- * @body    { current_password: string, new_password: string, password_confirm: string }
- */
+// =========================================================
+// LOGIN OLMUŞ KULLANICI/ADMİN – Şifre Değiştirme
+// =========================================================
 router.post(
-  '/set-new-password',
-  // Her iki middleware'i de dene, biri başarılı olursa devam et
+  '/change-password',
   (req, res, next) => {
     verifyUserToken(req, res, (err) => {
-      if (!err) return next();
-      verifyAdminToken(req, res, next);
+      if (!err) return next(); // User token geçerli
+      verifyAdminToken(req, res, (err2) => {
+        if (!err2) return next(); // Admin token geçerli
+        return res.status(401).json({ success: false, message: 'Yetkisiz işlem.' });
+      });
     });
   },
-  setNewPassword
+  changePasswordWithLogin
 );
 
 export default router;

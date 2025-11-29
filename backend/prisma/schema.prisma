@@ -37,7 +37,6 @@ model User {
   @@map("users")
   @@schema("public")
 }
-
 model Admin {
   id                Int                @id @default(autoincrement())
   full_name         String
@@ -45,6 +44,7 @@ model Admin {
   password          String
   account_type      AccountType
   company_name      String?
+  company_code      String?
   created_at        DateTime           @default(now())
   updated_at        DateTime           @updatedAt
   tokenExpiry       DateTime?
@@ -55,13 +55,18 @@ model Admin {
   account_status    AccountStatus      @default(ACTIVE)
   deleted_at        DateTime?
   last_login        DateTime?
-  companies         companies[]
+
+  // 🔥 ŞU İKİ SATIR ZORUNLU OLMAMALI
+  companyId         Int?                  
+  company           companies?             @relation(fields: [companyId], references: [id])
+
   company_employees company_employees?
   sites_created     Site[]
 
   @@map("admins")
   @@schema("public")
 }
+
 
 model Site {
   id                   Int                    @id @default(autoincrement())
@@ -140,8 +145,8 @@ model companies {
   created_at        DateTime            @default(now())
   updated_at        DateTime
   deleted_at        DateTime?
-  manager_id        Int
-  admins            Admin               @relation(fields: [manager_id], references: [id])
+
+  admins            Admin[]             // Bire-çok ilişkiyi burada belirtiyoruz
   company_employees company_employees[]
   invitations       invitations[]
   sites             Site[]
@@ -223,7 +228,6 @@ model payments {
 
 enum AccountType {
   INDIVIDUAL
-  MASTER_ADMIN
   COMPANY_MANAGER
   COMPANY_EMPLOYEE
   SITE_USER
@@ -281,4 +285,31 @@ enum Status {
   REJECTED
 
   @@schema("public")
+}
+
+
+// Master Portal Rolleri (Ekip Odaklı)
+enum MasterRole {
+  SUPER_ADMIN // Tüm sistem yetkisi
+  DEVELOPER   // Geliştirme ve teknik erişim
+   @@schema("public")
+}
+
+// Master Portal Kullanıcı Tablosu
+model MasterUser {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  password_hash   String
+  full_name       String
+  
+  master_role     MasterRole  @default(DEVELOPER)
+  
+  is_active       Boolean     @default(true)
+  last_login_at   DateTime?
+  
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  
+  @@map("master_users") 
+    @@schema("public")
 }

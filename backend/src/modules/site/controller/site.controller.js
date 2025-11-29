@@ -6,15 +6,16 @@ import {
   deleteSiteService
 } from '../../../index.js';
 
-/**
- * @route   POST /api/sites/create
- * @desc    Site oluşturma
- * @access  Private (Admin only)
- */
 export async function createSite(req, res) {
   try {
     const adminId = req.admin.id; // Middleware'den gelir
     const { site_id, site_name, site_address, block_count, apartment_count } = req.body;
+
+    console.log('📝 Site oluşturma isteği:', {
+      adminId,
+      accountType: req.admin.account_type,
+      siteData: { site_id, site_name, site_address, block_count, apartment_count }
+    });
 
     // Validation
     if (!site_id || !site_name || !site_address) {
@@ -32,6 +33,8 @@ export async function createSite(req, res) {
       apartment_count: apartment_count || 0
     });
 
+    console.log('✅ Site başarıyla oluşturuldu:', result.site.site_id);
+
     return res.status(201).json({
       success: true,
       message: result.message,
@@ -43,7 +46,7 @@ export async function createSite(req, res) {
     });
 
   } catch (error) {
-    console.error('createSite controller hatası:', error);
+    console.error('❌ createSite controller hatası:', error);
 
     if (error.message.includes('SITE_ERROR')) {
       return res.status(409).json({
@@ -75,7 +78,8 @@ export async function createSite(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: 'Site oluşturulurken bir hata oluştu.'
+      error: 'Site oluşturulurken bir hata oluştu.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
@@ -91,6 +95,13 @@ export async function updateSite(req, res) {
     const { siteId } = req.params;
     const { site_name, site_address, block_count, apartment_count } = req.body;
 
+    console.log('✏️ Site güncelleme isteği:', {
+      adminId,
+      accountType: req.admin.account_type,
+      siteId,
+      updateData: { site_name, site_address, block_count, apartment_count }
+    });
+
     if (!siteId) {
       return res.status(400).json({
         success: false,
@@ -105,13 +116,15 @@ export async function updateSite(req, res) {
       apartment_count
     });
 
+    console.log('✅ Site başarıyla güncellendi:', siteId);
+
     return res.status(200).json({
       success: true,
       message: result.message
     });
 
   } catch (error) {
-    console.error('updateSite controller hatası:', error);
+    console.error('❌ updateSite controller hatası:', error);
 
     if (error.message.includes('SITE_ERROR')) {
       return res.status(404).json({
@@ -129,7 +142,8 @@ export async function updateSite(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: 'Site güncellenirken bir hata oluştu.'
+      error: 'Site güncellenirken bir hata oluştu.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
@@ -144,10 +158,16 @@ export async function getSites(req, res) {
     const adminId = req.admin.id;
     const { status, search } = req.query;
 
-    const sites = await getSitesService(adminId, {
-      status,
-      search
+    console.log('📋 Site listesi isteniyor:', {
+      adminId,
+      accountType: req.admin.account_type,
+      companyId: req.admin.companyId,
+      filters: { status, search }
     });
+
+    const sites = await getSitesService(adminId, { status, search });
+
+    console.log('✅ Siteler başarıyla getirildi. Toplam:', sites.length);
 
     return res.status(200).json({
       success: true,
@@ -159,7 +179,7 @@ export async function getSites(req, res) {
     });
 
   } catch (error) {
-    console.error('getSites controller hatası:', error);
+    console.error('❌ getSites controller hatası:', error);
 
     if (error.message.includes('AUTH_ERROR')) {
       return res.status(403).json({
@@ -177,7 +197,8 @@ export async function getSites(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: 'Siteler getirilirken bir hata oluştu.'
+      error: 'Siteler getirilirken bir hata oluştu.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
@@ -192,6 +213,12 @@ export async function getSiteById(req, res) {
     const adminId = req.admin.id;
     const { siteId } = req.params;
 
+    console.log('🔍 Site detayı isteniyor:', {
+      adminId,
+      accountType: req.admin.account_type,
+      siteId
+    });
+
     if (!siteId) {
       return res.status(400).json({
         success: false,
@@ -200,6 +227,8 @@ export async function getSiteById(req, res) {
     }
 
     const site = await getSiteByIdService(adminId, siteId);
+
+    console.log('✅ Site detayları başarıyla getirildi:', siteId);
 
     return res.status(200).json({
       success: true,
@@ -210,7 +239,7 @@ export async function getSiteById(req, res) {
     });
 
   } catch (error) {
-    console.error('getSiteById controller hatası:', error);
+    console.error('❌ getSiteById controller hatası:', error);
 
     if (error.message.includes('SITE_ERROR')) {
       return res.status(404).json({
@@ -228,7 +257,8 @@ export async function getSiteById(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: 'Site detayları getirilirken bir hata oluştu.'
+      error: 'Site detayları getirilirken bir hata oluştu.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
@@ -243,6 +273,12 @@ export async function deleteSite(req, res) {
     const adminId = req.admin.id;
     const { siteId } = req.params;
 
+    console.log('🗑️ Site silme isteği:', {
+      adminId,
+      accountType: req.admin.account_type,
+      siteId
+    });
+
     if (!siteId) {
       return res.status(400).json({
         success: false,
@@ -252,13 +288,15 @@ export async function deleteSite(req, res) {
 
     const result = await deleteSiteService(adminId, siteId);
 
+    console.log('✅ Site başarıyla silindi:', siteId);
+
     return res.status(200).json({
       success: true,
       message: result.message
     });
 
   } catch (error) {
-    console.error('deleteSite controller hatası:', error);
+    console.error('❌ deleteSite controller hatası:', error);
 
     if (error.message.includes('SITE_ERROR')) {
       return res.status(404).json({
@@ -276,7 +314,8 @@ export async function deleteSite(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: 'Site silinirken bir hata oluştu.'
+      error: 'Site silinirken bir hata oluştu.',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 }
