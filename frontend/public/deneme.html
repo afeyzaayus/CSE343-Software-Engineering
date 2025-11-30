@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Panel</title>
+    <link rel="stylesheet" href="css/deneme.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo">🏢 Master Admin</div>
+        <div class="user-info">
+            <h3 id="userName">Admin</h3>
+            <p id="userRole">MASTER_ADMIN</p>
+        </div>
+        <nav>
+            <div class="nav-item active" data-tab="dashboard">📊 Dashboard</div>
+            <div class="nav-item" data-tab="companies">🏢 Şirketler</div>
+            <div class="nav-item" data-tab="admins">👤 Admin Kullanıcılar</div>
+            <div class="nav-item" data-tab="sites">🏠 Siteler</div>
+            <div class="nav-item" data-tab="users">👥 Site Kullanıcıları</div>
+            <div class="nav-item" data-tab="master-users">💻 Master Kullanıcılar</div>
+            <div class="nav-item logout">🚪 Çıkış</div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <div class="header">
+                <h1>Dashboard</h1>
+                <button class="btn btn-primary">🔄 Yenile</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Toplam Şirket</h3>
+                    <div class="value">0</div>
+                </div>
+
+                <div class="stat-card">
+                    <h3>Toplam Site</h3>
+                    <div class="value">0</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Site Kullanıcıları</h3>
+                    <div class="value">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Şirketler -->
+        <div id="companies" class="tab-content">
+            <div class="header">
+                <h1>Şirketler</h1>
+                <button class="btn btn-primary" onclick="openModal('companyModal')">➕ Yeni Şirket</button>
+            </div>
+
+            <div class="filters">
+                <input type="text" placeholder="Şirket ara..." class="search-box">
+                <select>
+                    <option>Tüm Durumlar</option>
+                    <option>ACTIVE</option>
+                    <option>SUSPENDED</option>
+                    <option>DELETED</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Şirket Adı</th>
+                        <th>Şirket Kodu</th>
+                        <th>Durum</th>
+                        <th>Oluşturma Tarihi</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="companiesTable">
+                    <tr>
+                        <td colspan="6" style="text-align: center;">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Admin Kullanıcılar -->
+        <div id="admins" class="tab-content">
+            <div class="header">
+                <h1>Admin Kullanıcılar</h1>
+                <button class="btn btn-primary" onclick="openModal('adminModal')">➕ Yeni Admin</button>
+            </div>
+
+            <div class="filters">
+                <input type="text" placeholder="Admin ara..." class="search-box">
+                <select>
+                    <option>Tüm Tipler</option>
+                    <option>INDIVIDUAL</option>
+                    <option>COMPANY_MANAGER</option>
+                    <option>COMPANY_EMPLOYEE</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ad Soyad</th>
+                        <th>Email</th>
+                        <th>Hesap Tipi</th>
+                        <th>Şirket</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="adminsTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Siteler -->
+        <div id="sites" class="tab-content">
+            <div class="header">
+                <h1>Siteler</h1>
+                <button class="btn btn-primary" onclick="openModal('siteModal')">➕ Yeni Site</button>
+            </div>
+
+            <div class="filters">
+                <input type="text" placeholder="Site ara..." class="search-box">
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Site Adı</th>
+                        <th>Adres</th>
+                        <th>Şirket</th>
+                        <th>Blok Sayısı</th>
+                        <th>Daire Sayısı</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="sitesTable">
+                    <tr>
+                        <td colspan="8" style="text-align: center;">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Site Kullanıcıları -->
+        <div id="users" class="tab-content">
+            <div class="header">
+                <h1>Site Kullanıcıları</h1>
+            </div>
+
+            <div class="filters">
+                <input type="text" placeholder="Kullanıcı ara..." class="search-box">
+                <select>
+                    <option>Tüm Siteler</option>
+                </select>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ad Soyad</th>
+                        <th>Telefon</th>
+                        <th>Site</th>
+                        <th>Blok</th>
+                        <th>Daire No</th>
+                        <th>Durum</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="usersTable">
+                    <tr>
+                        <td colspan="8" style="text-align: center;">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Master Kullanıcılar -->
+        <div id="master-users" class="tab-content">
+            <div class="header">
+                <h1>Master Kullanıcılar</h1>
+                <button class="btn btn-primary" onclick="openModal('masterUserModal')">➕ Yeni Master User</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Ad Soyad</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Durum</th>
+                        <th>Son Giriş</th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody id="masterUsersTable">
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Veri yükleniyor...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Şirket</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Şirket Adı</label>
+                    <input type="text" name="company_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Şirket Kodu</label>
+                    <input type="text" name="company_code" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Admin</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" name="full_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label>Hesap Tipi</label>
+                    <select name="account_type" required>
+                        <option value="INDIVIDUAL">Bireysel</option>
+                        <option value="COMPANY_MANAGER">Şirket Yöneticisi</option>
+                        <option value="COMPANY_EMPLOYEE">Şirket Çalışanı</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="siteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Site</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Site Adı</label>
+                    <input type="text" name="site_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Site Adresi</label>
+                    <textarea name="site_address" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Şirket</label>
+                    <select name="company_id">
+                        <option value="">Şirket Seçin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="masterUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Master Kullanıcı</h2>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form>
+                <div class="form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" name="full_name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Şifre</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label>Rol</label>
+                    <select name="master_role" required>
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="MASTER_ADMIN">Master Admin</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary close-modal">İptal</button>
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/deneme.js"></script>
+</body>
+</html>

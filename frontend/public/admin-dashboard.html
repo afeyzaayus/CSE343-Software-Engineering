@@ -71,7 +71,7 @@
         </div>
 
         <!-- Tab Navigasyon -->
-        <div class="tab-navigation">
+        <div class="tab-navigation" id="tabNavigation">
             <button class="tab-btn active" onclick="switchTab('sites')">
                 <span>🏠</span>
                 Siteler
@@ -99,10 +99,25 @@
 
         <!-- Çalışanlar Tab -->
         <div id="employeesTab" class="tab-content">
-            <div class="empty-state">
-                <div class="empty-icon">👥</div>
-                <h3>Çalışanlar Bölümü</h3>
-                <p>Çalışan yönetimi ve davet sistemi yakında aktif olacak</p>
+            <div class="section-header">
+                <h2 class="section-title">Çalışan Yönetimi</h2>
+                <button class="create-site-btn" onclick="openInviteModal()">
+                    <span>+</span>
+                    Çalışan Davet Et
+                </button>
+            </div>
+
+            <!-- Çalışan Listesi -->
+            <div id="employeeList" class="site-list">
+                <!-- Çalışanlar buraya gelecek -->
+            </div>
+
+            <!-- Bekleyen Davetler -->
+            <div style="margin-top: 40px;">
+                <h3 style="color: #333; margin-bottom: 20px;">📨 Bekleyen Davetler</h3>
+                <div id="invitationList" class="invitation-list">
+                    <!-- Davetler buraya gelecek -->
+                </div>
             </div>
         </div>
     </div>
@@ -117,29 +132,96 @@
         </div>
         <div class="modal-body">
             <form id="createSiteForm">
+                
                 <div class="form-group">
                     <label>Site ID *</label>
                     <input type="text" id="siteId" placeholder="Örn: SITE001" required>
                 </div>
+
                 <div class="form-group">
                     <label>Site Adı *</label>
                     <input type="text" id="siteName" placeholder="Örn: Yeşil Vadi Sitesi" required>
                 </div>
+
                 <div class="form-group">
                     <label>Site Adresi *</label>
                     <input type="text" id="siteAddress" placeholder="Örn: Kadıköy, İstanbul" required>
                 </div>
-                <div class="form-group">
-                    <label>Blok Sayısı</label>
-                    <input type="number" id="blockCount" placeholder="Örn: 5" min="1" value="1">
+
+                <div class="info-box">
+                    <p>ℹ️ Site oluşturulduğunda blok ve daire sayıları 0 olarak başlatılır.</p>
+                    <p>Bloklar ekledikçe bu sayılar otomatik olarak güncellenecektir.</p>
                 </div>
-                <div class="form-group">
-                    <label>Daire Sayısı (Her Blokta)</label>
-                    <input type="number" id="apartmentCount" placeholder="Örn: 20" min="1" value="10">
-                </div>
+
                 <div class="modal-actions">
                     <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">İptal</button>
                     <button type="submit" class="btn btn-primary">✨ Site Oluştur</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Site Modal -->
+<div class="modal" id="editModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>✏️ Siteyi Düzenle</h3>
+            <button class="modal-close" onclick="closeEditModal()">×</button>
+        </div>
+
+        <div class="modal-body">
+            <form id="editSiteForm">
+
+                <div class="form-group">
+                    <label>Site ID (Değiştirilemez)</label>
+                    <input type="text" id="editSiteId" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Site Adı</label>
+                    <input type="text" id="editSiteName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Site Adresi</label>
+                    <input type="text" id="editSiteAddress" required>
+                </div>
+
+                <div class="info-box">
+                    <p>ℹ️ Blok ve daire sayıları blok yönetiminden otomatik güncellenir.</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Çalışan Davet Modalı -->
+<div class="modal" id="inviteModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>✉️ Çalışan Davet Et</h3>
+            <button class="modal-close" onclick="closeInviteModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="inviteEmployeeForm">
+                <div class="form-group">
+                    <label>Çalışan Email Adresi *</label>
+                    <input type="email" id="employeeEmail" placeholder="ornek@email.com" required>
+                    <small style="color: #999; display: block; margin-top: 8px;">
+                        Bu email adresine davet linki gönderilecek
+                    </small>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeInviteModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary">📧 Davet Gönder</button>
                 </div>
             </form>
         </div>

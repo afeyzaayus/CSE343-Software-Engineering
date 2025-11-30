@@ -2,9 +2,12 @@ import express from 'express';
 import {
   getCompanyByManager,
   updateCompany,
-  getCompanyEmployees
+  getCompanyEmployees,
+  suspendEmployee,      // ✅ Eklendi
+  activateEmployee,     // ✅ Eklendi
+  deleteEmployee        // ✅ Eklendi
 } from '../controller/company.controller.js';
-import { verifyAdminToken } from '../../auth/middleware/adminAuth.middleware.js';
+import { verifyAdminToken, requireCompanyManager } from '../../auth/middleware/adminAuth.middleware.js';
 
 const router = express.Router();
 
@@ -12,7 +15,6 @@ const router = express.Router();
 
 /**
  * Tüm route'lar için authentication kontrolü
- * COMPANY_MANAGER rolü kontrolü controller içinde yapılıyor
  */
 router.use(verifyAdminToken);
 
@@ -31,11 +33,34 @@ router.get('/', getCompanyByManager);
  */
 router.put('/', updateCompany);
 
+// ==================== Çalışan Yönetimi ====================
+
+router.get('/employees', (req, res, next) => {
+  console.log('🎯 ROUTE ÇALIŞTI: GET /api/company/employees');
+  console.log('👤 req.admin:', req.admin);
+  next();
+}, requireCompanyManager, getCompanyEmployees);
+
+
 /**
- * @route   GET /api/company/employees
- * @desc    Şirket çalışanlarını listele (atanmış siteler dahil)
+ * @route   PUT /api/company/employees/:id/suspend
+ * @desc    Çalışanı askıya al
  * @access  Private (COMPANY_MANAGER)
  */
-router.get('/employees', getCompanyEmployees);
+router.put('/employees/:id/suspend', requireCompanyManager, suspendEmployee);
+
+/**
+ * @route   PUT /api/company/employees/:id/activate
+ * @desc    Çalışanı aktif et
+ * @access  Private (COMPANY_MANAGER)
+ */
+router.put('/employees/:id/activate', requireCompanyManager, activateEmployee);
+
+/**
+ * @route   DELETE /api/company/employees/:id
+ * @desc    Çalışanı sil (soft delete)
+ * @access  Private (COMPANY_MANAGER)
+ */
+router.delete('/employees/:id', requireCompanyManager, deleteEmployee);
 
 export default router;

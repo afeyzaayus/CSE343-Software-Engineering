@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Çalışan Kaydı - Site Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/register-employee.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Company Banner -->
+        <div class="company-info-banner" id="companyInfoBanner">
+            <div class="company-icon">🏢</div>
+            <div class="company-details">
+                <h3 id="companyName">Şirket Adı</h3>
+                <p id="companyCode">Kod: ABC123</p>
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="form-content" id="employeeRegisterForm">
+            <div class="form-header">
+                <h2>Çalışan Kaydı</h2>
+                <p>Davet linkiniz ile hesabınızı oluşturun</p>
+            </div>
+
+            <form id="individual-form">
+                <div class="form-group">
+                    <label for="fullName">Tam Ad</label>
+                    <input type="text" id="fullName" placeholder="Ad Soyad" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">E-posta</label>
+                    <input type="email" id="email" placeholder="ornek@sirket.com" required autocomplete="email">
+                    <small class="form-help" id="emailHelp"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Şifre</label>
+                    <input type="password" id="password" placeholder="En az 6 karakter" required>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="individual-strength-bar"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Şifre Tekrar</label>
+                    <input type="password" id="confirmPassword" placeholder="Şifrenizi tekrar girin" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">✨ Kayıt Ol</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/register-employee.js"></script>
+</body>
+</html>

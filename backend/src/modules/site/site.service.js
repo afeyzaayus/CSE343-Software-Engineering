@@ -1,19 +1,14 @@
-import prisma from '../../../prisma/prismaClient.js';
-import { validateSiteId } from '../../../shared/validation.service.js';
-import { createBlocksForSite, recreateBlocksForSite } from './block.service.js';
+import prisma from '../../prisma/prismaClient.js';
+import { validateSiteId } from '../../shared/validation.service.js';
 
 /**
  * Site oluşturma
- * site_id frontend'den gelecek
- * block_count varsa otomatik bloklar oluşturulacak
  */
 export async function createSiteService(adminId, siteData) {
-  const { site_id, site_name, site_address, block_count, apartment_count } = siteData;
+  const { site_id, site_name, site_address } = siteData;
 
-  // site_id validasyonu
   validateSiteId(site_id, 4);
 
-  // Site ID çakışması kontrolü
   const existingSite = await prisma.site.findUnique({ where: { site_id } });
   if (existingSite) throw new Error('SITE_ERROR: Bu Site ID zaten kullanılıyor.');
 
@@ -37,33 +32,20 @@ export async function createSiteService(adminId, siteData) {
     companyId = admin.company.id;
   }
 
-  // Transaction ile Site ve Blokları birlikte oluştur
-  const result = await prisma.$transaction(async (tx) => {
-    // Yeni site oluştur
-    const newSite = await tx.site.create({
-      data: {
-        site_id,
-        site_name,
-        site_address,
-        block_count: block_count || null,
-        apartment_count: apartment_count || null,
-        site_status: 'ACTIVE',
-        adminId: admin.id,
-        company_id: companyId  // ← Site modelinde company_id (snake_case)
-      }
-    });
-
-    // Eğer block_count varsa blokları otomatik oluştur
-    const blocks = await createBlocksForSite(newSite.id, block_count, tx);
-
-    return { newSite, blocks };
+  const newSite = await prisma.site.create({
+    data: {
+      site_id,
+      site_name,
+      site_address,
+      site_status: 'ACTIVE',
+      adminId: admin.id,
+      company_id: companyId
+    }
   });
 
   return {
     message: 'Site başarıyla oluşturuldu.',
-    site: result.newSite,
-    blocks: result.blocks,
-    blockCount: result.blocks.length
+    site: newSite
   };
 }
 
@@ -119,7 +101,7 @@ export async function getSitesService(adminId, filters) {
 
     sites = await prisma.site.findMany({
       where: {
-        company_id: admin.companyId,  // ← Admin'den companyId, Site'de company_id
+        company_id: admin.companyId,
         deleted_at: null
       },
       include: {
@@ -129,7 +111,7 @@ export async function getSitesService(adminId, filters) {
             email: true
           }
         },
-        companies: {  // ← Site modelinde relation adı 'companies'
+        companies: {
           select: {
             company_name: true,
             company_code: true
@@ -150,23 +132,87 @@ export async function getSitesService(adminId, filters) {
 
   // 3. COMPANY_EMPLOYEE → şirketine bağlı tüm siteler
   else if (admin.account_type === "COMPANY_EMPLOYEE") {
-    const employeeRecord = await prisma.company_employee.findFirst({
-      where: {
-        admin_id: admin.id,
-        deleted_at: null
-      },
-      include: {
-        company: true
-      }
-    });
+    console.log('🔍 COMPANY_EMPLOYEE için site listesi alınıyor...');
+    
+    let companyIdToUse = null;
 
-    if (!employeeRecord) {
-      throw new Error("AUTH_ERROR: Çalışan kaydı bulunamadı.");
+    // ÖNCE: Admin tablosunda companyId var mı kontrol et
+    if (admin.companyId) {
+      console.log('✅ Admin.companyId bulundu:', admin.companyId);
+      companyIdToUse = admin.companyId;
+    } 
+    // Yoksa: company_employees tablosundan şirket ID'sini al
+    else {
+      console.log('⚠️ Admin.companyId yok, company_employees tablosundan aranıyor...');
+      
+      // ✅ ÇÖZÜM: Her ihtimali dene
+      let employeeRecord = null;
+      
+      try {
+        // İlk deneme: company_employees (snake_case - veritabanı adı)
+        if (prisma.company_employees) {
+          console.log('🧪 Deneme 1: prisma.company_employees');
+          employeeRecord = await prisma.company_employees.findFirst({
+            where: {
+              admin_id: admin.id,
+              deleted_at: null
+            }
+          });
+        }
+      } catch (err) {
+        console.log('❌ company_employees çalışmadı:', err.message);
+      }
+
+      if (!employeeRecord) {
+        try {
+          // İkinci deneme: companyEmployee (camelCase tekil)
+          if (prisma.companyEmployee) {
+            console.log('🧪 Deneme 2: prisma.companyEmployee');
+            employeeRecord = await prisma.companyEmployee.findFirst({
+              where: {
+                admin_id: admin.id,
+                deleted_at: null
+              }
+            });
+          }
+        } catch (err) {
+          console.log('❌ companyEmployee çalışmadı:', err.message);
+        }
+      }
+
+      if (!employeeRecord) {
+        try {
+          // Üçüncü deneme: companyEmployees (camelCase çoğul)
+          if (prisma.companyEmployees) {
+            console.log('🧪 Deneme 3: prisma.companyEmployees');
+            employeeRecord = await prisma.companyEmployees.findFirst({
+              where: {
+                admin_id: admin.id,
+                deleted_at: null
+              }
+            });
+          }
+        } catch (err) {
+          console.log('❌ companyEmployees çalışmadı:', err.message);
+        }
+      }
+
+      if (!employeeRecord) {
+        // Tüm Prisma modellerini logla
+        const allModels = Object.keys(prisma).filter(k => !k.startsWith('_') && !k.startsWith('$'));
+        console.log('❌ Hiçbir model çalışmadı! Mevcut modeller:', allModels);
+        
+        throw new Error("AUTH_ERROR: Çalışan kaydı bulunamadı. Sistem yapılandırması hatalı.");
+      }
+
+      companyIdToUse = employeeRecord.company_id;
+      console.log('✅ Çalışan kaydı bulundu, company_id:', companyIdToUse);
     }
 
+    // Şirkete ait siteleri getir
     sites = await prisma.site.findMany({
       where: {
-        company_id: employeeRecord.company_id,
+        company_id: companyIdToUse,
         deleted_at: null
       },
       include: {
@@ -176,7 +222,7 @@ export async function getSitesService(adminId, filters) {
             email: true
           }
         },
-        companies: {  // ← Site modelinde relation adı 'companies'
+        companies: {
           select: {
             company_name: true,
             company_code: true
@@ -206,7 +252,7 @@ export async function getSitesService(adminId, filters) {
             email: true
           }
         },
-        companies: {  // ← Site modelinde relation adı 'companies'
+        companies: {
           select: {
             company_name: true,
             company_code: true
@@ -243,22 +289,18 @@ export async function getSitesService(adminId, filters) {
 }
 
 /**
- * Site güncelleme (blok sayısı değişirse blokları yeniden oluştur)
+ * Site güncelleme
  */
 export async function updateSiteService(adminId, site_id, updateData) {
-  const { site_name, site_address, block_count, apartment_count } = updateData;
+  const { site_name, site_address } = updateData;
 
   const site = await prisma.site.findUnique({
-    where: { site_id },
-    include: {
-      blocks: { where: { deleted_at: null } }
-    }
+    where: { site_id }
   });
 
   if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
   if (site.deleted_at) throw new Error('SITE_ERROR: Bu site silinmiş.');
 
-  // Yetki kontrolü
   const admin = await prisma.admin.findUnique({ 
     where: { id: adminId },
     include: {
@@ -268,41 +310,26 @@ export async function updateSiteService(adminId, site_id, updateData) {
 
   if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
 
-  // COMPANY_EMPLOYEE düzenleyemez
   if (admin.account_type === 'COMPANY_EMPLOYEE') {
     throw new Error('AUTH_ERROR: Şirket çalışanları site düzenleyemez.');
   }
 
-  // INDIVIDUAL sadece kendi sitelerini düzenleyebilir
   if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
     throw new Error('AUTH_ERROR: Bu siteyi güncelleme yetkiniz yok.');
   }
 
-  // COMPANY_MANAGER sadece şirketinin sitelerini düzenleyebilir
   if (admin.account_type === 'COMPANY_MANAGER') {
     if (!admin.companyId || site.company_id !== admin.companyId) {
       throw new Error('AUTH_ERROR: Bu siteyi güncelleme yetkiniz yok.');
     }
   }
 
-  // SUPER_ADMIN her şeyi düzenleyebilir
-
-  await prisma.$transaction(async (tx) => {
-    // Site bilgilerini güncelle
-    await tx.site.update({
-      where: { site_id },
-      data: {
-        site_name: site_name || site.site_name,
-        site_address: site_address || site.site_address,
-        block_count: block_count !== undefined ? block_count : site.block_count,
-        apartment_count: apartment_count !== undefined ? apartment_count : site.apartment_count,
-        updated_at: new Date()
-      }
-    });
-
-    // Eğer block_count değiştiyse blokları yeniden oluştur
-    if (block_count !== undefined && block_count !== site.block_count) {
-      await recreateBlocksForSite(site_id, block_count, tx);
+  await prisma.site.update({
+    where: { site_id },
+    data: {
+      site_name: site_name || site.site_name,
+      site_address: site_address || site.site_address,
+      updated_at: new Date()
     }
   });
 
@@ -320,7 +347,6 @@ export async function deleteSiteService(adminId, site_id) {
   if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
   if (site.deleted_at) throw new Error('SITE_ERROR: Bu site zaten silinmiş.');
 
-  // Yetki kontrolü
   const admin = await prisma.admin.findUnique({ 
     where: { id: adminId },
     include: {
@@ -330,37 +356,32 @@ export async function deleteSiteService(adminId, site_id) {
 
   if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
 
-  // COMPANY_EMPLOYEE silemez
   if (admin.account_type === 'COMPANY_EMPLOYEE') {
     throw new Error('AUTH_ERROR: Şirket çalışanları site silemez.');
   }
 
-  // INDIVIDUAL sadece kendi sitelerini silebilir
   if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
     throw new Error('AUTH_ERROR: Bu siteyi silme yetkiniz yok.');
   }
 
-  // COMPANY_MANAGER sadece şirketinin sitelerini silebilir
   if (admin.account_type === 'COMPANY_MANAGER') {
     if (!admin.companyId || site.company_id !== admin.companyId) {
       throw new Error('AUTH_ERROR: Bu siteyi silme yetkiniz yok.');
     }
   }
 
-  // SUPER_ADMIN her şeyi silebilir
-
   await prisma.site.update({
     where: { site_id },
     data: {
-      deleted_at: new Date()
+      deleted_at: new Date(),
+      site_status: 'DELETED'  // ✅ Eklendi
     }
   });
 
   return { message: 'Site başarıyla silindi.' };
 }
-
 /**
- * Tek bir site detayı getir (bloklar, kullanıcılar dahil)
+ * Tek bir site detayı getir
  */
 export async function getSiteByIdService(adminId, site_id) {
   const site = await prisma.site.findUnique({
@@ -373,7 +394,7 @@ export async function getSiteByIdService(adminId, site_id) {
           account_type: true
         }
       },
-      companies: {  // ← Site modelinde relation adı 'companies'
+      companies: {
         select: {
           company_name: true,
           company_code: true
@@ -411,7 +432,6 @@ export async function getSiteByIdService(adminId, site_id) {
   if (!site) throw new Error('SITE_ERROR: Site bulunamadı.');
   if (site.deleted_at) throw new Error('SITE_ERROR: Bu site silinmiş.');
 
-  // Yetki kontrolü
   const admin = await prisma.admin.findUnique({ 
     where: { id: adminId },
     include: {
@@ -421,23 +441,40 @@ export async function getSiteByIdService(adminId, site_id) {
 
   if (!admin) throw new Error('AUTH_ERROR: Admin bulunamadı.');
 
-  // INDIVIDUAL sadece kendi sitelerini görebilir
   if (admin.account_type === 'INDIVIDUAL' && site.adminId !== adminId) {
     throw new Error('AUTH_ERROR: Bu siteyi görüntüleme yetkiniz yok.');
   }
 
-  // COMPANY_MANAGER ve COMPANY_EMPLOYEE şirketlerinin sitelerini görebilir
   if (admin.account_type === 'COMPANY_MANAGER' || admin.account_type === 'COMPANY_EMPLOYEE') {
     let companyId = admin.companyId;
 
-    // COMPANY_EMPLOYEE ise company_employee tablosundan şirket ID'sini al
-    if (admin.account_type === 'COMPANY_EMPLOYEE') {
-      const employeeRecord = await prisma.company_employee.findFirst({
-        where: {
-          admin_id: admin.id,
-          deleted_at: null
-        }
-      });
+    if (admin.account_type === 'COMPANY_EMPLOYEE' && !companyId) {
+      // Aynı fallback mantığı
+      let employeeRecord = null;
+      
+      if (prisma.company_employees) {
+        try {
+          employeeRecord = await prisma.company_employees.findFirst({
+            where: { admin_id: admin.id, deleted_at: null }
+          });
+        } catch (err) {}
+      }
+      
+      if (!employeeRecord && prisma.companyEmployee) {
+        try {
+          employeeRecord = await prisma.companyEmployee.findFirst({
+            where: { admin_id: admin.id, deleted_at: null }
+          });
+        } catch (err) {}
+      }
+      
+      if (!employeeRecord && prisma.companyEmployees) {
+        try {
+          employeeRecord = await prisma.companyEmployees.findFirst({
+            where: { admin_id: admin.id, deleted_at: null }
+          });
+        } catch (err) {}
+      }
 
       if (!employeeRecord) {
         throw new Error('AUTH_ERROR: Çalışan kaydı bulunamadı.');
@@ -450,8 +487,6 @@ export async function getSiteByIdService(adminId, site_id) {
       throw new Error('AUTH_ERROR: Bu siteyi görüntüleme yetkiniz yok.');
     }
   }
-
-  // SUPER_ADMIN her şeyi görebilir
 
   return site;
 }

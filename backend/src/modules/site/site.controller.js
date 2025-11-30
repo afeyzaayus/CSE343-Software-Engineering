@@ -4,17 +4,17 @@ import {
   getSitesService,
   getSiteByIdService,
   deleteSiteService
-} from '../../../index.js';
+} from '../../index.js';
 
 export async function createSite(req, res) {
   try {
     const adminId = req.admin.id; // Middleware'den gelir
-    const { site_id, site_name, site_address, block_count, apartment_count } = req.body;
+    const { site_id, site_name, site_address } = req.body;
 
     console.log('📝 Site oluşturma isteği:', {
       adminId,
       accountType: req.admin.account_type,
-      siteData: { site_id, site_name, site_address, block_count, apartment_count }
+      siteData: { site_id, site_name, site_address }
     });
 
     // Validation
@@ -28,9 +28,7 @@ export async function createSite(req, res) {
     const result = await createSiteService(adminId, {
       site_id,
       site_name,
-      site_address,
-      block_count: block_count || 0,
-      apartment_count: apartment_count || 0
+      site_address
     });
 
     console.log('✅ Site başarıyla oluşturuldu:', result.site.site_id);
@@ -39,9 +37,7 @@ export async function createSite(req, res) {
       success: true,
       message: result.message,
       data: {
-        site: result.site,
-        blocks: result.blocks,
-        blockCount: result.blockCount
+        site: result.site
       }
     });
 
@@ -93,13 +89,13 @@ export async function updateSite(req, res) {
   try {
     const adminId = req.admin.id;
     const { siteId } = req.params;
-    const { site_name, site_address, block_count, apartment_count } = req.body;
+    const { site_name, site_address } = req.body;
 
     console.log('✏️ Site güncelleme isteği:', {
       adminId,
       accountType: req.admin.account_type,
       siteId,
-      updateData: { site_name, site_address, block_count, apartment_count }
+      updateData: { site_name, site_address }
     });
 
     if (!siteId) {
@@ -111,9 +107,7 @@ export async function updateSite(req, res) {
 
     const result = await updateSiteService(adminId, siteId, {
       site_name,
-      site_address,
-      block_count,
-      apartment_count
+      site_address
     });
 
     console.log('✅ Site başarıyla güncellendi:', siteId);

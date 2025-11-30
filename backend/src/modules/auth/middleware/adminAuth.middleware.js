@@ -3,38 +3,28 @@ import jwt from 'jsonwebtoken';
 import prisma from '../../../prisma/prismaClient.js';
 
 /**
- * Admin token doğrulama middleware
+ * Token doğrulama middleware
  */
-export async function verifyAdminToken(req, res, next) {
+export const verifyAdminToken = async (req, res, next) => {
   try {
-    // Token'ı farklı yerlerden almayı dene
-    let token = req.headers.authorization?.split(' ')[1]; // "Bearer TOKEN"
+    // Token'ı header'dan al
+    const authHeader = req.headers.authorization;
     
-    if (!token) {
-      token = req.headers.authorization; // Sadece "TOKEN"
-    }
-    
-    if (!token) {
-      token = req.cookies?.adminToken; // Cookie'den
-    }
-
-    console.log('🔍 Token kontrol:', {
-      authorization: req.headers.authorization,
-      cookie: req.cookies?.adminToken,
-      token: token ? 'Bulundu' : 'Bulunamadı'
-    });
-
-    if (!token) {
-      return res.status(401).json({ 
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
         success: false,
-        error: 'Yetkilendirme token\'ı bulunamadı.' 
+        error: 'Token bulunamadı. Lütfen giriş yapın.'
       });
     }
 
+    const token = authHeader.split(' ')[1];
+
+    // Token'ı doğrula
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log('✅ Token decoded:', decoded);
     
-    // Admin kontrolü - companyId CAMELCASE!
+    console.log('🔍 Token decoded:', decoded);
+
+    // ✅ Admin bilgilerini database'den al (company_id dahil)
     const admin = await prisma.admin.findUnique({
       where: { id: decoded.id },
       select: {
@@ -42,102 +32,97 @@ export async function verifyAdminToken(req, res, next) {
         email: true,
         full_name: true,
         account_type: true,
-        account_status: true,
-        is_verified: true,
-        deleted_at: true,
-        companyId: true,  // ← CAMELCASE!
-        company: {
-          select: {
-            id: true,
-            company_name: true,
-            company_code: true
-          }
-        }
+        companyId: true, // ✅ Prisma schema'daki alan adı
+        company_code: true,
+        company_name: true,
+        account_status: true
       }
     });
 
-    console.log('🔍 Admin sorgusu:', admin);
-
-    if (!admin || admin.deleted_at) {
-      return res.status(401).json({ 
+    if (!admin) {
+      return res.status(401).json({
         success: false,
-        error: 'Geçersiz token.' 
+        error: 'Kullanıcı bulunamadı'
       });
     }
 
     if (admin.account_status !== 'ACTIVE') {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        error: 'Hesabınız aktif değil.' 
+        error: 'Hesabınız aktif değil'
       });
     }
 
-    if (!admin.is_verified) {
-      return res.status(403).json({ 
-        success: false,
-        error: 'E-posta doğrulaması yapılmamış.' 
-      });
-    }
-
-    // Request'e admin bilgisini ekle
+    // ✅ req.admin nesnesini düzgün şekilde oluştur
     req.admin = {
       id: admin.id,
       email: admin.email,
       full_name: admin.full_name,
       account_type: admin.account_type,
-      companyId: admin.companyId,  // ← CAMELCASE!
-      company: admin.company
+      company_id: admin.companyId, // ✅ Prisma'dan gelen companyId'yi company_id olarak ekle
+      company_code: admin.company_code,
+      company_name: admin.company_name
     };
 
-    console.log('👤 Admin authenticated:', req.admin);
+    console.log('✅ req.admin oluşturuldu:', req.admin);
 
     next();
   } catch (error) {
-    console.error('❌ Token verification error:', error);
+    console.error('❌ Token doğrulama hatası:', error);
 
     if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Geçersiz token.' 
+        error: 'Geçersiz token'
       });
     }
-    
+
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Token süresi dolmuş.' 
+        error: 'Token süresi dolmuş. Lütfen tekrar giriş yapın.'
       });
     }
-    
-    return res.status(500).json({ 
+
+    return res.status(500).json({
       success: false,
-      error: 'Token doğrulama hatası.' 
+      error: 'Token doğrulama hatası'
     });
   }
-}
+};
 
 /**
- * Sadece COMPANY_MANAGER yetkisi kontrolü
+ * Company Manager yetkisi kontrolü
  */
-export function requireCompanyManager(req, res, next) {
+export const requireCompanyManager = (req, res, next) => {
+  console.log('🔐 requireCompanyManager middleware çalıştı');
+  console.log('👤 req.admin:', req.admin);
+
+  if (!req.admin) {
+    console.error('❌ req.admin yok!');
+    return res.status(401).json({
+      success: false,
+      error: 'Yetkilendirme bilgisi bulunamadı'
+    });
+  }
+
   if (req.admin.account_type !== 'COMPANY_MANAGER') {
-    return res.status(403).json({ 
+    console.error('❌ Yetki yok:', req.admin.account_type);
+    return res.status(403).json({
       success: false,
-      error: 'Bu işlem için şirket yöneticisi olmalısınız.' 
+      error: 'Bu işlem için Şirket Yöneticisi yetkisi gereklidir'
     });
   }
-  next();
-}
 
-/**
- * Sadece INDIVIDUAL veya COMPANY_MANAGER
- */
-export function requireAdminAccess(req, res, next) {
-  if (!['INDIVIDUAL', 'COMPANY_MANAGER'].includes(req.admin.account_type)) {
-    return res.status(403).json({ 
+  if (!req.admin.company_id) {
+    console.error('❌ company_id yok!');
+    return res.status(403).json({
       success: false,
-      error: 'Yetkisiz erişim.' 
+      error: 'Şirket bilgisi bulunamadı'
     });
   }
+
+  console.log('✅ Yetki kontrolü başarılı');
   next();
-}
+};
+

@@ -5,8 +5,8 @@ import {
   getSites,
   getSiteById,
   deleteSite
-} from '../controller/site.controller.js';
-import { verifyAdminToken } from '../../auth/middleware/adminAuth.middleware.js';
+} from './site.controller.js';
+import { verifyAdminToken } from '../auth/middleware/adminAuth.middleware.js';
 
 const router = express.Router();
 
@@ -24,12 +24,12 @@ const router = express.Router();
 router.get('/', verifyAdminToken, getSites);
 
 /**
- * @route   POST /api/sites/create
- * @desc    Site oluşturma (bloklar otomatik oluşturulur)
+ * @route   POST /api/sites
+ * @desc    Site oluşturma
  * @access  Private (Admin only - COMPANY_EMPLOYEE hariç)
- * @body    { site_id: string, site_name: string, site_address: string, block_count?: number, apartment_count?: number }
+ * @body    { site_id: string, site_name: string, site_address: string }
  */
-router.post('/create', verifyAdminToken, createSite);
+router.post('/', verifyAdminToken, createSite);
 
 /**
  * @route   GET /api/sites/:siteId
@@ -40,9 +40,9 @@ router.get('/:siteId', verifyAdminToken, getSiteById);
 
 /**
  * @route   PUT /api/sites/:siteId
- * @desc    Site güncelleme (block_count değişirse bloklar yeniden oluşturulur)
+ * @desc    Site güncelleme
  * @access  Private (Admin only - COMPANY_EMPLOYEE düzenleyemez)
- * @body    { site_name?: string, site_address?: string, block_count?: number, apartment_count?: number }
+ * @body    { site_name?: string, site_address?: string }
  */
 router.put('/:siteId', verifyAdminToken, updateSite);
 

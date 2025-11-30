@@ -600,3 +600,294 @@
                 align-items: flex-start;
             }
         }
+
+        /* Invitation List */
+.invitation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.invitation-card {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.invitation-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+
+.invitation-card code {
+    background: #f5f5f5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    color: #667eea;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.invitation-card strong {
+    color: #333;
+    font-size: 15px;
+}
+
+.invitation-card p {
+    margin: 5px 0;
+}
+
+/* Site Badge güncelleme */
+.site-badge.active {
+    background: #d4edda;
+    color: #155724;
+
+}
+
+.site-badge.inactive {
+    background: #ccc;
+}
+
+/* Davet Silme Butonu */
+.btn-delete-invite {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.btn-delete-invite:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete-invite:active {
+    transform: translateY(0);
+}
+
+/* Davet Kartı Düzenlemesi */
+.invitation-card {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+}
+
+.invitation-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #2563eb;
+}
+
+/* Responsive düzenleme */
+@media (max-width: 768px) {
+    .invitation-card > div {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .invitation-card > div > div:last-child {
+        margin-top: 10px;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+}
+
+/* admin-dashboard.css dosyanıza ekleyin */
+
+/* Suspended (Askıda) badge */
+.site-badge.suspended {
+    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+    color: white;
+    font-weight: 600;
+}
+
+/* Secondary button (Askıya Al) */
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* Primary button (Aktif Et) - zaten var ama emin olmak için */
+.btn-primary {
+    background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(46, 134, 193, 0.3);
+}
+
+/* Delete button - zaten var ama güncellenmiş hali */
+.btn-delete {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+}
+
+/* Site actions container */
+.site-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.site-actions button {
+    flex: 1;
+    min-width: 120px;
+}
+
+/* Responsive - mobil için */
+@media (max-width: 600px) {
+    .site-actions {
+        flex-direction: column;
+    }
+    
+    .site-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+/* Responsive - mobil için */
+@media (max-width: 600px) {
+    .site-actions {
+        flex-direction: column;
+    }
+    
+    .site-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+}
+
+/* Edit Modal Özel Stilleri */
+.modal-dialog.edit-modal {
+    max-width: 700px;
+}
+
+.edit-modal .modal-header {
+    background: linear-gradient(135deg, #1a5276, #2e86c1);
+    color: white;
+    border-radius: 20px 20px 0 0;
+}
+
+.edit-modal .modal-header h3 {
+    color: white;
+}
+
+.edit-modal .modal-close {
+    color: white;
+    opacity: 0.9;
+}
+
+.edit-modal .modal-close:hover {
+    opacity: 1;
+}
+
+.edit-modal .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.edit-modal .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.edit-modal input:focus,
+.edit-modal select:focus {
+    border-color: #2e86c1;
+    box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.1);
+}
+
+.edit-modal .modal-actions {
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.edit-modal .btn-primary {
+    background: linear-gradient(135deg, #2e86c1, #3498db);
+    flex: 2;
+}
+
+.edit-modal .btn-secondary {
+    background: #f0f2f5;
+    color: #666;
+    flex: 1;
+}
+
+.edit-modal .btn-secondary:hover {
+    background: #e8eaed;
+    color: #333;
+}
+
+/* Form İkon Desteği */
+.form-group-icon {
+    position: relative;
+}
+
+.form-group-icon input {
+    padding-left: 45px;
+}
+
+.form-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .edit-modal .form-row {
+        grid-template-columns: 1fr;
+    }
+}

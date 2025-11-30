@@ -8,7 +8,7 @@ const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !selectedSite) {
         // Kullanıcı veya site seçimi yoksa login sayfasına yönlendir
-        window.location.href = 'index.html';
+        window.location.href = 'login.html';
         return;
     }
 
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     logoutBtn.addEventListener('click', () => {
         localStorage.removeItem('currentUser');
         localStorage.removeItem('selectedSite');
-        window.location.href = 'index.html';
+        window.location.href = 'admin-dashboard.html';
     });
 
     // Dashboard verilerini yükle

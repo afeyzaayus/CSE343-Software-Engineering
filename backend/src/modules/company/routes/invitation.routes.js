@@ -2,7 +2,9 @@ import express from 'express';
 import {
   createEmployeeInvitation,
   acceptEmployeeInvitation,
-  getCompanyInvitations
+  getCompanyInvitations,
+  deleteInvitation,
+  verifyEmployeeInvitation
 } from '../controller/invitation.controller.js';
 import { verifyAdminToken, requireCompanyManager } from '../../auth/middleware/adminAuth.middleware.js';
 
@@ -40,5 +42,22 @@ router.get(
   requireCompanyManager,
   getCompanyInvitations
 );
+
+
+/**
+ * @route   DELETE /api/company/invitations/:id
+ * @desc    Daveti sil
+ * @access  Private (Company Manager only)
+ * ⚠️ DÜZELTİLDİ: '/invitations/:id' yerine '/:id' kullanıldı
+ */
+// DELETE /api/company/invitations/:id
+router.delete('/:id', verifyAdminToken, requireCompanyManager, deleteInvitation);
+
+/**
+ * @route   POST /api/company/invitations/verify
+ * @desc    Davet kodunu doğrula
+ * @access  Public
+ */
+router.post('/verify', verifyEmployeeInvitation);
 
 export default router;

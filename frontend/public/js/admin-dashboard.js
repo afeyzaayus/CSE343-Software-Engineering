@@ -1,3 +1,4 @@
+
 const API_BASE_URL = 'http://localhost:3000/api';
 
 // Token'ı localStorage'dan al
@@ -26,51 +27,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Siteleri yükle
     fetchSites();
+    
+    // Eğer COMPANY_MANAGER ise çalışan ve davet verilerini yükle
+    if (userData.role === 'COMPANY_MANAGER' || userData.account_type === 'COMPANY_MANAGER') {
+        fetchEmployees();
+        fetchInvitations();
+    }
 });
 
 // UI'ı doldur
 function setupUI(userData) {
     // Kullanıcı bilgileri
     const userName = userData.name || userData.full_name || 'Kullanıcı';
-    const userRole = userData.role || 'USER';
+    const userRole = userData.role || userData.account_type || 'USER';
     
     document.getElementById('userName').textContent = userName;
     document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
     document.getElementById('userType').textContent = getRoleText(userRole);
-    
-    // Şirket bilgileri (varsa)
-    if (userData.company_name) {
-        // Header'daki şirket adı alanı yoksa eklemeyelim, sadece varsa dolduralım
-        const companyEl = document.getElementById('userCompany');
-        if (companyEl) companyEl.textContent = userData.company_name;
-    }
     
     // Şirket kodu banner'ı
     const companyCodeBanner = document.getElementById('companyCodeBanner');
     const companyCodeEl = document.getElementById('companyCode');
     const companyCodeDesc = document.getElementById('companyCodeDesc');
     
+    // Tab navigasyonu
+    const tabNavigation = document.querySelector('.tab-navigation');
+    const employeesTabBtn = document.querySelectorAll('.tab-btn')[1];
+    const employeesTabContent = document.getElementById('employeesTab');
+    
     if (userRole === 'INDIVIDUAL') {
-        // Bireysel hesap - şirket kodu yok
-        companyCodeBanner.style.display = 'none';
+        // ========== BİREYSEL HESAP ==========
+        // Şirket kodu yok
+        if (companyCodeBanner) companyCodeBanner.style.display = 'none';
         document.getElementById('siteLimit').textContent = '1';
         
-        // Çalışanlar tabını gizle
-        const employeesTab = document.querySelectorAll('.tab-btn')[1];
-        if (employeesTab) employeesTab.style.display = 'none';
+        // Tab navigasyonunu tamamen gizle (sadece Siteler olacak)
+        if (tabNavigation) tabNavigation.style.display = 'none';
+        if (employeesTabContent) employeesTabContent.style.display = 'none';
+        
     } else if (userRole === 'COMPANY_MANAGER') {
-        // Şirket yöneticisi - şirket kodunu göster
-        companyCodeBanner.style.display = 'block';
-        companyCodeEl.textContent = userData.company_code || 'KOD YOK';
-        companyCodeDesc.textContent = 'Bu kodu çalışanlarınızla paylaşarak onları sisteme davet edebilirsiniz';
+        // ========== ŞİRKET YÖNETİCİSİ ==========
+        // Şirket kodunu göster
+        if (companyCodeBanner) companyCodeBanner.style.display = 'flex';
+        if (companyCodeEl) companyCodeEl.textContent = userData.company_code || 'KOD YOK';
+        if (companyCodeDesc) companyCodeDesc.textContent = 'Bu kodu çalışanlarınızla paylaşarak onları sisteme davet edebilirsiniz';
         document.getElementById('siteLimit').textContent = '∞';
+        
+        // Tab navigasyonunu göster (gelecekte çalışan yönetimi için)
+        if (tabNavigation) tabNavigation.style.display = 'flex';
+        
     } else if (userRole === 'COMPANY_EMPLOYEE') {
-        // Çalışan - şirket kodunu göster ama oluşturma butonu gizli
-        companyCodeBanner.style.display = 'block';
-        companyCodeEl.textContent = userData.company_code || 'KOD YOK';
-        companyCodeDesc.textContent = 'Şirket kodunuz (Sadece görüntüleme)';
+        // ========== ŞİRKET ÇALIŞANI ==========
+        // Şirket kodunu göster (sadece görüntüleme)
+        if (companyCodeBanner) companyCodeBanner.style.display = 'flex';
+        if (companyCodeEl) companyCodeEl.textContent = userData.company_code || 'KOD YOK';
+        if (companyCodeDesc) companyCodeDesc.textContent = 'Şirket kodunuz (Sadece görüntüleme)';
         document.getElementById('siteLimit').textContent = '∞';
-        document.getElementById('createSiteBtn').style.display = 'none';
+        
+        // Site oluşturma butonunu gizle
+        const createBtn = document.getElementById('createSiteBtn');
+        if (createBtn) createBtn.style.display = 'none';
+        
+        // Tab navigasyonunu gizle (çalışanlar sitelerle ilgilenmez)
+        if (tabNavigation) tabNavigation.style.display = 'none';
+        if (employeesTabContent) employeesTabContent.style.display = 'none';
     }
     
     console.log(`✅ UI kuruldu: ${userName} (${userRole})`);
@@ -125,6 +145,8 @@ async function fetchSites() {
 
         if (data.success && data.data && data.data.sites) {
             console.log(`✅ ${data.data.sites.length} site bulundu`);
+
+            window.sites = data.data.sites;
             
             // İstatistikleri güncelle
             document.getElementById('totalSites').textContent = data.data.sites.length;
@@ -156,11 +178,19 @@ function renderSiteList(sites) {
 
     // Site yoksa
     if (!sites || sites.length === 0) {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        const userRole = userData.role || userData.account_type;
+        
+        // COMPANY_EMPLOYEE için farklı mesaj
+        const emptyMessage = userRole === 'COMPANY_EMPLOYEE' 
+            ? 'Şirketinizde henüz oluşturulmuş site bulunmuyor'
+            : 'Yeni bir site oluşturarak başlayabilirsiniz';
+        
         list.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">🏗️</div>
                 <h3>Henüz Site Bulunmuyor</h3>
-                <p>Yeni bir site oluşturarak başlayabilirsiniz</p>
+                <p>${emptyMessage}</p>
             </div>
         `;
         return;
@@ -169,10 +199,11 @@ function renderSiteList(sites) {
     console.log('🎨 Siteler render ediliyor...');
 
     const userData = JSON.parse(localStorage.getItem('user'));
-    const userRole = userData.role || 'USER';
+    const userRole = userData.role || userData.account_type || 'USER';
     
     // Yetki kontrolü
     const canEdit = (userRole === 'COMPANY_MANAGER' || userRole === 'INDIVIDUAL');
+    const canManage = true; // Herkes yönetebilir
 
     sites.forEach(site => {
         const card = document.createElement('div');
@@ -181,7 +212,9 @@ function renderSiteList(sites) {
         card.innerHTML = `
             <div class="site-card-header">
                 <h3>🏢 ${site.site_name}</h3>
-                <span class="site-badge">${site.site_status === 'ACTIVE' ? 'AKTİF' : 'PASİF'}</span>
+                <span class="site-badge ${site.site_status === 'ACTIVE' ? 'active' : 'inactive'}">
+                    ${site.site_status === 'ACTIVE' ? 'AKTİF' : 'PASİF'}
+                </span>
             </div>
             
             <p class="site-address">
@@ -212,16 +245,24 @@ function renderSiteList(sites) {
             
             ${site.admin ? `
                 <div style="padding-top: 12px; border-top: 1px solid #eee; margin-top: 15px; font-size: 12px; color: #999;">
-                    👤 Oluşturan: <strong style="color: #666;">${site.admin.name || site.admin.full_name || 'Bilinmeyen'}</strong>
+                    👤 Oluşturan: <strong style="color: #666;">${site.admin.full_name || site.admin.name || 'Bilinmeyen'}</strong>
                 </div>
             ` : ''}
             
-            <div class="site-actions">
-                <button onclick="selectSite('${site.site_id}', '${site.site_name}')" 
-                        class="btn btn-manage">
-                    🎯 Siteyi Yönet
-                </button>
-            </div>
+            ${site.companies ? `
+                <div style="font-size: 12px; color: #999; margin-top: 5px;">
+                    🏢 Şirket: <strong style="color: #666;">${site.companies.company_name}</strong>
+                </div>
+            ` : ''}
+            
+            ${canManage ? `
+                <div class="site-actions">
+                    <button onclick="selectSite('${site.site_id}', '${site.site_name.replace(/'/g, "\\'")}')" 
+                            class="btn btn-manage">
+                        🎯 Siteyi Yönet
+                    </button>
+                </div>
+            ` : ''}
             
             ${canEdit ? `
                 <div class="site-actions" style="margin-top: 8px;">
@@ -229,7 +270,7 @@ function renderSiteList(sites) {
                             class="btn btn-edit">
                         ✏️ Düzenle
                     </button>
-                    <button onclick="deleteSiteConfirm('${site.site_id}', '${site.site_name}')" 
+                    <button onclick="deleteSiteConfirm('${site.site_id}', '${site.site_name.replace(/'/g, "\\'")}')" 
                             class="btn btn-delete">
                         🗑️ Sil
                     </button>
@@ -245,105 +286,133 @@ function renderSiteList(sites) {
 
 // Site seçme
 function selectSite(siteId, siteName) {
-    console.log('🎯 Site seçildi:', siteId, siteName);
+    const currentUser = JSON.parse(localStorage.getItem('user'));
     
     localStorage.setItem('selectedSite', JSON.stringify({
         site_id: siteId,
         site_name: siteName
     }));
-    
-    showToast(`✅ "${siteName}" sitesi seçildi! Site paneline yönlendiriliyorsunuz...`, 'success');
-    
+
+    localStorage.setItem('currentUser', JSON.stringify({
+        user_id: currentUser.id || currentUser.user_id,
+        full_name: currentUser.full_name || currentUser.name,
+        account_type: currentUser.role || currentUser.account_type,
+        email: currentUser.email || ''
+    }));
+
+    console.log(`✅ Site ve kullanıcı seçildi: ${siteName} (${siteId}) - ${currentUser.full_name}`);
+
+    showToast(`✅ "${siteName}" seçildi! Dashboard'a yönlendiriliyorsunuz...`, 'success');
+
     setTimeout(() => {
-        window.location.href = `/site-panel.html?siteId=${siteId}`;
-    }, 1500);
+        window.location.href = 'http://localhost:3000/dashboard';
+    }, 1000);
 }
+
 
 // Site oluşturma formu
-const createSiteForm = document.getElementById('createSiteForm');
-if (createSiteForm) {
-    createSiteForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+document.getElementById("createSiteForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const token = getAuthToken();
-        const userData = JSON.parse(localStorage.getItem('user'));
-        
-        if (!token) {
-            showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
-            setTimeout(() => window.location.href = '/login.html', 1500);
-            return;
-        }
+    const payload = {
+        siteId: document.getElementById("siteId").value.trim(),
+        siteName: document.getElementById("siteName").value.trim(),
+        siteAddress: document.getElementById("siteAddress").value.trim(),
+        blockCount: 0,         // Artık otomatik!
+        apartmentCount: 0      // Artık otomatik!
+    };
 
-        // BİREYSEL HESAP LİMİT KONTROLÜ
-        if (userData.role === 'INDIVIDUAL') {
-            const totalSites = parseInt(document.getElementById('totalSites').textContent) || 0;
-            
-            if (totalSites >= 1) {
-                showToast("❌ Bireysel hesaplar maksimum 1 site oluşturabilir!", "error");
-                closeCreateModal();
-                return;
-            }
-        }
+    try {
+        const res = await fetch("/api/sites/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
 
-        const siteData = {
-            site_id: document.getElementById('siteId').value.trim().toUpperCase(),
-            site_name: document.getElementById('siteName').value.trim(),
-            site_address: document.getElementById('siteAddress').value.trim(),
-            block_count: parseInt(document.getElementById('blockCount').value) || 0,
-            apartment_count: parseInt(document.getElementById('apartmentCount').value) || 0,
-        };
+        const data = await res.json();
+        if (!res.ok) return showToast(data.message || "Bir hata oluştu");
 
-        // Validasyon
-        if (!siteData.site_id || !siteData.site_name || !siteData.site_address) {
-            showToast("Lütfen tüm zorunlu alanları doldurun!", "error");
-            return;
-        }
+        showToast("Site başarıyla oluşturuldu!");
+        closeCreateModal();
+        loadSites(); // tekrar listele
+    } catch (err) {
+        showToast("Sunucu hatası!");
+    }
+});
 
-        if (siteData.site_id.length < 4) {
-            showToast("Site ID en az 4 karakter olmalıdır!", "error");
-            return;
-        }
+function openEditModal(site) {
+    const modal = document.getElementById("editModal");
+    if (!modal) return console.error("❌ Edit modal bulunamadı");
 
-        console.log('📤 Site oluşturuluyor:', siteData);
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/sites/create`, {
-                method: 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(siteData)
-            });
-
-            const data = await response.json();
-            console.log('📥 Response:', data);
-
-            if (!response.ok) {
-                throw new Error(data.error || data.message || 'Site oluşturulamadı');
-            }
-
-            showToast("✅ Site başarıyla oluşturuldu!", "success");
-            closeCreateModal();
-            
-            setTimeout(() => fetchSites(), 500);
-
-        } catch (err) {
-            console.error('❌ Site oluşturma hatası:', err);
-            showToast(err.message, "error");
-        }
-    });
+    modal.style.display = "flex";
+    document.getElementById("editSiteId").value = site.site_id || "";
+    document.getElementById("editSiteName").value = site.name || "";
+    document.getElementById("editSiteAddress").value = site.address || "";
 }
 
-// Site düzenleme
+// Edit modal kapatma
+function closeEditModal() {
+    const modal = document.getElementById("editModal");
+    if (modal) modal.style.display = "none";
+}
+
+// Edit form submit
+const editForm = document.getElementById("editSiteForm");
+if (editForm) {
+    editForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const payload = {
+            siteId: document.getElementById("editSiteId").value,
+            name: document.getElementById("editSiteName").value,
+            address: document.getElementById("editSiteAddress").value
+        };
+
+        try {
+            const res = await fetch("/api/sites/update", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || "Sunucu hatası");
+            }
+
+            showToast("Site başarıyla güncellendi!", "success");
+            closeEditModal();
+            loadSites(); // site listesini yenile
+        } catch (err) {
+            console.error("❌ Site güncelleme hatası:", err);
+            showToast("Site güncellenirken hata oluştu!", "error");
+        }
+    });
+} else {
+    console.error("❌ Edit form bulunamadı");
+}
+
+// Edit butonu ile site aç
 function editSite(siteId) {
-    console.log('✏️ Site düzenleniyor:', siteId);
-    showToast("Site düzenleme özelliği yakında eklenecek!", "info");
+    if (!window.sites || !Array.isArray(window.sites)) {
+        showToast("Site listesi yüklenemedi. Sayfayı yenileyin.", "error");
+        console.error("❌ window.sites tanımlı değil");
+        return;
+    }
+
+    const site = window.sites.find(s => s.site_id === siteId);
+    if (!site) {
+        showToast("Site bilgisi bulunamadı!", "error");
+        console.error("❌ Site bulunamadı:", siteId);
+        return;
+    }
+
+    openEditModal(site);
 }
 
 // Site silme onayı
 function deleteSiteConfirm(siteId, siteName) {
-    if (confirm(`"${siteName}" sitesini silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz!`)) {
+    if (confirm(`"${siteName}" sitesini silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz! Site ve bağlı tüm bloklar silinecek.`)) {
         deleteSite(siteId);
     }
 }
@@ -376,7 +445,7 @@ async function deleteSite(siteId) {
             throw new Error(data.error || data.message || 'Site silinemedi');
         }
 
-        showToast("✅ Site başarıyla silindi!", "success");
+        showToast("✅ Site ve bağlı bloklar başarıyla silindi!", "success");
         
         setTimeout(() => fetchSites(), 500);
 
@@ -389,9 +458,10 @@ async function deleteSite(siteId) {
 // Modal
 function openCreateModal() {
     const userData = JSON.parse(localStorage.getItem('user'));
+    const userRole = userData.role || userData.account_type;
     
     // BİREYSEL HESAP LİMİT KONTROLÜ
-    if (userData.role === 'INDIVIDUAL') {
+    if (userRole === 'INDIVIDUAL') {
         const totalSites = parseInt(document.getElementById('totalSites').textContent) || 0;
         
         if (totalSites >= 1) {
@@ -443,9 +513,9 @@ function switchTab(tab) {
 // Şirket kodu kopyalama
 function copyCompanyCode() {
     const codeEl = document.getElementById('companyCode');
-    const code = codeEl.textContent;
+    const code = codeEl ? codeEl.textContent : '';
     
-    if (code && code !== 'KOD YOK') {
+    if (code && code !== 'KOD YOK' && code !== '-') {
         navigator.clipboard.writeText(code)
             .then(() => showToast("📋 Şirket kodu kopyalandı: " + code, "success"))
             .catch(() => showToast("Kopyalama başarısız!", "error"));
@@ -469,6 +539,7 @@ function showToast(message, type = "success") {
 
     setTimeout(() => toast.classList.add('hidden'), 3000);
 }
+
 function logout() {
     if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
         console.log('👋 Çıkış yapılıyor...');
@@ -478,6 +549,7 @@ function logout() {
         window.location.href = 'login.html';
     }
 }
+
 // Token kontrolü
 document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
@@ -494,5 +566,567 @@ document.addEventListener('click', (e) => {
     const modal = document.getElementById('createModal');
     if (modal && e.target === modal) {
         closeCreateModal();
+    }
+    
+    const inviteModal = document.getElementById('inviteModal');
+    if (inviteModal && e.target === inviteModal) {
+        closeInviteModal();
+    }
+});
+
+// ==================== ÇALIŞAN YÖNETİMİ ====================
+
+// Çalışanları getir
+async function fetchEmployees() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/company/employees`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Çalışanlar alınamadı');
+        }
+
+        const data = await response.json();
+        console.log('✅ Çalışanlar:', data);
+
+        if (data.success && data.data && data.data.employees) {
+            document.getElementById('totalEmployees').textContent = data.data.employees.length;
+            renderEmployeeList(data.data.employees);
+        }
+    } catch (err) {
+        console.error('❌ Çalışan listesi hatası:', err);
+        showToast(err.message, 'error');
+    }
+}
+
+// Çalışan listesini render et - Askıya alma ve silme ile
+function renderEmployeeList(employees) {
+    const list = document.getElementById('employeeList');
+    
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (!employees || employees.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <h3>Henüz Çalışan Yok</h3>
+                <p>Yeni çalışan davet ederek başlayabilirsiniz</p>
+            </div>
+        `;
+        return;
+    }
+
+    employees.forEach(emp => {
+        const card = document.createElement('div');
+        card.classList.add('site-card');
+        
+        // Status badge'i belirle
+        let statusBadgeClass = 'inactive';
+        let statusText = 'PASİF';
+        
+        if (emp.status === 'ACTIVE') {
+            statusBadgeClass = 'active';
+            statusText = 'AKTİF';
+        } else if (emp.status === 'SUSPENDED') {
+            statusBadgeClass = 'suspended';
+            statusText = '⏸️ ASKIDA';
+        } else if (emp.status === 'DELETED') {
+            statusBadgeClass = 'inactive';
+            statusText = '🗑️ SİLİNDİ';
+        }
+        
+        // Atanmış siteleri göster
+        let sitesHTML = '';
+        if (emp.assigned_sites && emp.assigned_sites.length > 0) {
+            sitesHTML = `
+                <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+                    <p style="color: #666; font-size: 12px; margin-bottom: 5px;">
+                        🏗️ Atanmış Siteler:
+                    </p>
+                    ${emp.assigned_sites.map(site => `
+                        <span class="site-badge" style="margin-right: 5px; font-size: 11px;">
+                            ${site.site_name}
+                        </span>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        // Aksiyon butonları (sadece silinmemiş çalışanlar için)
+        let actionsHTML = '';
+        if (emp.status !== 'DELETED') {
+            actionsHTML = `
+                <div class="site-actions" style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                    ${emp.status === 'ACTIVE' ? `
+                        <button onclick="suspendEmployeeConfirm(${emp.id}, '${emp.full_name.replace(/'/g, "\\'")}')" 
+                                class="btn btn-secondary" style="flex: 1; min-width: 120px;">
+                            ⏸️ Askıya Al
+                        </button>
+                    ` : ''}
+                    ${emp.status === 'SUSPENDED' ? `
+                        <button onclick="activateEmployeeConfirm(${emp.id}, '${emp.full_name.replace(/'/g, "\\'")}')" 
+                                class="btn btn-primary" style="flex: 1; min-width: 120px;">
+                            ✅ Aktif Et
+                        </button>
+                    ` : ''}
+                    <button onclick="deleteEmployeeConfirm(${emp.id}, '${emp.full_name.replace(/'/g, "\\'")}')" 
+                            class="btn btn-delete" style="flex: 1; min-width: 120px;">
+                        🗑️ Sil
+                    </button>
+                </div>
+            `;
+        }
+        
+        card.innerHTML = `
+            <div class="site-card-header">
+                <h3>👤 ${emp.full_name || 'İsimsiz Çalışan'}</h3>
+                <span class="site-badge ${statusBadgeClass}">
+                    ${statusText}
+                </span>
+            </div>
+            <p style="color: #666; margin: 10px 0;">
+                📧 ${emp.email}
+            </p>
+            <p style="color: #999; font-size: 12px;">
+                📅 Katılma: ${emp.joined_at ? new Date(emp.joined_at).toLocaleDateString('tr-TR') : 'Belirsiz'}
+            </p>
+            ${emp.last_login ? `
+                <p style="color: #999; font-size: 12px;">
+                    🕐 Son Giriş: ${new Date(emp.last_login).toLocaleDateString('tr-TR')}
+                </p>
+            ` : ''}
+            ${sitesHTML}
+            ${actionsHTML}
+        `;
+        list.appendChild(card);
+    });
+}
+
+// ==================== Çalışan Yönetimi Fonksiyonları ====================
+
+/**
+ * Çalışanı askıya alma onayı
+ */
+function suspendEmployeeConfirm(employeeId, employeeName) {
+    if (confirm(`"${employeeName}" adlı çalışanı askıya almak istediğinize emin misiniz?\n\n⚠️ Askıya alınan çalışan sisteme giriş yapamaz.`)) {
+        suspendEmployee(employeeId);
+    }
+}
+
+/**
+ * Çalışanı askıya al
+ */
+async function suspendEmployee(employeeId) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
+        setTimeout(() => window.location.href = '/login.html', 1500);
+        return;
+    }
+
+    console.log('⏸️ Çalışan askıya alınıyor:', employeeId);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/company/employees/${employeeId}/suspend`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        console.log('📥 Response:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Çalışan askıya alınamadı');
+        }
+
+        showToast('✅ Çalışan başarıyla askıya alındı!', 'success');
+        
+        setTimeout(() => {
+            fetchEmployees();
+        }, 500);
+
+    } catch (err) {
+        console.error('❌ Çalışan askıya alma hatası:', err);
+        showToast('❌ ' + err.message, 'error');
+    }
+}
+
+/**
+ * Çalışanı aktif etme onayı
+ */
+function activateEmployeeConfirm(employeeId, employeeName) {
+    if (confirm(`"${employeeName}" adlı çalışanı aktif etmek istediğinize emin misiniz?`)) {
+        activateEmployee(employeeId);
+    }
+}
+
+/**
+ * Çalışanı aktif et
+ */
+async function activateEmployee(employeeId) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
+        setTimeout(() => window.location.href = '/login.html', 1500);
+        return;
+    }
+
+    console.log('✅ Çalışan aktif ediliyor:', employeeId);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/company/employees/${employeeId}/activate`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        console.log('📥 Response:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Çalışan aktif edilemedi');
+        }
+
+        showToast('✅ Çalışan başarıyla aktif edildi!', 'success');
+        
+        setTimeout(() => {
+            fetchEmployees();
+        }, 500);
+
+    } catch (err) {
+        console.error('❌ Çalışan aktif etme hatası:', err);
+        showToast('❌ ' + err.message, 'error');
+    }
+}
+
+/**
+ * Çalışanı silme onayı
+ */
+function deleteEmployeeConfirm(employeeId, employeeName) {
+    if (confirm(`"${employeeName}" adlı çalışanı silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem geri alınamaz! Çalışan tüm site erişimlerini kaybedecek.`)) {
+        deleteEmployee(employeeId);
+    }
+}
+
+/**
+ * Çalışanı sil
+ */
+async function deleteEmployee(employeeId) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
+        setTimeout(() => window.location.href = '/login.html', 1500);
+        return;
+    }
+
+    console.log('🗑️ Çalışan siliniyor:', employeeId);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/company/employees/${employeeId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        console.log('📥 Response:', data);
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Çalışan silinemedi');
+        }
+
+        showToast('✅ Çalışan başarıyla silindi!', 'success');
+        
+        setTimeout(() => {
+            fetchEmployees();
+        }, 500);
+
+    } catch (err) {
+        console.error('❌ Çalışan silme hatası:', err);
+        showToast('❌ ' + err.message, 'error');
+    }
+}
+// Davetleri getir
+async function fetchInvitations() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/company/invitations`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Davetler alınamadı');
+        }
+
+        const data = await response.json();
+        console.log('✅ Davetler:', data);
+
+        if (data.success && data.data && data.data.invitations) {
+            const pending = data.data.invitations.filter(inv => inv.status === 'PENDING');
+            document.getElementById('pendingInvites').textContent = pending.length;
+            renderInvitationList(data.data.invitations);
+        }
+    } catch (err) {
+        console.error('❌ Davet listesi hatası:', err);
+        showToast(err.message, 'error');
+    }
+}
+
+// Davet listesini render et
+function renderInvitationList(invitations) {
+    const list = document.getElementById('invitationList');
+    
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (!invitations || invitations.length === 0) {
+        list.innerHTML = '<p style="color: #999;">Henüz davet gönderilmemiş</p>';
+        return;
+    }
+
+    invitations.forEach(inv => {
+        const card = document.createElement('div');
+        card.classList.add('invitation-card');
+        
+        const statusText = {
+            'PENDING': '⏳ Bekliyor',
+            'ACCEPTED': '✅ Kabul Edildi',
+            'EXPIRED': '❌ Süresi Doldu',
+            'REJECTED': '🚫 Reddedildi'
+        }[inv.status] || inv.status;
+
+        const isExpired = inv.expires_at && new Date(inv.expires_at) < new Date();
+        const isPending = inv.status === 'PENDING' && !isExpired;
+        
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                <div style="flex: 1;">
+                    <strong style="color: #333;">
+                        ${inv.invited_email || 'Email belirtilmemiş'}
+                    </strong>
+                    <p style="color: #999; font-size: 12px; margin: 5px 0;">
+                        Kod: <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${inv.invite_code}</code>
+                    </p>
+                    <p style="color: #999; font-size: 12px;">
+                        ${inv.expires_at 
+                            ? (isExpired ? '❌ Süresi doldu' : '⏰ Bitiş: ' + new Date(inv.expires_at).toLocaleDateString('tr-TR'))
+                            : '⏰ Süresiz'
+                        }
+                    </p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                    <span class="site-badge ${inv.status === 'ACCEPTED' ? 'active' : inv.status === 'PENDING' ? '' : 'inactive'}">
+                        ${statusText}
+                    </span>
+                    ${isPending ? `
+                        <button onclick="deleteInvitation(${inv.id}, '${inv.invited_email || 'Bu davet'}')" 
+                                class="btn-delete-invite"
+                                title="Daveti Sil">
+                            🗑️ Sil
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            ${isPending && inv.invite_link ? `
+                <button onclick="copyInviteLink('${inv.invite_link}')" 
+                        class="btn btn-primary" style="margin-top: 5px; width: 100%;">
+                    📋 Davet Linkini Kopyala
+                </button>
+            ` : ''}
+        `;
+        list.appendChild(card);
+    });
+}
+
+// ✅ Daveti sil
+// ✅ Daveti sil - TAM DÜZELTİLMİŞ VERSİYON
+async function deleteInvitation(invitationId, invitedEmail) {
+    // Onay iste
+    if (!confirm(`"${invitedEmail}" için gönderilen daveti silmek istediğinize emin misiniz?`)) {
+        return;
+    }
+
+    try {
+        const token = getAuthToken();
+        
+        if (!token) {
+            showToast('❌ Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        console.log('🗑️ Davet siliniyor - ID:', invitationId);
+
+        // ✅ DOĞRU ENDPOINT: /api/company/invitations/:id
+        const response = await fetch(`${API_BASE_URL}/company/invitations/${invitationId}`, {
+            method: 'DELETE',
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            }
+        });
+
+        // Response'u kontrol et
+        console.log('📥 Response status:', response.status);
+
+        const data = await response.json();
+        console.log('📥 Response data:', data);
+
+        if (!response.ok) {
+            // Özel hata durumları
+            if (response.status === 404) {
+                throw new Error('Davet bulunamadı veya zaten silinmiş');
+            }
+            if (response.status === 403) {
+                throw new Error('Bu daveti silme yetkiniz yok');
+            }
+            if (response.status === 401) {
+                throw new Error('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.');
+            }
+            
+            throw new Error(data.error || data.message || 'Davet silinemedi');
+        }
+
+        // Başarılı silme
+        if (data.success) {
+            showToast('✅ Davet başarıyla silindi!', 'success');
+            
+            // Listeyi yenile
+            setTimeout(() => {
+                fetchInvitations();
+            }, 500);
+        } else {
+            throw new Error(data.error || data.message || 'Davet silinemedi');
+        }
+
+    } catch (err) {
+        console.error('❌ Davet silme hatası:', err);
+        showToast('❌ ' + err.message, 'error');
+        
+        // 401 hatası varsa login'e yönlendir
+        if (err.message.includes('Oturum')) {
+            setTimeout(() => {
+                localStorage.clear();
+                window.location.href = '/login.html';
+            }, 2000);
+        }
+    }
+}
+
+// ========== ADMIN-DASHBOARD.JS İÇİNE EKLENECEK GÜNCEL VERSİYON ==========
+// Yukarıdaki fonksiyonu admin-dashboard.js dosyanızdaki mevcut deleteInvitation 
+// fonksiyonunun yerine koyun (satır 741 civarı)
+
+// Davet modalı aç/kapat
+function openInviteModal() {
+    const modal = document.getElementById('inviteModal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeInviteModal() {
+    const modal = document.getElementById('inviteModal');
+    const form = document.getElementById('inviteEmployeeForm');
+    if (modal) modal.classList.remove('active');
+    if (form) form.reset();
+}
+
+// Davet gönder
+const inviteForm = document.getElementById('inviteEmployeeForm');
+if (inviteForm) {
+    inviteForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const token = getAuthToken();
+        const email = document.getElementById('employeeEmail').value.trim();
+
+        if (!email) {
+            showToast('Lütfen email adresi girin!', 'error');
+            return;
+        }
+
+        // Email formatı kontrolü
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showToast('Geçerli bir email adresi girin!', 'error');
+            return;
+        }
+
+        console.log('📤 Davet gönderiliyor:', email);
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/company/invitations/create`, {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({ invited_email: email })
+            });
+
+            const data = await response.json();
+            console.log('📥 Response:', data);
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Davet gönderilemedi');
+            }
+
+            if (data.success) {
+                showToast(`✅ ${email} adresine davet gönderildi!`, 'success');
+                closeInviteModal();
+                
+                // Listeleri yenile
+                setTimeout(() => {
+                    fetchInvitations();
+                    fetchEmployees();
+                }, 500);
+            } else {
+                throw new Error(data.error || 'Davet oluşturulamadı');
+            }
+
+        } catch (err) {
+            console.error('❌ Davet gönderme hatası:', err);
+            showToast(err.message, 'error');
+        }
+    });
+}
+
+// Davet linkini kopyala
+function copyInviteLink(link) {
+    if (!link) {
+        showToast('Davet linki bulunamadı!', 'error');
+        return;
+    }
+    
+    navigator.clipboard.writeText(link)
+        .then(() => showToast('📋 Davet linki kopyalandı!', 'success'))
+        .catch((err) => {
+            console.error('Kopyalama hatası:', err);
+            showToast('Kopyalama başarısız!', 'error');
+        });
+}
+
+// Sayfa yüklendiğinde çalışan ve davet listelerini getir
+document.addEventListener('DOMContentLoaded', function() {
+    // Eğer çalışanlar sayfasındaysak
+    if (document.getElementById('employeeList') || document.getElementById('invitationList')) {
+        fetchEmployees();
+        fetchInvitations();
     }
 });

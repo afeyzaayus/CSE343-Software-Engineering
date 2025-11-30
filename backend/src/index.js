@@ -51,32 +51,28 @@ export {
 export {
   getCompanyByManagerService,
   updateCompanyService,
-  getCompanyEmployeesService
+  getCompanyEmployeesService,
+  suspendEmployeeService,
+  activateEmployeeService,
+  deleteEmployeeService
 } from './modules/company/service/company.service.js';
 
 export {
   createEmployeeInvitationService,
   acceptEmployeeInvitationService,
-  getCompanyInvitationsService
+  getCompanyInvitationsService,
+  deleteInvitationService,
+  verifyEmployeeInvitationService 
 } from './modules//company/service/invitation.service.js';
 
 // Site Services
-export {
-  generateBlockNames,
-  createBlocksForSite,
-  getBlocksBySiteService,
-  updateBlockService,
-  deleteBlockService,
-  recreateBlocksForSite
-} from './modules/site/service/block.service.js';
-
 export {
   createSiteService,
   updateSiteService,
   getSitesService,
   getSiteByIdService,
   deleteSiteService
-} from './modules/site/service/site.service.js';
+} from './modules/site/site.service.js';
 
 // Account Services
 export {
