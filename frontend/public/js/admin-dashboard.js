@@ -10,7 +10,7 @@ function getAuthToken() {
 document.addEventListener('DOMContentLoaded', () => {
     const userData = JSON.parse(localStorage.getItem('user'));
     const token = getAuthToken();
-
+    
     // Token ve user kontrolü
     if (!token || !userData) {
         console.error('❌ Token veya user data bulunamadı');
@@ -18,18 +18,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = '/login.html';
         return;
     }
-
+    
     console.log('✅ Token bulundu:', token.substring(0, 20) + '...');
     console.log('✅ User data:', userData);
-
+    
     // UI'ı doldur
     setupUI(userData);
-
+    
     // Siteleri yükle
     fetchSites();
     
     // Eğer COMPANY_MANAGER ise çalışan ve davet verilerini yükle
-    if (userData.role === 'COMPANY_MANAGER' || userData.account_type === 'COMPANY_MANAGER') {
+    const userRole = userData.role || userData.account_type || 'USER';
+    if (userRole === 'COMPANY_MANAGER') {
         fetchEmployees();
         fetchInvitations();
     }
@@ -287,56 +288,93 @@ function renderSiteList(sites) {
 // Site seçme
 function selectSite(siteId, siteName) {
     const currentUser = JSON.parse(localStorage.getItem('user'));
+    const token = getAuthToken(); // ✅ Token kontrolü ekledik
     
+    if (!token || !currentUser) {
+        showToast('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.', 'error');
+        setTimeout(() => window.location.href = '/login.html', 1500);
+        return;
+    }
+
+    // ✅ selectedSite'ı kaydet
     localStorage.setItem('selectedSite', JSON.stringify({
         site_id: siteId,
         site_name: siteName
     }));
 
-    localStorage.setItem('currentUser', JSON.stringify({
-        user_id: currentUser.id || currentUser.user_id,
-        full_name: currentUser.full_name || currentUser.name,
-        account_type: currentUser.role || currentUser.account_type,
-        email: currentUser.email || ''
-    }));
+    // ✅ currentUser'ı kaydet (eğer yoksa)
+    if (!localStorage.getItem('currentUser')) {
+        localStorage.setItem('currentUser', JSON.stringify({
+            user_id: currentUser.id || currentUser.user_id,
+            full_name: currentUser.full_name || currentUser.name,
+            account_type: currentUser.role || currentUser.account_type,
+            email: currentUser.email || ''
+        }));
+    }
 
-    console.log(`✅ Site ve kullanıcı seçildi: ${siteName} (${siteId}) - ${currentUser.full_name}`);
+    console.log(`✅ Site seçildi: ${siteName} (${siteId})`);
+    console.log(`✅ Kullanıcı: ${currentUser.full_name || currentUser.name}`);
+    console.log(`✅ Token mevcut: ${token.substring(0, 20)}...`);
 
     showToast(`✅ "${siteName}" seçildi! Dashboard'a yönlendiriliyorsunuz...`, 'success');
 
     setTimeout(() => {
-        window.location.href = 'http://localhost:3000/dashboard';
+        window.location.href = '/dashboard'; // ✅ http://localhost:3000 kaldırıldı
     }, 1000);
 }
-
 
 // Site oluşturma formu
 document.getElementById("createSiteForm").addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    const token = getAuthToken(); // ✅ Token ekledik
+    if (!token) {
+        showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
+        setTimeout(() => window.location.href = '/login.html', 1500);
+        return;
+    }
+
     const payload = {
-        siteId: document.getElementById("siteId").value.trim(),
-        siteName: document.getElementById("siteName").value.trim(),
-        siteAddress: document.getElementById("siteAddress").value.trim(),
-        blockCount: 0,         // Artık otomatik!
-        apartmentCount: 0      // Artık otomatik!
+        site_id: document.getElementById("siteId").value.trim(),        // ✅ siteId → site_id
+        site_name: document.getElementById("siteName").value.trim(),    // ✅ siteName → site_name
+        site_address: document.getElementById("siteAddress").value.trim() // ✅ siteAddress → site_address
+        // ✅ blockCount ve apartmentCount kaldırıldı (backend'de otomatik)
     };
 
+    // ✅ Validation ekledik
+    if (!payload.site_id || !payload.site_name || !payload.site_address) {
+        showToast("Lütfen tüm alanları doldurun!", "error");
+        return;
+    }
+
+    console.log('📤 Site oluşturuluyor:', payload);
+
     try {
-        const res = await fetch("/api/sites/create", {
+        const res = await fetch(`${API_BASE_URL}/sites`, { // ✅ /api/sites/create → /api/sites
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // ✅ Token header'ı ekledik
+            },
             body: JSON.stringify(payload)
         });
 
         const data = await res.json();
-        if (!res.ok) return showToast(data.message || "Bir hata oluştu");
+        console.log('📥 Response:', data);
 
-        showToast("Site başarıyla oluşturuldu!");
+        if (!res.ok) {
+            throw new Error(data.error || data.message || "Site oluşturulamadı");
+        }
+
+        showToast("✅ Site başarıyla oluşturuldu!", "success");
         closeCreateModal();
-        loadSites(); // tekrar listele
+        
+        // ✅ fetchSites() kullan (loadSites yerine)
+        setTimeout(() => fetchSites(), 500);
+        
     } catch (err) {
-        showToast("Sunucu hatası!");
+        console.error('❌ Site oluşturma hatası:', err);
+        showToast(err.message || "Sunucu hatası!", "error");
     }
 });
 
@@ -355,43 +393,68 @@ function closeEditModal() {
     const modal = document.getElementById("editModal");
     if (modal) modal.style.display = "none";
 }
-
 // Edit form submit
 const editForm = document.getElementById("editSiteForm");
 if (editForm) {
     editForm.addEventListener("submit", async function (e) {
         e.preventDefault();
 
+        const token = getAuthToken(); // ✅ Token ekledik
+        if (!token) {
+            showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
+            setTimeout(() => window.location.href = '/login.html', 1500);
+            return;
+        }
+
+        const siteId = document.getElementById("editSiteId").value.trim();
+        const siteName = document.getElementById("editSiteName").value.trim();
+        const siteAddress = document.getElementById("editSiteAddress").value.trim();
+
+        // ✅ Validation ekledik
+        if (!siteId || !siteName || !siteAddress) {
+            showToast("Lütfen tüm alanları doldurun!", "error");
+            return;
+        }
+
         const payload = {
-            siteId: document.getElementById("editSiteId").value,
-            name: document.getElementById("editSiteName").value,
-            address: document.getElementById("editSiteAddress").value
+            site_name: siteName,      // ✅ name → site_name
+            site_address: siteAddress  // ✅ address → site_address
         };
 
+        console.log('📤 Site güncelleniyor:', siteId, payload);
+
         try {
-            const res = await fetch("/api/sites/update", {
+            // ✅ Endpoint düzeltildi: /api/sites/:siteId
+            const res = await fetch(`${API_BASE_URL}/sites/${siteId}`, {
                 method: "PUT",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` // ✅ Token header'ı ekledik
+                },
                 body: JSON.stringify(payload)
             });
 
+            const data = await res.json();
+            console.log('📥 Response:', data);
+
             if (!res.ok) {
-                const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.message || "Sunucu hatası");
+                throw new Error(data.error || data.message || "Site güncellenemedi");
             }
 
-            showToast("Site başarıyla güncellendi!", "success");
+            showToast("✅ Site başarıyla güncellendi!", "success");
             closeEditModal();
-            loadSites(); // site listesini yenile
+            
+            // ✅ fetchSites() kullan (loadSites yerine)
+            setTimeout(() => fetchSites(), 500);
+            
         } catch (err) {
             console.error("❌ Site güncelleme hatası:", err);
-            showToast("Site güncellenirken hata oluştu!", "error");
+            showToast(err.message || "Site güncellenirken hata oluştu!", "error");
         }
     });
 } else {
     console.error("❌ Edit form bulunamadı");
 }
-
 // Edit butonu ile site aç
 function editSite(siteId) {
     if (!window.sites || !Array.isArray(window.sites)) {
