@@ -18,6 +18,10 @@ import accountRoutes from './modules/account/account.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import announcementRoutes from './modules/announcement/announcement.routes.js';
 import invitationRoutes from './modules/company/routes/invitation.routes.js';
+import paymentRoutes from './modules/payment/routes/payment.routes.js';
+import requestRoutes from './modules/request/request.routes.js';
+import residenceRoutes from './modules/residence/residence.routes.js';
+import socialFacilitiesRoutes from './modules/social-facilities/social-facilities.routes.js';
 
 import masterRoutes from './modules/master/masterUser.routes.js';
 import { seedMasterAdmin } from './modules/master/masterUser.service.js';
@@ -27,11 +31,16 @@ dotenv.config();
 
 const prisma = new PrismaClient();
 
-
+// Veritabanı bağlantısını test et ve master admin oluştur
 (async () => {
-  await seedMasterAdmin(); // program çalışınca otomatik superadmin
+  try {
+    await seedMasterAdmin(); // program çalışınca otomatik superadmin
+    console.log('✅ Master admin kontrolü tamamlandı');
+  } catch (error) {
+    console.error('⚠️  Master admin oluşturulamadı:', error.message);
+    console.log('Sunucu veritabanı bağlantısı olmadan çalışmaya devam ediyor...');
+  }
 })();
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,14 +53,33 @@ const frontendPublicPath = path.join(__dirname, '..', '..', 'frontend', 'public'
 // Tüm frontend dosyalarını servis et
 app.use(express.static(frontendPublicPath));
 
-// Dashboard route
+// Frontend Route Handler - Tüm HTML sayfalarını otomatik servis et
 app.get('/dashboard', (req, res) => {
     res.sendFile(path.join(frontendPublicPath, 'dashboard.html'));
 });
 
-// Login sayfası
 app.get('/login', (req, res) => {
     res.sendFile(path.join(frontendPublicPath, 'login.html'));
+});
+
+app.get('/announcements', (req, res) => {
+    res.sendFile(path.join(frontendPublicPath, 'announcements.html'));
+});
+
+app.get('/payment', (req, res) => {
+    res.sendFile(path.join(frontendPublicPath, 'payment.html'));
+});
+
+app.get('/complaints', (req, res) => {
+    res.sendFile(path.join(frontendPublicPath, 'complaint_request.html'));
+});
+
+app.get('/residents', (req, res) => {
+    res.sendFile(path.join(frontendPublicPath, 'residents.html'));
+});
+
+app.get('/social-facilities', (req, res) => {
+    res.sendFile(path.join(frontendPublicPath, 'socialfacilities.html'));
 });
 // JSON body parser
 app.use(express.json());
@@ -115,6 +143,10 @@ app.use('/api/company', companyRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/complaints', requestRoutes);
+app.use('/api/residence', residenceRoutes);
+app.use('/api/sites', socialFacilitiesRoutes);
 
 // ==========================================================
 // HATA YÖNETİMİ

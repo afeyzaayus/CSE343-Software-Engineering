@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sosyal Tesisler Yönetimi - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/facilities.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li class="active"><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h2>Sosyal Tesisler - Yönetim Paneli</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
+                    <span>Ahmet Yılmaz (Yönetici)</span>
+                </div>
+            </div>
+
+            <div class="form-card" id="form-card">
+                <h3 id="form-title">Yeni Sosyal Tesis Ekle</h3>
+                <form id="editFacilityForm">
+                    <input type="hidden" id="facilityId">
+                    
+                    <div class="form-group">
+                        <label for="facilityName">Tesis Adı</label>
+                        <input type="text" id="facilityName" placeholder="Örn: Yüzme Havuzu, Spor Salonu..." required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityDescription">Kısa Açıklama/Tanıtım</label>
+                        <textarea id="facilityDescription" rows="2" placeholder="Tesisin genel tanımını girin"></textarea>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="facilityStatus">Durum</label>
+                            <select id="facilityStatus" required>
+                                <option value="Açık">Açık</option>
+                                <option value="Kapalı">Kapalı</option>
+                                <option value="Rezervasyon Gereklidir">Rezervasyon Gereklidir</option>
+                                <option value="Bakımda">Bakımda</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                             </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityHours">Çalışma Saatleri (Her satır bir kural, Örn: Yaz Dönemi: 08:00 - 20:00)</label>
+                        <textarea id="facilityHours" rows="4" placeholder="Çalışma saatlerini girin. Her satırda bir kural/dönem belirtin."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityRules">Kullanım Kuralları (Her satır bir kural)</label>
+                        <textarea id="facilityRules" rows="5" placeholder="Kullanım kurallarını alt alta girin."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="facilityExtraInfo">Ekipmanlar / Özellikler / Notlar</label>
+                        <textarea id="facilityExtraInfo" rows="3" placeholder="Ekipmanları, Özellikleri veya diğer önemli notları giriniz."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="cancel-btn" id="cancel-edit-btn" style="display:none;"><i class="fas fa-times"></i> İptal</button>
+                        <button type="submit" class="save-btn" id="save-btn"><i class="fas fa-save"></i> Kaydet</button>
+                    </div>
+                </form>
+            </div>
+
+
+            <h3 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 10px;">Mevcut Sosyal Tesisler</h3>
+            <div class="facilities-content" id="facilities-list">
+                <p style="text-align: center; color: #777;">Sosyal tesisler yükleniyor...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

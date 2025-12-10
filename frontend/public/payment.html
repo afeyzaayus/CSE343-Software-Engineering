@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aidat Takibi - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">        
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/complaint.css">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li class="active"><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h2>Aidat Takibi - Yeşil Vadi Sitesi</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
+                    <span>Ahmet Yılmaz</span>
+                </div>
+            </div>
+            
+            <div class="dues-content">
+                <div class="table-container" id="paid-section">
+                    <div class="table-header">
+                        <div class="table-title">Aidatını Ödeyenler</div>
+                        <div class="table-subtitle">Ekim 2023 - 36 Daire</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daire No</th>
+                                <th>Daire Sahibi</th>
+                                <th>Ödeme Tarihi</th>
+                                <th>Tutar</th>
+                                <th>Ödeme Tipi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="table-container" id="unpaid-section">
+                    <div class="table-header">
+                        <div class="table-title">Aidatını Ödemeyenler</div>
+                        <div class="table-subtitle">Ekim 2023 - 12 Daire</div>
+                        <div>
+                            <button class="btn btn-warning" id="sendReminderBtn">
+                                <i class="fas fa-bell"></i> Hatırlatma Gönder
+                            </button>
+                            <button class="btn btn-primary" id="addPaymentBtn">
+                                <i class="fas fa-plus"></i> Ödeme Ekle
+                            </button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daire No</th>
+                                <th>Daire Sahibi</th>
+                                <th>Telefon</th>
+                                <th>Son Ödeme Tarihi</th>
+                                <th>Gecikme (Gün)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5" style="text-align: center;">Yükleniyor...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Ödeme Ekle</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="paymentApartment">Daire</label>
+                    <select id="paymentApartment" required>
+                        <option value="">Daire seçin</option>
+                        <option value="B-205">B-205 - Ayşe Kaya</option>
+                        <option value="A-205">A-205 - Fatma Öztürk</option>
+                        <option value="E-102">E-102 - Ahmet Yılmaz</option>
+                        <option value="C-208">C-208 - Zeynep Korkmaz</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="paymentAmount">Tutar (TL)</label>
+                    <input type="number" id="paymentAmount" value="250" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentDate">Ödeme Tarihi</label>
+                    <input type="date" id="paymentDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="paymentType">Ödeme Tipi</label>
+                    <select id="paymentType" required>
+                        <option value="nakit">Nakit</option>
+                        <option value="banka">Banka Havalesi</option>
+                        <option value="kredi">Kredi Kartı</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Ödemeyi Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/payment.js"></script>
+</body>
+</html>

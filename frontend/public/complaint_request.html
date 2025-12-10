@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şikayet/Talep - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="css/complaint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li class="active"><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+
+        <div class="main-content">
+            
+            <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Şikayet ve Talepler - <span id="site-name-header">Yükleniyor...</span></h2>
+                
+                <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
+                    <span id="current-user-name" style="font-weight: 500; color: #333;">Yükleniyor...</span>
+                    <div class="profile-icon" style="width: 35px; height: 35px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user" style="color: #666;"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="complaints-content">
+                
+                <div class="complaint-filters" style="margin-bottom: 20px;">
+                    <button class="filter-btn active" data-filter="all">Tümü</button>
+                    <button class="filter-btn" data-filter="pending">Bekleyen</button>
+                    <button class="filter-btn" data-filter="inprogress">İşlemde</button>
+                    <button class="filter-btn" data-filter="resolved">Çözülen</button>
+                </div>
+
+                <div class="table-container" id="pending-requests-section" style="margin-bottom: 20px;">
+                    <div class="table-header">
+                        <div class="table-title">Bekleyen Şikayet/Talepler</div>
+                    </div>
+                    <div class="complaints-list" id="pending-requests-list">
+                        <p style="text-align:center; color:#7f8c8d; padding: 20px;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+
+                <div class="table-container" id="inprogress-requests-section" style="margin-bottom: 20px;">
+                    <div class="table-header">
+                        <div class="table-title">İşlemdeki Şikayet/Talepler</div>
+                    </div>
+                    <div class="complaints-list" id="inprogress-requests-list">
+                        <p style="text-align:center; color:#7f8c8d; padding: 20px;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+
+                <div class="table-container" id="resolved-requests-section" style="margin-bottom: 20px;">
+                    <div class="table-header">
+                        <div class="table-title">Çözülen Şikayet/Talepler</div>
+                    </div>
+                    <div class="complaints-list" id="resolved-requests-list">
+                        <p style="text-align:center; color:#7f8c8d; padding: 20px;">Veriler yükleniyor...</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
