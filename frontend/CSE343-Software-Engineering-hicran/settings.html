@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayarlar - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/table.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="announcements.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li class="active"><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        <div class="main-content">
+            <div class="header">
+                <h2>Ayarlar - Yeşil Vadi Sitesi</h2>
+                <div class="user-info"> ... </div>
+            </div>
+            
+            <div class="settings-content">
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Site Bilgileri</div>
+                    </div>
+                    <form id="siteSettingsForm">
+                        <div class="form-group">
+                            <label for="siteName">Site Adı</label>
+                            <input type="text" id="siteName" value="" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Site Bilgilerini Kaydet</button>
+                    </form>
+                </div>
+
+                <div class="form-container">
+                    <div class="table-header">
+                        <div class="table-title">Yönetici Bilgileri</div>
+                    </div>
+                    <form id="managerSettingsForm">
+                        <div class="form-group">
+                            <label for="managerName">Ad Soyad</label>
+                            <input type="text" id="managerName" value="" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="managerPhone">Telefon</label>
+                            <input type="tel" id="managerPhone" value="" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="managerEmail">E-posta</label>
+                            <input type="email" id="managerEmail" value="" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Yönetici Bilgilerini Kaydet</button>
+                    </form>
+                </div>
+
+                <div class="form-container">...</div>
+                <div class="form-container">...</div>
+                <div class="form-container">...</div>
+
+                <div class="form-container danger-zone">
+                    <div class="table-header">
+                        <div class="table-title" style="color: var(--accent-color);">Tehlike Bölgesi</div>
+                    </div>
+                    <div class="danger-actions">
+                        <div class="danger-item">
+                            <h4><i class="fas fa-database"></i> Veritabanını Sıfırla</h4>
+                            <p>Tüm site verilerini siler ve sistemi fabrika ayarlarına döndürür.</p>
+                            <button class="btn btn-danger" id="resetDatabaseBtn">
+                                <i class="fas fa-exclamation-triangle"></i> Veritabanını Sıfırla
+                            </button>
+                        </div>
+                        
+                        <div class="danger-item">
+                            <h4><i class="fas fa-trash-alt"></i> Tüm Verileri Sil</h4>
+                            <p>Tüm daire sahipleri, aidat kayıtları, duyurular ve şikayetleri kalıcı olarak siler.</p>
+                            <button class="btn btn-danger" id="deleteAllDataBtn">
+                                <i class="fas fa-trash"></i> Tüm Verileri Sil
+                            </button>
+                        </div>
+                        
+                        <div class="danger-item">
+                            <h4><i class="fas fa-user-slash"></i> Hesabı Sil</h4>
+                            <p>Yönetici hesabını ve tüm yetkileri kalıcı olarak siler.</p>
+                            <button class="btn btn-danger" id="deleteAccountBtn">
+                                <i class="fas fa-user-times"></i> Hesabı Sil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="confirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" style="color: var(--accent-color);">İşlemi Onayla</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage">Bu işlem geri alınamaz. Devam etmek istiyor musunuz?</p>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" id="cancelBtn">İptal</button>
+                <button class="btn btn-danger" id="confirmBtn">Onayla</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

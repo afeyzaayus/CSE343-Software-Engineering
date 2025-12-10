@@ -1,0 +1,129 @@
+/* Yönetici Ekle/Düzenle Form Kartı - Duyurular Sayfası Görünümü */
+.form-card {
+    background: white;
+    border-radius: 8px; /* Varsayılan border radius */
+    padding: 30px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Daha hafif gölge */
+    border: 1px solid #e0e0e0;
+}
+
+.form-card h3 {
+    font-size: 1.4rem;
+    color: var(--primary-color, #3498db);
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.form-card input[type="text"],
+.form-card select,
+.form-card textarea {
+    width: 100%;
+    padding: 12px 15px; /* Daha kalın padding */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.form-card input[type="text"]:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+    border-color: var(--primary-color, #3498db);
+    outline: none;
+    box-shadow: 0 0 0 1px rgba(52, 152, 219, 0.2);
+}
+
+.form-card textarea {
+    resize: vertical;
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Form Aksiyon Butonları */
+.form-actions {
+    display: flex;
+    justify-content: flex-end; /* Butonları sağa hizala */
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.save-btn {
+    background-color: var(--primary-color, #3498db); /* Görseldeki butona uyduruldu */
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+    background-color: #2980b9;
+}
+
+.cancel-btn {
+    background-color: #95a5a6;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+.cancel-btn:hover {
+    background-color: #7f8c8d;
+}
+
+
+/* Mevcut Tesis Kartları için yönetim butonlarını daha kart içine alalım */
+.facility-actions-admin {
+    position: static; /* Kartın içine al */
+    gap: 5px;
+}
+.facility-header {
+    flex-direction: column;
+    align-items: flex-start;
+}
+.facility-title {
+    margin-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+/* Yöneticinin aksiyon butonlarını ve durumu yan yana gösteren satır */
+.facility-header > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-end; /* Sağ tarafa hizala */
+}
+/* Durum ve butonlar için daha iyi bir hizalama */
+.facility-actions-admin {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}

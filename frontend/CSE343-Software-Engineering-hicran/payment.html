@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aidat Takibi - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">        
+    <link rel="stylesheet" href="css/sidebar.css">    
+    <link rel="stylesheet" href="css/table.css">      
+    <link rel="stylesheet" href="css/complaint_request.css">  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Site Yönetim Sistemi</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="dashboard.html"><i class="fas fa-home"></i> Ana Sayfa</a></li>
+                <li><a href="residents.html"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
+                <li class="active"><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
+                <li><a href="announcement.html"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
+                <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="header">
+                <h2>Aidat Takibi - Yeşil Vadi Sitesi</h2>
+                <div class="user-info">
+                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
+                    <span>Ahmet Yılmaz</span>
+                </div>
+            </div>
+            
+            <div class="dues-content">
+                <div class="complaint-filters">
+                    <button class="filter-btn active" data-filter="all">Tümü</button>
+                    <button class="filter-btn" data-filter="paid">Ödeyenler</button>
+                    <button class="filter-btn" data-filter="unpaid">Ödemeyenler</button>
+                </div>
+
+                <!-- ÖDEYENLER TABLOSU -->
+                <div class="table-container" id="paid-section">
+                    <div class="table-header">
+                        <div class="table-title">Aidatını Ödeyenler</div>
+                        <div class="table-subtitle">Ekim 2023 - 36 Daire</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daire No</th>
+                                <th>Daire Sahibi</th>
+                                <th>Ödeme Tarihi</th>
+                                <th>Tutar</th>
+                                <th>İşlemler</th> <!-- İsteğe göre kaldırabilirsin -->
+                            </tr>
+                        </thead>
+                        <tbody id="paid-tbody">
+                            <!-- Dinamik veri JS ile gelecek -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ÖDEMEYENLER TABLOSU -->
+                <div class="table-container" id="unpaid-section">
+                    <div class="table-header">
+                        <div class="table-title">Aidatını Ödemeyenler</div>
+                        <div class="table-subtitle">Ekim 2023 - 12 Daire</div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Daire No</th>
+                                <th>Daire Sahibi</th>
+                                <th>Telefon</th>
+                                <th>Son Ödeme Tarihi</th>
+                                <th>Gecikme (Gün)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unpaid-tbody">
+                            <!-- Dinamik veri JS ile gelecek -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

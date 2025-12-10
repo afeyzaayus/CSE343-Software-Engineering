@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş ve Kayıt - Site Yönetim Sistemi</title>
+    
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/login.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .tab-header { display: flex; margin-bottom: 25px; border-bottom: 2px solid #e9ecef; }
+        .tab-btn { flex: 1; padding: 12px 10px; border: none; background: none; cursor: pointer; font-size: 1.1rem; font-weight: 600; color: #95a5a6; transition: all 0.3s ease; }
+        .tab-btn.active { color: var(--primary-color); border-bottom: 3px solid var(--secondary-color); }
+        .tab-content { padding-top: 10px; }
+        .tab-pane { display: none; }
+        .tab-pane.active { display: block; }
+        /* Yeni eklenen ID uyarı stili */
+        .site-id-info { background: var(--light-color); padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; color: var(--primary-color); border: 1px solid #e0e7ee; }
+        .site-id-info strong { font-size: 1.2rem; display: block; margin-top: 5px; font-weight: 700; color: var(--accent-color); }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2 class="login-title">Site Yönetim Sistemi</h2>
+            
+            <div class="tab-header">
+                <button class="tab-btn active" data-tab="login">Giriş Yap</button>
+                <button class="tab-btn" data-tab="register">Kayıt Ol</button>
+            </div>
+
+            <div class="tab-content">
+                
+                <div class="tab-pane active" id="login">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <input type="text" id="loginName" placeholder="Ad Soyad" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" id="loginEmail" placeholder="E-posta" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="loginPassword" placeholder="Şifre" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Giriş Yap</button>
+                    </form>
+                </div>
+
+                <div class="tab-pane" id="register">
+                    <form id="registerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="registerName">Ad Soyad</label>
+                                <input type="text" id="registerName" placeholder="Adınız Soyadınız" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="accountType">Hesap Tipi</label>
+                                <select id="accountType" required>
+                                    <option value="individual">Bireysel (1 Site Hakkı)</option>
+                                    <option value="company">Şirket (Çoklu Site Hakkı)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="registerEmail">E-posta</label>
+                            <input type="email" id="registerEmail" placeholder="E-posta Adresi" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="registerPassword">Şifre</label>
+                                <input type="password" id="registerPassword" placeholder="Şifre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="registerPasswordRepeat">Şifre Tekrarı</label>
+                                <input type="password" id="registerPasswordRepeat" placeholder="Şifre Tekrarı" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-success" style="width: 100%;">Hesap Oluştur ve Site Ekle</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="siteSelectionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">İşlem Yapmak İstediğiniz Siteyi Seçin</div>
+            </div>
+            <div class="site-list">
+                </div>
+        </div>
+    </div>
+
+    <div class="modal" id="createSiteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Yeni Site Oluşturma</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="createSiteForm">
+                <div class="form-group site-id-info">
+                    Oluşturulan Site ID'niz: 
+                    <strong id="siteIdDisplay">******</strong>
+                </div>
+                
+                <input type="hidden" id="siteIdHidden"> <div class="form-group">
+                    <label for="newSiteName">Site Adı</label>
+                    <input type="text" id="newSiteName" placeholder="Örn: Deniz Manzaralı Evler" required>
+                </div>
+                <div class="form-group">
+                    <label for="newSiteAddress">Adres</label>
+                    <textarea id="newSiteAddress" placeholder="Site adresi" rows="2" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Siteyi Kaydet</button>
+            </form>
+        </div>
+    </div>
+    
+
+ <script type="module" src="js/main.js"></script>
+</body>
+</html>
