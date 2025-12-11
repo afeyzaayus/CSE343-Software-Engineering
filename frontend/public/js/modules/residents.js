@@ -1,11 +1,21 @@
 import { getAuthToken } from './auth.js';
 import { openModal, closeModal } from './ui.js';
+import { getCurrentSiteId } from './site.js';
 
-const API_BASE_URL = 'http://localhost:3000/api/sites';
-const API_USERS_URL = 'http://localhost:3000/api/users';
-const SITE_ID = 1; // Default site ID
+const API_BASE_URL = 'http://localhost:3000/api/residence/sites';
+const API_USERS_URL = 'http://localhost:3000/api/residence/users';
 const USER_ID = localStorage.getItem('userId');
 const ROLE = localStorage.getItem('role'); // 'admin' veya 'user'
+
+// Site ID'yi dinamik olarak al
+function getSiteId() {
+    const siteId = getCurrentSiteId() || sessionStorage.getItem('siteId');
+    if (!siteId) {
+        console.error('Site ID bulunamadı! Lütfen önce bir site seçin.');
+        return null;
+    }
+    return siteId;
+}
 
 // --- API Fonksiyonları ---
 
@@ -93,6 +103,11 @@ async function updateResident(siteId, userId, data) {
 
 async function createResident(siteId, data) {
     try {
+        console.log('📤 [FRONTEND] Creating resident:');
+        console.log('  - Site ID:', siteId);
+        console.log('  - Data:', data);
+        console.log('  - URL:', `${API_BASE_URL}/${siteId}/residents`);
+        
         const res = await fetch(`${API_BASE_URL}/${siteId}/residents`, {
             method: 'POST',
             headers: {
@@ -100,14 +115,19 @@ async function createResident(siteId, data) {
             },
             body: JSON.stringify(data)
         });
+        
+        console.log('📥 [FRONTEND] Response status:', res.status);
+        
         if (!res.ok) {
             const errorData = await res.json();
+            console.error('❌ [FRONTEND] Error response:', errorData);
             throw new Error(errorData.message || 'Sakin eklenemedi');
         }
         const result = await res.json();
+        console.log('✅ [FRONTEND] Resident created successfully:', result);
         return result.data || null;
     } catch (err) {
-        console.error(err);
+        console.error('❌ [FRONTEND] Create resident error:', err);
         alert(err.message);
         throw err;
     }
@@ -118,7 +138,13 @@ async function createResident(siteId, data) {
 async function renderResidents() {
     const container = document.querySelector('#residents-table-body');
     
+    const SITE_ID = getSiteId();
     console.log('renderResidents called - SITE_ID:', SITE_ID, 'USER_ID:', USER_ID, 'ROLE:', ROLE);
+
+    if (!SITE_ID) {
+        container.innerHTML = '<tr><td colspan="8" style="text-align:center; color: red;">Lütfen önce bir site seçin!</td></tr>';
+        return;
+    }
 
     container.innerHTML = '<tr><td colspan="8" style="text-align:center;">Veriler yükleniyor...</td></tr>';
 
@@ -283,6 +309,9 @@ export async function setupResidents() {
                 resident_type: document.getElementById('editStatus').value
             };
             
+            const SITE_ID = getSiteId();
+            if (!SITE_ID) return;
+            
             try {
                 await updateResident(SITE_ID, residentId, data);
                 alert("Sakin başarıyla güncellendi!");
@@ -312,14 +341,27 @@ export async function setupResidents() {
                 resident_type: formData.get('status') === 'active' ? 'HIRER' : 'OWNER'
             };
             
+            console.log('📝 [FORM] Form submitted with data:', data);
+            
+            const SITE_ID = getSiteId();
+            console.log('🏠 [FORM] Site ID:', SITE_ID);
+            
+            if (!SITE_ID) {
+                console.error('❌ [FORM] Site ID bulunamadı!');
+                alert('Site ID bulunamadı! Lütfen tekrar giriş yapın.');
+                return;
+            }
+            
             try {
                 await createResident(SITE_ID, data);
+                console.log('✅ [FORM] Sakin başarıyla eklendi');
                 alert("Yeni sakin başarıyla eklendi!");
                 addModal.style.display = "none";
                 addForm.reset();
                 await renderResidents();
             } catch (err) {
-                console.error('Sakin eklenirken hata:', err);
+                console.error('❌ [FORM] Sakin eklenirken hata:', err);
+                alert('Hata: ' + err.message);
             }
         });
     }

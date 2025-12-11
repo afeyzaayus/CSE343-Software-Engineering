@@ -12,8 +12,19 @@ export async function createPayment(req, res) {
   try {
     const { userId, siteId, amount, payment_date, payment_method, description } = req.body;
 
+    // Debug: Gelen veriyi logla
+    console.log('📥 createPayment - Gelen body:', req.body);
+    console.log('📥 userId:', userId, 'siteId:', siteId, 'amount:', amount, 'payment_date:', payment_date, 'payment_method:', payment_method);
+
     // Validasyon
     if (!userId || !siteId || !amount || !payment_date || !payment_method) {
+      console.error('❌ Validasyon hatası - Eksik alanlar:', {
+        userId: !!userId,
+        siteId: !!siteId,
+        amount: !!amount,
+        payment_date: !!payment_date,
+        payment_method: !!payment_method
+      });
       return res.status(400).json({
         success: false,
         message: 'Kullanıcı ID, Site ID, tutar, ödeme tarihi ve ödeme yöntemi zorunludur.'
@@ -63,6 +74,18 @@ export async function createPayment(req, res) {
 export async function getPaymentsBySite(req, res) {
   try {
     const { siteId } = req.params;
+    
+    // Debug: siteId'nin değerini ve tipini kontrol et
+    console.log('getPaymentsBySite - siteId:', siteId, 'type:', typeof siteId);
+    
+    // siteId validasyonu
+    if (!siteId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Site ID zorunludur.'
+      });
+    }
+
     const { startDate, endDate, userId, payment_method } = req.query;
 
     const payments = await getPaymentsBySiteService(siteId, {
@@ -78,6 +101,14 @@ export async function getPaymentsBySite(req, res) {
     });
   } catch (error) {
     console.error('Ödemeleri getirme hatası:', error);
+
+    if (error.message.startsWith('VALIDATION_ERROR')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message.replace('VALIDATION_ERROR: ', '')
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: 'Ödemeler getirilirken bir hata oluştu.'
@@ -161,18 +192,22 @@ export async function getPaymentStats(req, res) {
 export async function getResidentsBySite(req, res) {
   try {
     const { siteId } = req.params;
+    
+    console.log('🏠 getResidentsBySite - siteId:', siteId, 'type:', typeof siteId);
 
     const residents = await getResidentsBySiteService(siteId);
+    
+    console.log('✅ Sakinler bulundu - Toplam:', residents.length);
 
     return res.status(200).json({
       success: true,
       data: residents
     });
   } catch (error) {
-    console.error('Site sakinleri hatası:', error);
+    console.error('❌ Site sakinleri hatası:', error);
     return res.status(500).json({
       success: false,
-      message: 'Site sakinleri getirilirken bir hata oluştu.'
+      message: 'Site sakinleri getirilirken bir hata oluştu: ' + error.message
     });
   }
 }

@@ -1,8 +1,16 @@
 // Social Facilities Page Script
 const API_BASE_URL = 'http://localhost:3000/api';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
-const SITE_ID = selectedSite?.site_id;
+const SITE_ID = selectedSite?.site_id || selectedSite?.id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+
+// Tesisleri bellekte tut
+let facilitiesCache = [];
+
+// DEBUG
+console.log('🏢 [FACILITIES] selectedSite:', selectedSite);
+console.log('🏢 [FACILITIES] SITE_ID:', SITE_ID);
+console.log('🏢 [FACILITIES] currentUser:', currentUser);
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,17 +45,28 @@ async function loadFacilities() {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
     
+    console.log('📡 [LOAD] Tesisler yükleniyor...');
+    console.log('📡 [LOAD] URL:', `${API_BASE_URL}/sites/${SITE_ID}/social-amenities`);
+    
     try {
         const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities`, { headers });
-        if (!response.ok) throw new Error('Sosyal tesisler yüklenemedi');
+        console.log('📡 [LOAD] Response status:', response.status);
         
         const result = await response.json();
+        console.log('📡 [LOAD] Response data:', result);
+        
+        if (!response.ok) throw new Error(result.message || 'Sosyal tesisler yüklenemedi');
+        
         const facilities = result.data || result.facilities || [];
+        console.log('📡 [LOAD] Facilities:', facilities);
+        
+        // Cache'e kaydet
+        facilitiesCache = facilities;
         
         renderFacilities(facilities);
     } catch (error) {
-        console.error('Sosyal tesisler yüklenirken hata:', error);
-        alert('Sosyal tesisler yüklenirken bir hata oluştu.');
+        console.error('❌ [LOAD] Hata:', error);
+        alert('Sosyal tesisler yüklenirken bir hata oluştu: ' + error.message);
     }
 }
 
@@ -62,8 +81,10 @@ function renderFacilities(facilities) {
     }
 
     container.innerHTML = facilities.map(facility => {
-        const statusColor = facility.status === 'ACTIVE' ? '#27ae60' : '#e74c3c';
-        const statusText = facility.status === 'ACTIVE' ? 'Aktif' : 'Bakımda';
+        const statusColor = facility.status === 'ACTIVE' || facility.status === 'Açık' ? '#27ae60' : '#e74c3c';
+        const statusText = facility.status === 'ACTIVE' || facility.status === 'Açık' ? 'Aktif' : 'Bakımda';
+        const capacity = facility.capacity || facility.extra || '';
+        const operatingHours = facility.operating_hours || facility.hours || '';
 
         return `
         <div class="facility-card" style="border:1px solid #e0e0e0;padding:20px;margin-bottom:15px;background:white;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">
@@ -72,8 +93,8 @@ function renderFacilities(facilities) {
                     <h3 style="margin:0 0 10px 0;color:#2c3e50;">${facility.name}</h3>
                     <p style="margin:0 0 10px 0;color:#7f8c8d;">${facility.description || ''}</p>
                     <div style="font-size:14px;color:#95a5a6;">
-                        <span><strong>Kapasite:</strong> ${facility.capacity || 'Belirtilmemiş'}</span>
-                        ${facility.operating_hours ? ` | <strong>Çalışma Saatleri:</strong> ${facility.operating_hours}` : ''}
+                        <span><strong>Kapasite:</strong> ${capacity || 'Belirtilmemiş'}</span>
+                        ${operatingHours ? ` | <strong>Çalışma Saatleri:</strong> ${operatingHours}` : ''}
                     </div>
                 </div>
                 <div style="display:flex;flex-direction:column;gap:10px;align-items:end;">
@@ -81,10 +102,10 @@ function renderFacilities(facilities) {
                         ${statusText}
                     </span>
                     <div style="display:flex;gap:5px;">
-                        <button class="btn-edit" onclick="editFacility(${facility.id})" style="padding:5px 10px;background:#3498db;color:white;border:none;border-radius:4px;cursor:pointer;">
+                        <button class="btn-edit" onclick="editFacility('${facility.id}')" style="padding:5px 10px;background:#3498db;color:white;border:none;border-radius:4px;cursor:pointer;">
                             Düzenle
                         </button>
-                        <button class="btn-delete" onclick="deleteFacility(${facility.id})" style="padding:5px 10px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;">
+                        <button class="btn-delete" onclick="deleteFacility('${facility.id}')" style="padding:5px 10px;background:#e74c3c;color:white;border:none;border-radius:4px;cursor:pointer;">
                             Sil
                         </button>
                     </div>
@@ -102,68 +123,106 @@ function setupFacilityForm() {
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const facilityId = document.getElementById('facilityId').value;
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+        if (!token) {
+            alert('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const facilityId = document.getElementById('facilityId')?.value || '';
         const name = document.getElementById('facilityName').value;
         const description = document.getElementById('facilityDescription')?.value || '';
-        const capacity = document.getElementById('facilityCapacity')?.value || null;
+        const capacity = document.getElementById('facilityCapacity')?.value || '';
         const operatingHours = document.getElementById('operatingHours')?.value || '';
 
-        const data = { name, description, capacity, operating_hours: operatingHours, status: 'ACTIVE' };
+        const data = { name, description, capacity, operating_hours: operatingHours, status: 'Açık' };
+        
+        console.log('📤 [SUBMIT] Form gönderiliyor...');
+        console.log('📤 [SUBMIT] SITE_ID:', SITE_ID);
+        console.log('📤 [SUBMIT] facilityId:', facilityId);
+        console.log('📤 [SUBMIT] data:', data);
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
 
         try {
             let response;
+            let url;
             if (facilityId) {
                 // Güncelleme
-                response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`, {
+                url = `${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`;
+                console.log('📤 [SUBMIT] PUT URL:', url);
+                response = await fetch(url, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify(data)
                 });
             } else {
                 // Yeni ekleme
-                response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities`, {
+                url = `${API_BASE_URL}/sites/${SITE_ID}/social-amenities`;
+                console.log('📤 [SUBMIT] POST URL:', url);
+                response = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers,
                     body: JSON.stringify(data)
                 });
             }
 
-            if (!response.ok) throw new Error('İşlem başarısız');
+            console.log('📤 [SUBMIT] Response status:', response.status);
+            const result = await response.json();
+            console.log('📤 [SUBMIT] Response data:', result);
+
+            if (!response.ok) throw new Error(result.message || result.error || 'İşlem başarısız');
 
             alert(facilityId ? 'Tesis güncellendi!' : 'Tesis eklendi!');
             form.reset();
+            if (document.getElementById('facilityId')) document.getElementById('facilityId').value = '';
             await loadFacilities();
         } catch (error) {
-            console.error('Form gönderme hatası:', error);
-            alert('İşlem sırasında bir hata oluştu.');
+            console.error('❌ [SUBMIT] Hata:', error);
+            alert('İşlem sırasında bir hata oluştu: ' + error.message);
         }
     });
 }
 
 // Tesis düzenleme
 window.editFacility = async function(facilityId) {
+    console.log('✏️ [EDIT] facilityId:', facilityId);
+    
+    // Cache'den tesis bilgisini al
+    const facility = facilitiesCache.find(f => f.id === facilityId);
+    console.log('✏️ [EDIT] facility from cache:', facility);
+    
+    if (!facility) {
+        alert('Tesis bilgisi bulunamadı. Sayfa yenileniyor...');
+        await loadFacilities();
+        return;
+    }
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`);
-        if (!response.ok) throw new Error('Tesis bilgisi alınamadı');
-        
-        const facility = await response.json();
-        
         document.getElementById('facilityId').value = facility.id;
         document.getElementById('facilityName').value = facility.name;
         if (document.getElementById('facilityDescription')) {
             document.getElementById('facilityDescription').value = facility.description || '';
         }
         if (document.getElementById('facilityCapacity')) {
-            document.getElementById('facilityCapacity').value = facility.capacity || '';
+            document.getElementById('facilityCapacity').value = facility.extra || facility.capacity || '';
         }
         if (document.getElementById('operatingHours')) {
-            document.getElementById('operatingHours').value = facility.operating_hours || '';
+            document.getElementById('operatingHours').value = facility.hours || facility.operating_hours || '';
         }
 
-        document.getElementById('form-title').textContent = 'Tesis Düzenle';
+        const formTitle = document.getElementById('form-title');
+        if (formTitle) formTitle.textContent = 'Tesis Düzenle';
+        
+        // Forma scroll yap
+        document.getElementById('editFacilityForm')?.scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
-        console.error('Düzenleme hatası:', error);
-        alert('Tesis bilgisi alınamadı.');
+        console.error('❌ [EDIT] Hata:', error);
+        alert('Tesis bilgisi yüklenirken hata oluştu.');
     }
 };
 
@@ -171,17 +230,24 @@ window.editFacility = async function(facilityId) {
 window.deleteFacility = async function(facilityId) {
     if (!confirm('Bu tesisi silmek istediğinizden emin misiniz?')) return;
 
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
     try {
         const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers
         });
 
-        if (!response.ok) throw new Error('Silme başarısız');
+        if (!response.ok) {
+            const result = await response.json();
+            throw new Error(result.message || 'Silme başarısız');
+        }
 
         alert('Tesis silindi!');
         await loadFacilities();
     } catch (error) {
-        console.error('Silme hatası:', error);
-        alert('Tesis silinemedi.');
+        console.error('❌ [DELETE] Hata:', error);
+        alert('Tesis silinemedi: ' + error.message);
     }
 };

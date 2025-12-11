@@ -2,6 +2,19 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 class ResidenceService {
+  // Get site by site_id (string code)
+  async getSiteByCode(siteCode) {
+    try {
+      const site = await prisma.site.findUnique({
+        where: { site_id: siteCode },
+        select: { id: true, site_id: true, site_name: true }
+      });
+      return site;
+    } catch (error) {
+      throw new Error(`Failed to fetch site: ${error.message}`);
+    }
+  }
+
   // Get unique blocks for a specific site
   async getBlocksBySiteId(siteId) {
     try {
@@ -107,41 +120,90 @@ class ResidenceService {
   // Create a new resident
   async createResident(data) {
     try {
-      let blockId = data.block_id;
+      console.log('🔧 [SERVICE] Creating resident with data:', JSON.stringify(data, null, 2));
+      
+      // Remove id field if it exists (should be auto-generated)
+      const { id, ...dataWithoutId } = data;
+      if (id) {
+        console.log('  - WARNING: Removing id field:', id);
+      }
+      
+      let blockId = dataWithoutId.block_id;
       
       // If block_name is provided instead of block_id, find or create the block
-      if (data.block_name && !blockId) {
+      if (dataWithoutId.block_name && !blockId) {
+        console.log('  - Looking for block:', dataWithoutId.block_name, 'in site:', dataWithoutId.siteId);
         let block = await prisma.blocks.findFirst({
           where: {
-            site_id: data.siteId,
-            block_name: data.block_name
+            site_id: dataWithoutId.siteId,
+            block_name: dataWithoutId.block_name
           }
         });
         
         // If block doesn't exist, create it
         if (!block) {
+          console.log('  - Block not found, creating new block:', dataWithoutId.block_name);
           block = await prisma.blocks.create({
             data: {
-              block_name: data.block_name,
-              site_id: data.siteId
+              block_name: dataWithoutId.block_name,
+              site_id: dataWithoutId.siteId
             }
           });
+          console.log('  - Block created with ID:', block.id);
+        } else {
+          console.log('  - Block found with ID:', block.id);
         }
         
         blockId = block.id;
       }
       
+      console.log('  - Creating user in database with:');
+      console.log('    * full_name:', dataWithoutId.full_name);
+      console.log('    * phone_number:', dataWithoutId.phone_number);
+      console.log('    * block_id:', blockId);
+      console.log('    * apartment_no:', dataWithoutId.apartment_no);
+      console.log('    * siteId:', dataWithoutId.siteId);
+      console.log('    * resident_type:', dataWithoutId.resident_type);
+      
+      // Validate and normalize resident_type
+      let residentType = dataWithoutId.resident_type;
+      if (residentType === 'active' || residentType === 'HIRER') {
+        residentType = 'HIRER';
+      } else if (residentType === 'inactive' || residentType === 'OWNER') {
+        residentType = 'OWNER';
+      } else {
+        residentType = 'OWNER'; // Default
+      }
+      console.log('    * normalized resident_type:', residentType);
+        
+      // Check if phone number already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { phone_number: dataWithoutId.phone_number }
+      });
+      
+      if (existingUser) {
+        throw new Error(`Bu telefon numarası zaten kayıtlı: ${dataWithoutId.phone_number}`);
+      }
+      
+      // Reset sequence if needed (fix for id constraint issues)
+      try {
+        await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"public"."users"', 'id'), COALESCE((SELECT MAX(id) FROM "public"."users"), 1), true)`;
+        console.log('  - Database sequence reset successfully');
+      } catch (seqError) {
+        console.log('  - Sequence reset skipped:', seqError.message);
+      }
+      
       const resident = await prisma.user.create({
         data: {
-          full_name: data.full_name,
-          phone_number: data.phone_number,
-          password: data.password || 'defaultPassword123',
+          full_name: dataWithoutId.full_name,
+          phone_number: dataWithoutId.phone_number,
+          password: dataWithoutId.password || 'defaultPassword123',
           block_id: blockId ? parseInt(blockId) : null,
-          apartment_no: data.apartment_no,
-          siteId: data.siteId,
-          resident_count: data.resident_count || 1,
-          plates: data.plates,
-          resident_type: data.resident_type,
+          apartment_no: dataWithoutId.apartment_no,
+          siteId: dataWithoutId.siteId,
+          resident_count: dataWithoutId.resident_count || 1,
+          plates: dataWithoutId.plates,
+          resident_type: residentType,
           updated_at: new Date()
         },
         select: {
