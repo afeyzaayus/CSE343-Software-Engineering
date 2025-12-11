@@ -16,13 +16,14 @@ import {
  */
 export async function createAnnouncement(req, res) {
   try {
-    const { title, content, start_date, end_date, site_id } = req.body;
+    const { siteId } = req.params;
+    const { title, content, start_date, end_date, priority } = req.body;
 
     // Validasyon
-    if (!title || !content || !start_date || !end_date || !site_id) {
+    if (!title || !content || !start_date || !end_date) {
       return res.status(400).json({
         success: false,
-        message: 'Tüm alanlar zorunludur (title, content, start_date, end_date, site_id).'
+        message: 'Tüm alanlar zorunludur (title, content, start_date, end_date).'
       });
     }
 
@@ -40,7 +41,10 @@ export async function createAnnouncement(req, res) {
       });
     }
 
-    const announcement = await createAnnouncementService(req.body);
+    const announcement = await createAnnouncementService({
+      ...req.body,
+      site_id: siteId
+    });
 
     return res.status(201).json({
       success: true,
@@ -64,6 +68,15 @@ export async function createAnnouncement(req, res) {
       });
     }
 
+    // Prisma unique constraint hatası
+    if (error.code === 'P2002') {
+      console.error('Unique constraint error details:', error.meta);
+      return res.status(400).json({
+        success: false,
+        message: `Benzersiz kısıt hatası: ${error.meta?.target?.join(', ') || 'bilinmeyen alan'}. Lütfen ID sequence'ini kontrol edin.`
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: 'Duyuru oluşturulurken bir hata oluştu.'
@@ -80,16 +93,16 @@ export async function createAnnouncement(req, res) {
  */
 export async function getAnnouncementsBySite(req, res) {
   try {
-    const { site_id } = req.params;
+    const { siteId } = req.params;
 
-    if (!site_id) {
+    if (!siteId) {
       return res.status(400).json({
         success: false,
         message: 'Site ID belirtilmelidir.'
       });
     }
 
-    const announcements = await getAnnouncementsBySiteService(site_id);
+    const announcements = await getAnnouncementsBySiteService(siteId);
 
     return res.status(200).json({
       success: true,
@@ -121,16 +134,16 @@ export async function getAnnouncementsBySite(req, res) {
  */
 export async function getAnnouncementById(req, res) {
   try {
-    const { id, site_id } = req.params;
+    const { siteId, id } = req.params;
 
-    if (!id || !site_id) {
+    if (!id || !siteId) {
       return res.status(400).json({
         success: false,
         message: 'Duyuru ID ve Site ID belirtilmelidir.'
       });
     }
 
-    const announcement = await getAnnouncementByIdService(id, site_id);
+    const announcement = await getAnnouncementByIdService(id, siteId);
 
     return res.status(200).json({
       success: true,
@@ -170,10 +183,10 @@ export async function getAnnouncementById(req, res) {
  */
 export async function updateAnnouncement(req, res) {
   try {
-    const { id, site_id } = req.params;
-    const { title, content, start_date, end_date } = req.body;
+    const { siteId, id } = req.params;
+    const { title, content, start_date, end_date, priority } = req.body;
 
-    if (!id || !site_id) {
+    if (!id || !siteId) {
       return res.status(400).json({
         success: false,
         message: 'Duyuru ID ve Site ID belirtilmelidir.'
@@ -206,8 +219,9 @@ export async function updateAnnouncement(req, res) {
     if (content) updateData.content = content.trim();
     if (start_date) updateData.start_date = start_date;
     if (end_date) updateData.end_date = end_date;
+    if (priority) updateData.priority = priority;
 
-    const announcement = await updateAnnouncementService(id, site_id, updateData);
+    const announcement = await updateAnnouncementService(id, siteId, updateData);
 
     return res.status(200).json({
       success: true,
@@ -254,16 +268,16 @@ export async function updateAnnouncement(req, res) {
  */
 export async function deleteAnnouncement(req, res) {
   try {
-    const { id, site_id } = req.params;
+    const { siteId, id } = req.params;
 
-    if (!id || !site_id) {
+    if (!id || !siteId) {
       return res.status(400).json({
         success: false,
         message: 'Duyuru ID ve Site ID belirtilmelidir.'
       });
     }
 
-    const result = await deleteAnnouncementService(id, site_id);
+    const result = await deleteAnnouncementService(id, siteId);
 
     return res.status(200).json({
       success: true,

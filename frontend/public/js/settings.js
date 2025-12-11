@@ -4,7 +4,8 @@ import { apiCall } from './api.js';
 import { openModal, closeModal } from './ui.js';
 
 // --- Global Sabitler ve Endpointler ---
-const SITE_ID = localStorage.getItem('selectedSite'); 
+const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
+const SITE_ID = selectedSite?.site_id; 
 const SETTINGS_ENDPOINT = `/api/sites/${SITE_ID}/settings`; // PUT ile güncellenir
 const USER_PROFILE_ENDPOINT = `/api/users/me`; // Kullanıcının veya yöneticinin profil bilgisi
 

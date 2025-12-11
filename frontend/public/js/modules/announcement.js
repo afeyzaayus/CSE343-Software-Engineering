@@ -1,6 +1,7 @@
 
-const API_BASE_URL = 'https://api.sityonetim.com/v1'; // Örneğin: Gerçek API URL'niz
-const getCurrentSiteId = () => localStorage.getItem('activeSiteId') || '1'; // Varsayılan site ID
+const API_BASE_URL = 'http://localhost:3000/api';
+const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
+const getCurrentSiteId = () => selectedSite?.site_id || '1';
 const getToken = () => localStorage.getItem('authToken'); 
 
 // =================================================================

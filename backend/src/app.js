@@ -142,7 +142,7 @@ app.use('/api/company/invitations', invitationRoutes);
 app.use('/api/company', companyRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/announcements', announcementRoutes);
+app.use('/api/sites', announcementRoutes); // Announcements için /api/sites/:siteId/announcements
 app.use('/api/payments', paymentRoutes);
 app.use('/api/complaints', requestRoutes);
 app.use('/api/residence', residenceRoutes);

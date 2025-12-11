@@ -40,12 +40,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Dashboard verilerini API'den çek
 async function loadDashboardData() {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
     try {
         // Örnek API çağrıları
-        const occupancyRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/occupancy`);
-        const duesRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/dues`);
-        const announcementsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements`);
-        const requestsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/requests`);
+        const occupancyRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/occupancy`, { headers });
+        const duesRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/dues`, { headers });
+        const announcementsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements`, { headers });
+        const requestsRes = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/requests`, { headers });
 
         // JSON
         const occupancy = (await occupancyRes.json()).percentage || '--';

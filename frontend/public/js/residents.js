@@ -1,11 +1,15 @@
 // Residents Management
 const API_BASE_URL = 'http://localhost:3000/api/residence';
-const SITE_ID = localStorage.getItem('siteId') || 1;
+const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
+const SITE_ID = selectedSite?.site_id;
 
 // Fetch residents
 async function fetchResidents(siteId) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
     try {
-        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents`);
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents`, { headers });
         if (!res.ok) throw new Error('Sakinler alınamadı');
         const result = await res.json();
         return result.data || [];
@@ -18,8 +22,11 @@ async function fetchResidents(siteId) {
 
 // Fetch blocks
 async function fetchBlocks(siteId) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
     try {
-        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks`);
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks`, { headers });
         if (!res.ok) throw new Error('Bloklar alınamadı');
         const blocks = await res.json();
         return blocks || [];
@@ -31,10 +38,16 @@ async function fetchBlocks(siteId) {
 
 // Create resident
 async function createResident(siteId, data) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+    
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(data)
         });
         if (!res.ok) {
@@ -52,10 +65,16 @@ async function createResident(siteId, data) {
 
 // Update resident
 async function updateResident(siteId, userId, data) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+    
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents/${userId}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(data)
         });
         if (!res.ok) {
@@ -73,6 +92,12 @@ async function updateResident(siteId, userId, data) {
 
 // Render residents table
 async function renderResidents() {
+    if (!SITE_ID) {
+        alert('Site seçilmedi. Ana sayfaya yönlendiriliyorsunuz.');
+        window.location.href = '/admin-dashboard.html';
+        return;
+    }
+    
     const tbody = document.getElementById('residents-table-body');
     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Yükleniyor...</td></tr>';
 
