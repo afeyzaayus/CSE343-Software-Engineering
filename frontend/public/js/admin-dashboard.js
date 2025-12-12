@@ -235,11 +235,11 @@ function renderSiteList(sites) {
                     <small>Blok</small>
                 </div>
                 <div class="site-stat">
-                    <span>${site.apartment_count || 0}</span>
+                    <span>${site.apartments_per_block || 0}</span>
                     <small>Daire/Blok</small>
                 </div>
                 <div class="site-stat">
-                    <span>${(site.block_count || 0) * (site.apartment_count || 0)}</span>
+                    <span>${site.total_capacity || 0}</span>
                     <small>Toplam</small>
                 </div>
             </div>

@@ -51,41 +51,60 @@ async function loadComplaints() {
     
     try {
         const response = await fetch(`${API_BASE_URL}/complaints?siteId=${SITE_ID}`, { headers });
-        if (!response.ok) throw new Error('Şikayetler yüklenemedi');
+        if (!response.ok) {
+            throw new Error('Şikayetler yüklenemedi');
+        }
         
         const result = await response.json();
+        console.log('API Yanıtı:', result);
         const complaints = result.data || result.complaints || [];
         
-        renderComplaints(complaints);
+        renderComplaintsByStatus(complaints);
     } catch (error) {
         console.error('Şikayetler yüklenirken hata:', error);
-        alert('Şikayetler yüklenirken bir hata oluştu.');
+        showErrorMessage('Şikayetler yüklenirken bir hata oluştu.');
     }
 }
 
-// Şikayetleri render et
-function renderComplaints(complaints, filter = 'all') {
-    const container = document.getElementById('complaints-list');
-    if (!container) return;
+// Şikayetleri durumlarına göre render et
+function renderComplaintsByStatus(complaints) {
+    const pendingList = document.getElementById('pending-requests-list');
+    const inprogressList = document.getElementById('inprogress-requests-list');
+    const resolvedList = document.getElementById('resolved-requests-list');
 
-    let filtered = complaints;
-    if (filter !== 'all') {
-        filtered = complaints.filter(c => c.status?.toLowerCase() === filter);
+    // Şikayetleri duruma göre ayır
+    const pending = complaints.filter(c => c.status?.toLowerCase() === 'pending');
+    const inprogress = complaints.filter(c => c.status?.toLowerCase() === 'in_progress' || c.status?.toLowerCase() === 'inprogress');
+    const resolved = complaints.filter(c => c.status?.toLowerCase() === 'resolved');
+
+    // Her liste için render et
+    if (pendingList) {
+        pendingList.innerHTML = renderComplaintsList(pending, 'Bekleyen şikayet/talep bulunmamaktadır.');
+    }
+    if (inprogressList) {
+        inprogressList.innerHTML = renderComplaintsList(inprogress, 'İşlemdeki şikayet/talep bulunmamaktadır.');
+    }
+    if (resolvedList) {
+        resolvedList.innerHTML = renderComplaintsList(resolved, 'Çözülen şikayet/talep bulunmamaktadır.');
+    }
+}
+
+// Şikayet listesi HTML'i oluştur
+function renderComplaintsList(complaints, emptyMessage) {
+    if (complaints.length === 0) {
+        return `<p style="text-align:center;color:#7f8c8d;padding:20px;">${emptyMessage}</p>`;
     }
 
-    if (filtered.length === 0) {
-        container.innerHTML = '<p style="text-align:center;color:#7f8c8d;">Şikayet/talep kaydı bulunmamaktadır.</p>';
-        return;
-    }
-
-    container.innerHTML = filtered.map(complaint => {
+    return complaints.map(complaint => {
         const statusColors = {
             'pending': '#f39c12',
+            'in_progress': '#3498db',
             'inprogress': '#3498db',
             'resolved': '#27ae60'
         };
         const statusTexts = {
             'pending': 'Bekliyor',
+            'in_progress': 'İşlemde',
             'inprogress': 'İşlemde',
             'resolved': 'Çözüldü'
         };
@@ -98,10 +117,11 @@ function renderComplaints(complaints, filter = 'all') {
             <div style="display:flex;justify-content:space-between;align-items:start;">
                 <div style="flex:1;">
                     <h4 style="margin:0 0 10px 0;color:#2c3e50;">${complaint.title || 'Şikayet/Talep'}</h4>
-                    <p style="margin:0 0 10px 0;color:#7f8c8d;">${complaint.description || ''}</p>
+                    <p style="margin:0 0 10px 0;color:#7f8c8d;">${complaint.content || complaint.description || ''}</p>
                     <div style="font-size:12px;color:#95a5a6;">
                         <span><strong>Tarih:</strong> ${new Date(complaint.created_at).toLocaleDateString('tr-TR')}</span>
-                        ${complaint.resident_name ? ` | <strong>Gönderen:</strong> ${complaint.resident_name}` : ''}
+                        ${complaint.users?.full_name ? ` | <strong>Gönderen:</strong> ${complaint.users.full_name}` : ''}
+                        ${complaint.users?.apartment_no ? ` - Daire: ${complaint.users.apartment_no}` : ''}
                     </div>
                 </div>
                 <div>
@@ -114,18 +134,46 @@ function renderComplaints(complaints, filter = 'all') {
     }).join('');
 }
 
+// Hata mesajını göster
+function showErrorMessage(message) {
+    const pendingList = document.getElementById('pending-requests-list');
+    const inprogressList = document.getElementById('inprogress-requests-list');
+    const resolvedList = document.getElementById('resolved-requests-list');
+    
+    const errorHTML = `<p style="text-align:center;color:#e74c3c;padding:20px;">${message}</p>`;
+    if (pendingList) pendingList.innerHTML = errorHTML;
+    if (inprogressList) inprogressList.innerHTML = errorHTML;
+    if (resolvedList) resolvedList.innerHTML = errorHTML;
+}
+
 // Filtreleme butonları
 function setupFilters() {
     const filterBtns = document.querySelectorAll('.filter-btn');
+    const sections = {
+        'pending': document.getElementById('pending-requests-section'),
+        'inprogress': document.getElementById('inprogress-requests-section'),
+        'resolved': document.getElementById('resolved-requests-section')
+    };
+
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
             const filter = btn.getAttribute('data-filter');
-            loadComplaints().then(() => {
-                // Re-render with filter
-            });
+            
+            // Tüm bölümleri göster/gizle
+            if (filter === 'all') {
+                Object.values(sections).forEach(section => {
+                    if (section) section.style.display = 'block';
+                });
+            } else {
+                Object.entries(sections).forEach(([key, section]) => {
+                    if (section) {
+                        section.style.display = (key === filter) ? 'block' : 'none';
+                    }
+                });
+            }
         });
     });
 }

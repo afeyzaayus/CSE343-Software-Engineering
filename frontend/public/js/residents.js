@@ -36,6 +36,57 @@ async function fetchBlocks(siteId) {
     }
 }
 
+// Create block
+async function createBlock(siteId, data) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Blok oluşturulamadı');
+        }
+        const result = await res.json();
+        return result.data;
+    } catch (err) {
+        console.error('Create block error:', err);
+        alert(err.message);
+        throw err;
+    }
+}
+
+// Delete block
+async function deleteBlock(siteId, blockId) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks/${blockId}`, {
+            method: 'DELETE',
+            headers
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Blok silinemedi');
+        }
+        
+        return await res.json();
+    } catch (err) {
+        console.error('Delete block error:', err);
+        alert(err.message);
+        throw err;
+    }
+}
+
 // Create resident
 async function createResident(siteId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
@@ -123,13 +174,18 @@ async function renderResidents() {
             <td>${resident.resident_count || 1}</td>
             <td>${statusText}</td>
             <td>
-                <button class="btn btn-sm btn-primary edit-btn" data-id="${resident.id}">Düzenle</button>
+                <button class="btn btn-sm btn-primary edit-btn" data-id="${resident.id}" style="margin-right: 5px;">Düzenle</button>
+                <button class="btn btn-sm btn-danger delete-btn" data-id="${resident.id}">Sil</button>
             </td>
         `;
         tbody.appendChild(tr);
 
         tr.querySelector('.edit-btn').addEventListener('click', () => {
             openEditModal(resident);
+        });
+        
+        tr.querySelector('.delete-btn').addEventListener('click', () => {
+            deleteResidentConfirm(resident);
         });
     });
 }
@@ -148,8 +204,42 @@ async function populateBlockFilter() {
     });
 }
 
+// Update block dropdowns in modals
+async function updateBlockDropdowns() {
+    const blocks = await fetchBlocks(SITE_ID);
+    
+    // Update add modal dropdown
+    const addBlockSelect = document.querySelector('#addApartmentForm select[name="block"]');
+    if (addBlockSelect) {
+        addBlockSelect.innerHTML = '';
+        blocks.forEach(block => {
+            const option = document.createElement('option');
+            option.value = block.id;
+            option.textContent = block.block_name;
+            addBlockSelect.appendChild(option);
+        });
+    }
+    
+    // Update edit modal dropdown
+    const editBlockSelect = document.getElementById('editBlock');
+    if (editBlockSelect) {
+        const currentValue = editBlockSelect.value;
+        editBlockSelect.innerHTML = '';
+        blocks.forEach(block => {
+            const option = document.createElement('option');
+            option.value = block.id;
+            option.textContent = block.block_name;
+            editBlockSelect.appendChild(option);
+        });
+        if (currentValue) {
+            editBlockSelect.value = currentValue;
+        }
+    }
+}
+
 // Open add modal
-function openAddModal() {
+async function openAddModal() {
+    await updateBlockDropdowns();
     document.getElementById('addApartmentModal').style.display = 'flex';
 }
 
@@ -160,7 +250,9 @@ function closeAddModal() {
 }
 
 // Open edit modal
-function openEditModal(resident) {
+async function openEditModal(resident) {
+    await updateBlockDropdowns();
+    
     document.getElementById('editResidentId').value = resident.id;
     document.getElementById('editBlock').value = resident.block_id;
     document.getElementById('editDoorNo').value = resident.apartment_no;
@@ -177,6 +269,88 @@ function openEditModal(resident) {
 function closeEditModal() {
     document.getElementById('editApartmentModal').style.display = 'none';
     document.getElementById('editApartmentForm').reset();
+}
+
+// Delete resident confirmation
+async function deleteResidentConfirm(resident) {
+    if (!confirm(`${resident.full_name} sakinini silmek istediğinizden emin misiniz?`)) {
+        return;
+    }
+    
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/residents/${resident.id}`, {
+            method: 'DELETE',
+            headers
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Silme işlemi başarısız');
+        }
+        
+        alert('Sakin başarıyla silindi!');
+        renderResidents();
+    } catch (err) {
+        console.error('Delete resident error:', err);
+        alert(err.message);
+    }
+}
+
+// Open manage blocks modal
+async function openManageBlocksModal() {
+    document.getElementById('manageBlocksModal').style.display = 'flex';
+    await renderBlocksList();
+}
+
+// Render blocks list in management modal
+async function renderBlocksList() {
+    const blocksList = document.getElementById('blocksList');
+    blocksList.innerHTML = '<p style="text-align:center;">Yükleniyor...</p>';
+    
+    const blocks = await fetchBlocks(SITE_ID);
+    
+    if (blocks.length === 0) {
+        blocksList.innerHTML = '<p style="text-align:center;color:#999;">Henüz blok oluşturulmamış.</p>';
+        return;
+    }
+    
+    blocksList.innerHTML = blocks.map(block => `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #2e86c1;">
+            <div>
+                <h4 style="margin: 0 0 5px 0; color: #2c3e50;">${block.block_name}</h4>
+                <p style="margin: 0; font-size: 13px; color: #7f8c8d;">
+                    Kapasite: ${block.apartment_count || 0} daire
+                </p>
+            </div>
+            <button onclick="deleteBlockConfirm(${block.id}, '${block.block_name}')" 
+                    class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i> Sil
+            </button>
+        </div>
+    `).join('');
+}
+
+// Delete block confirmation
+async function deleteBlockConfirm(blockId, blockName) {
+    if (!confirm(`"${blockName}" bloğunu ve bu bloktaki tüm daireleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
+        return;
+    }
+    
+    try {
+        await deleteBlock(SITE_ID, blockId);
+        alert('Blok ve bağlı daireler başarıyla silindi!');
+        
+        // Reload everything
+        await renderBlocksList();
+        await populateBlockFilter();
+        await updateBlockDropdowns();
+        renderResidents();
+    } catch (err) {
+        console.error('Delete block failed:', err);
+    }
 }
 
 // Handle add form submit
@@ -234,9 +408,47 @@ document.getElementById('addResidentBtn').addEventListener('click', openAddModal
 document.getElementById('closeAddModal').addEventListener('click', closeAddModal);
 document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
 document.getElementById('blockFilter').addEventListener('change', renderResidents);
+document.getElementById('createBlockBtn').addEventListener('click', () => {
+    document.getElementById('createBlockModal').style.display = 'flex';
+});
+document.getElementById('closeCreateBlockModal').addEventListener('click', () => {
+    document.getElementById('createBlockModal').style.display = 'none';
+    document.getElementById('createBlockForm').reset();
+});
+document.getElementById('manageBlocksBtn').addEventListener('click', openManageBlocksModal);
+document.getElementById('closeManageBlocksModal').addEventListener('click', () => {
+    document.getElementById('manageBlocksModal').style.display = 'none';
+});
+
+// Handle create block form submit
+document.getElementById('createBlockForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(e.target);
+    const data = {
+        block_name: formData.get('block_name'),
+        apartment_count: parseInt(formData.get('apartment_count')),
+        description: formData.get('description') || null
+    };
+
+    try {
+        await createBlock(SITE_ID, data);
+        alert('Blok başarıyla oluşturuldu!');
+        document.getElementById('createBlockModal').style.display = 'none';
+        document.getElementById('createBlockForm').reset();
+        
+        // Reload blocks and update dropdowns
+        await populateBlockFilter();
+        await updateBlockDropdowns();
+        renderResidents();
+    } catch (err) {
+        console.error('Create block failed:', err);
+    }
+});
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
-    populateBlockFilter();
+document.addEventListener('DOMContentLoaded', async () => {
+    await populateBlockFilter();
+    await updateBlockDropdowns();
     renderResidents();
 });

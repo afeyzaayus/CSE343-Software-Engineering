@@ -15,8 +15,8 @@ async function loadDashboardData() {
     }
 
     // Endpointleri site ID ile dinamik olarak oluştur
-    const statsUrl = `/sites/${currentSiteId}/dashboard/stats`; 
-    const announcementUrl = `/sites/${currentSiteId}/announcements?limit=2`; 
+    const statsUrl = `/dashboard/statistics/${currentSiteId}`; 
+    const announcementUrl = `/dashboard/announcements/${currentSiteId}?limit=3`; 
     
     try {
         // 1. İstatistikleri Çekme (Dashboard Kartları)
@@ -26,16 +26,31 @@ async function loadDashboardData() {
         const announcementResponse = await apiCall(announcementUrl, 'GET', null, true);
 
         if (statsResponse.ok) {
-            const stats = await statsResponse.json();
-            renderStatCards(stats);
+            const statsData = await statsResponse.json();
+            console.log('Stats Data:', statsData); // Debug
+            
+            // Backend'den gelen data objesi içindeki veriyi al
+            if (statsData.success && statsData.data) {
+                renderStatCards(statsData.data);
+            } else {
+                console.error("İstatistik verisi formatı hatalı:", statsData);
+            }
         } else {
             console.error("İstatistikler yüklenemedi:", await statsResponse.json());
         }
         
         if (announcementResponse.ok) {
-            // Backend'in duyuruları 'data' içinde döndürme ihtimaline karşı ek koruma
-            const announcementsData = await announcementResponse.json();
-            renderAnnouncementSummary(announcementsData.data || announcementsData); 
+            const announcementData = await announcementResponse.json();
+            console.log('Announcement Data:', announcementData); // Debug
+            
+            // Backend'in duyuruları 'data' içinde döndürdüğü için onu al
+            if (announcementData.success && announcementData.data) {
+                renderAnnouncementSummary(announcementData.data);
+            } else if (Array.isArray(announcementData)) {
+                renderAnnouncementSummary(announcementData);
+            } else {
+                console.error("Duyuru verisi formatı hatalı:", announcementData);
+            }
         } else {
             console.error("Duyuru özeti yüklenemedi:", await announcementResponse.json());
         }
@@ -46,30 +61,36 @@ async function loadDashboardData() {
 }
 
 function renderStatCards(stats) {
+    console.log('Stats:', stats); // Debug için
+    
     // Daire Doluluk Kartı
     const occCard = document.getElementById('occupancy-card');
-    if (occCard && stats.occupancy) {
-        occCard.querySelector('.card-value').textContent = `${stats.occupancy.percent || 0}%`;
-        occCard.querySelector('.card-footer').textContent = `${stats.occupancy.count || 0}/${stats.occupancy.total || 0} dolu`;
+    if (occCard && stats.statistics && stats.statistics.occupancy) {
+        const occ = stats.statistics.occupancy;
+        occCard.querySelector('.card-value').textContent = `${occ.percentage || 0}%`;
+        occCard.querySelector('.card-footer').textContent = `${occ.occupied || 0}/${occ.total || 0} dolu`;
     }
     
     // Aidat Ödenme Kartı
     const duesCard = document.getElementById('dues-card');
-    if (duesCard && stats.dues) {
-        duesCard.querySelector('.card-value').textContent = `${stats.dues.percent || 0}%`;
-        duesCard.querySelector('.card-footer').textContent = `${stats.dues.paidCount || 0}/${stats.dues.totalCount || 0} ödendi`;
+    if (duesCard && stats.statistics && stats.statistics.dues) {
+        const dues = stats.statistics.dues;
+        duesCard.querySelector('.card-value').textContent = `${dues.percentage || 0}%`;
+        duesCard.querySelector('.card-footer').textContent = `${dues.paid_count || 0}/${dues.total_count || 0} ödendi`;
     }
 
     // Aktif Duyurular Kartı
     const annCard = document.getElementById('announcement-card');
-    if (annCard && stats.activeAnnouncements !== undefined) {
-        annCard.querySelector('.card-value').textContent = stats.activeAnnouncements;
+    if (annCard && stats.statistics && stats.statistics.announcements) {
+        annCard.querySelector('.card-value').textContent = stats.statistics.announcements.active || 0;
+        annCard.querySelector('.card-footer').textContent = `Toplam: ${stats.statistics.announcements.total || 0}`;
     }
     
     // Bekleyen Şikayet/Talepler Kartı
     const reqCard = document.getElementById('requests-card');
-    if (reqCard && stats.pendingRequests !== undefined) {
-        reqCard.querySelector('.card-value').textContent = stats.pendingRequests;
+    if (reqCard && stats.statistics && stats.statistics.requests) {
+        reqCard.querySelector('.card-value').textContent = stats.statistics.requests.pending || 0;
+        reqCard.querySelector('.card-footer').textContent = `Toplam: ${stats.statistics.requests.total || 0}`;
     }
 }
 
@@ -79,20 +100,24 @@ function renderAnnouncementSummary(announcements) {
 
     container.innerHTML = '';
 
-    if (announcements.length === 0) {
-        container.innerHTML = `<p style="text-align: center; padding: 15px; color: #7f8c8d;">Aktif duyuru özeti bulunmamaktadır.</p>`;
+    if (!announcements || announcements.length === 0) {
+        container.innerHTML = `<p style="text-align: center; padding: 15px; color: #7f8c8d;">Aktif duyuru bulunmamaktadır.</p>`;
         return;
     }
 
     announcements.forEach(item => {
         const contentPreview = item.content ? item.content.substring(0, 80) + (item.content.length > 80 ? '...' : '') : 'Detay yok.';
+        const startDate = item.start_date ? new Date(item.start_date).toLocaleDateString('tr-TR') : 'Tarih Yok';
+        const endDate = item.end_date ? new Date(item.end_date).toLocaleDateString('tr-TR') : 'Belirtilmemiş';
+        const status = item.status || 'Normal';
+        
         const itemHTML = `
             <div class="announcement-item">
-                <div class="announcement-title">${item.title || 'Başlıksız Duyuru'}</div>
+                <div class="announcement-title">${item.title || 'Başlıksız Duyuru'} <span class="status-badge status-${status.toLowerCase()}">${status}</span></div>
                 <div class="announcement-content">${contentPreview}</div>
                 <div class="announcement-meta">
-                    <span class="announcement-date">Yayın: ${item.publishDate ? new Date(item.publishDate).toLocaleDateString() : 'Tarih Yok'}</span>
-                    <span class="announcement-expiry">Son: ${item.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'Belirtilmemiş'}</span>
+                    <span class="announcement-date">Başlangıç: ${startDate}</span>
+                    <span class="announcement-expiry">Bitiş: ${endDate}</span>
                 </div>
             </div>
         `;
@@ -102,5 +127,54 @@ function renderAnnouncementSummary(announcements) {
 
 // --- Modül Başlatma Fonksiyonu ---
 export function setupDashboard() {
+    // Kullanıcı bilgilerini göster
+    setupUserInfo();
+    
+    // Logout işlemini ayarla
+    setupLogout();
+    
+    // Dashboard verilerini yükle
     loadDashboardData(); 
+}
+
+// --- Kullanıcı Bilgilerini Göster ---
+function setupUserInfo() {
+    const currentUser = JSON.parse(sessionStorage.getItem('adminData') || '{}');
+    const selectedSite = JSON.parse(sessionStorage.getItem('selectedSite') || '{}');
+    
+    // Dashboard başlığını güncelle
+    const dashboardTitle = document.getElementById('dashboard-title');
+    if (dashboardTitle && selectedSite.site_name) {
+        dashboardTitle.textContent = `Ana Sayfa - ${selectedSite.site_name}`;
+    }
+    
+    // Kullanıcı bilgilerini göster
+    const userInfo = document.getElementById('dashboard-user-info');
+    if (userInfo && currentUser.full_name) {
+        const initial = currentUser.full_name.charAt(0).toUpperCase();
+        const accountType = currentUser.account_type === 'SITE_MANAGER' ? 'Site Yöneticisi' : 
+                          currentUser.account_type === 'COMPANY_ADMIN' ? 'Şirket Yöneticisi' : 
+                          'Yönetici';
+        
+        userInfo.innerHTML = `
+            <div class="user-avatar">${initial}</div>
+            <div style="margin-left: 10px;">
+                <div style="font-weight: 600;">${currentUser.full_name}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${accountType}</div>
+            </div>
+        `;
+    }
+}
+
+// --- Logout İşlemi ---
+function setupLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            sessionStorage.clear();
+            localStorage.clear();
+            window.location.href = '/login.html';
+        });
+    }
 }
