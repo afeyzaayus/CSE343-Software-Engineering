@@ -324,6 +324,140 @@ class ResidenceService {
       throw new Error(`Failed to delete resident: ${error.message}`);
     }
   }
+
+  // Create a new block
+  async createBlock(siteId, blockData) {
+    try {
+      const { block_name, apartment_count, description } = blockData;
+
+      // Validation
+      if (!block_name) {
+        throw new Error('Blok adı gerekli');
+      }
+
+      if (!apartment_count || apartment_count < 1) {
+        throw new Error('Daire sayısı gerekli ve 1\'den büyük olmalı');
+      }
+
+      // Check if block name already exists for this site
+      const existingBlock = await prisma.blocks.findFirst({
+        where: {
+          site_id: parseInt(siteId),
+          block_name: block_name,
+          deleted_at: null
+        }
+      });
+
+      if (existingBlock) {
+        throw new Error('Bu isimde bir blok zaten mevcut');
+      }
+
+      // Create block with apartment_count
+      const block = await prisma.blocks.create({
+        data: {
+          block_name: block_name.trim(),
+          apartment_count: parseInt(apartment_count),
+          site_id: parseInt(siteId),
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        select: {
+          id: true,
+          block_name: true,
+          apartment_count: true,
+          site_id: true,
+          created_at: true
+        }
+      });
+
+      console.log(`✅ [CREATE BLOCK] Block "${block_name}" created with ${apartment_count} apartments for site ${siteId}`);
+      
+      return block;
+    } catch (error) {
+      console.error('❌ [CREATE BLOCK] Error:', error.message);
+      throw new Error(`Blok oluşturulamadı: ${error.message}`);
+    }
+  }
+
+  // Get block statistics for a site
+  async getBlockStats(siteId) {
+    try {
+      const blocks = await prisma.blocks.findMany({
+        where: {
+          site_id: parseInt(siteId),
+          deleted_at: null
+        },
+        include: {
+          users: {
+            where: {
+              deleted_at: null,
+              account_status: 'ACTIVE'
+            }
+          }
+        }
+      });
+
+      return blocks.map(block => ({
+        id: block.id,
+        block_name: block.block_name,
+        apartment_count: block.users.length,
+        resident_count: block.users.reduce((sum, user) => sum + (user.resident_count || 1), 0)
+      }));
+    } catch (error) {
+      throw new Error(`Failed to fetch block stats: ${error.message}`);
+    }
+  }
+
+  // Delete a block (soft delete - also soft deletes all users in that block)
+  async deleteBlock(blockId) {
+    try {
+      const block = await prisma.blocks.findUnique({
+        where: { id: parseInt(blockId) },
+        include: {
+          users: {
+            where: { deleted_at: null }
+          }
+        }
+      });
+
+      if (!block) {
+        throw new Error('Blok bulunamadı');
+      }
+
+      // Soft delete all users in this block
+      if (block.users.length > 0) {
+        await prisma.user.updateMany({
+          where: {
+            block_id: parseInt(blockId),
+            deleted_at: null
+          },
+          data: {
+            deleted_at: new Date(),
+            account_status: 'DELETED',
+            updated_at: new Date()
+          }
+        });
+
+        console.log(`🗑️  [DELETE BLOCK] ${block.users.length} daire silindi`);
+      }
+
+      // Soft delete the block
+      const deletedBlock = await prisma.blocks.update({
+        where: { id: parseInt(blockId) },
+        data: {
+          deleted_at: new Date(),
+          updated_at: new Date()
+        }
+      });
+
+      console.log(`✅ [DELETE BLOCK] Block "${block.block_name}" silindi`);
+
+      return deletedBlock;
+    } catch (error) {
+      console.error('❌ [DELETE BLOCK] Error:', error.message);
+      throw new Error(`Blok silinemedi: ${error.message}`);
+    }
+  }
 }
 
 export default new ResidenceService();

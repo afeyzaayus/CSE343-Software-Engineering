@@ -226,15 +226,130 @@ class ResidenceController {
   // Delete a resident
   async deleteResident(req, res) {
     try {
-      const { id } = req.params;
+      const { userId } = req.params;
       
-      await residenceService.deleteResident(id);
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+      
+      await residenceService.deleteResident(userId);
       
       res.status(200).json({
         success: true,
         message: 'Resident deleted successfully'
       });
     } catch (error) {
+      console.error('❌ [DELETE RESIDENT] Error:', error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Create a new block
+  async createBlock(req, res) {
+    try {
+      const { siteId } = req.params;
+      
+      console.log('🏗️  [CREATE BLOCK] Request received:');
+      console.log('  - SiteId:', siteId);
+      console.log('  - Request Body:', JSON.stringify(req.body, null, 2));
+      
+      // Convert site_id (string) to site id (integer)
+      let siteIdInt;
+      if (isNaN(parseInt(siteId))) {
+        const site = await residenceService.getSiteByCode(siteId);
+        if (!site) {
+          return res.status(404).json({
+            success: false,
+            message: 'Site bulunamadı: ' + siteId
+          });
+        }
+        siteIdInt = site.id;
+        console.log('  - Site code converted:', siteId, '->', siteIdInt);
+      } else {
+        siteIdInt = parseInt(siteId);
+      }
+      
+      const block = await residenceService.createBlock(siteIdInt, req.body);
+      
+      console.log('✅ [CREATE BLOCK] Block created successfully:', block.id);
+      
+      res.status(201).json({
+        success: true,
+        message: 'Blok başarıyla oluşturuldu',
+        data: block
+      });
+    } catch (error) {
+      console.error('❌ [CREATE BLOCK] Error:', error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Get block statistics
+  async getBlockStats(req, res) {
+    try {
+      const { siteId } = req.params;
+      
+      let siteIdInt;
+      if (isNaN(parseInt(siteId))) {
+        const site = await residenceService.getSiteByCode(siteId);
+        if (!site) {
+          return res.status(404).json({
+            success: false,
+            message: 'Site bulunamadı'
+          });
+        }
+        siteIdInt = site.id;
+      } else {
+        siteIdInt = parseInt(siteId);
+      }
+      
+      const stats = await residenceService.getBlockStats(siteIdInt);
+      
+      res.status(200).json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
+
+  // Delete a block
+  async deleteBlock(req, res) {
+    try {
+      const { blockId } = req.params;
+      
+      console.log('🗑️  [DELETE BLOCK] Request received:', blockId);
+      
+      if (!blockId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Block ID is required'
+        });
+      }
+      
+      await residenceService.deleteBlock(blockId);
+      
+      console.log('✅ [DELETE BLOCK] Block deleted successfully');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Blok ve bağlı daireler başarıyla silindi'
+      });
+    } catch (error) {
+      console.error('❌ [DELETE BLOCK] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message

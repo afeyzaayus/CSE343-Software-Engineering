@@ -129,16 +129,17 @@ model announcements {
 }
 
 model blocks {
-  id          Int       @id @default(autoincrement())
-  block_name  String
-  block_number Int?
-  site_id     Int
-  created_at  DateTime  @default(now())
-  updated_at  DateTime  @default(now()) @updatedAt
-  deleted_at  DateTime?
+  id               Int       @id @default(autoincrement())
+  block_name       String
+  block_number     Int?
+  apartment_count  Int?      @default(0)
+  site_id          Int
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @default(now()) @updatedAt
+  deleted_at       DateTime?
   
-  sites       Site      @relation(fields: [site_id], references: [id], onDelete: Cascade)
-  users       User[]
+  sites            Site      @relation(fields: [site_id], references: [id], onDelete: Cascade)
+  users            User[]
 
   @@unique([site_id, block_name])
   @@schema("public")

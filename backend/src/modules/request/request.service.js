@@ -22,8 +22,19 @@ class ComplaintsService {
     // Where clause oluştur
     let whereClause = {};
 
+    // siteId string ise, site_id ile ara ve integer id kullan
     if (siteId) {
-      whereClause.siteId = parseInt(siteId);
+      // Önce site_id ile site'ı bul
+      const site = await prisma.site.findUnique({
+        where: { site_id: siteId },
+        select: { id: true }
+      });
+
+      if (!site) {
+        throw new Error('Site bulunamadı');
+      }
+
+      whereClause.siteId = site.id; // Integer id kullan
     }
 
     if (status && status !== 'all') {
@@ -50,10 +61,10 @@ class ComplaintsService {
       whereClause.userId = parseInt(userId);
     }
 
-    const complaints = await prisma.complaint.findMany({
+    const complaints = await prisma.complaints.findMany({
       where: whereClause,
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -62,7 +73,7 @@ class ComplaintsService {
             phone_number: true
           }
         },
-        site: {
+        sites: {
           select: {
             id: true,
             site_name: true
@@ -85,13 +96,23 @@ class ComplaintsService {
    * @returns {Promise<Array>} Kullanıcının şikayetleri
    */
   async getUserComplaints(userId, siteId) {
-    const complaints = await prisma.complaint.findMany({
+    // site_id string ile site'ı bul
+    const site = await prisma.site.findUnique({
+      where: { site_id: siteId },
+      select: { id: true }
+    });
+
+    if (!site) {
+      throw new Error('Site bulunamadı');
+    }
+
+    const complaints = await prisma.complaints.findMany({
       where: {
         userId: parseInt(userId),
-        siteId: parseInt(siteId)
+        siteId: site.id
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -114,10 +135,10 @@ class ComplaintsService {
    * @returns {Promise<Object>} Şikayet detayı
    */
   async getComplaintById(complaintId) {
-    const complaint = await prisma.complaint.findUnique({
+    const complaint = await prisma.complaints.findUnique({
       where: { id: parseInt(complaintId) },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -126,7 +147,7 @@ class ComplaintsService {
             phone_number: true
           }
         },
-        site: {
+        sites: {
           select: {
             id: true,
             site_name: true,
@@ -164,11 +185,21 @@ class ComplaintsService {
       throw new Error('Geçersiz kategori');
     }
 
+    // site_id ile site'ı bul
+    const site = await prisma.site.findUnique({
+      where: { site_id: siteId },
+      select: { id: true }
+    });
+
+    if (!site) {
+      throw new Error('Site bulunamadı');
+    }
+
     // Kullanıcının bu site'a ait olup olmadığını kontrol et
     const user = await prisma.user.findFirst({
       where: {
         id: parseInt(userId),
-        siteId: parseInt(siteId)
+        siteId: site.id
       }
     });
 
@@ -177,17 +208,17 @@ class ComplaintsService {
     }
 
     // Şikayet oluştur
-    const complaint = await prisma.complaint.create({
+    const complaint = await prisma.complaints.create({
       data: {
         title: title.trim(),
         content: content.trim(),
         category: categoryValue,
-        siteId: parseInt(siteId),
+        siteId: site.id,
         userId: parseInt(userId),
         status: 'PENDING'
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -195,7 +226,7 @@ class ComplaintsService {
             apartment_no: true
           }
         },
-        site: {
+        sites: {
           select: {
             id: true,
             site_name: true
@@ -224,9 +255,9 @@ class ComplaintsService {
     }
 
     // Mevcut complaint'i kontrol et
-    const existingComplaint = await prisma.complaint.findUnique({
+    const existingComplaint = await prisma.complaints.findUnique({
       where: { id: parseInt(complaintId) },
-      include: { user: true, site: true }
+      include: { users: true, sites: true }
     });
 
     if (!existingComplaint) {
@@ -234,14 +265,14 @@ class ComplaintsService {
     }
 
     // Durumu güncelle
-    const complaint = await prisma.complaint.update({
+    const complaint = await prisma.complaints.update({
       where: { id: parseInt(complaintId) },
       data: { 
         status: newStatus,
         updated_at: new Date()
       },
       include: {
-        user: {
+        users: {
           select: {
             id: true,
             full_name: true,
@@ -249,7 +280,7 @@ class ComplaintsService {
             apartment_no: true
           }
         },
-        site: {
+        sites: {
           select: {
             id: true,
             site_name: true
@@ -273,7 +304,7 @@ class ComplaintsService {
    * @returns {Promise<void>}
    */
   async deleteComplaint(complaintId) {
-    const complaint = await prisma.complaint.findUnique({
+    const complaint = await prisma.complaints.findUnique({
       where: { id: parseInt(complaintId) }
     });
 
@@ -281,7 +312,7 @@ class ComplaintsService {
       throw new Error('Şikayet bulunamadı');
     }
 
-    await prisma.complaint.delete({
+    await prisma.complaints.delete({
       where: { id: parseInt(complaintId) }
     });
   }
@@ -292,19 +323,29 @@ class ComplaintsService {
    * @returns {Promise<Object>} İstatistikler
    */
   async getComplaintStats(siteId) {
-    const stats = await prisma.complaint.groupBy({
+    // site_id ile site'ı bul
+    const site = await prisma.site.findUnique({
+      where: { site_id: siteId },
+      select: { id: true }
+    });
+
+    if (!site) {
+      throw new Error('Site bulunamadı');
+    }
+
+    const stats = await prisma.complaints.groupBy({
       by: ['status', 'category'],
       where: {
-        siteId: parseInt(siteId)
+        siteId: site.id
       },
       _count: {
         id: true
       }
     });
 
-    const totalCount = await prisma.complaint.count({
+    const totalCount = await prisma.complaints.count({
       where: {
-        siteId: parseInt(siteId)
+        siteId: site.id
       }
     });
 

@@ -285,7 +285,35 @@ export async function getSitesService(adminId, filters) {
     );
   }
 
-  return sites;
+  // Format sites to include block_count and apartment_count
+  const formattedSites = await Promise.all(sites.map(async site => {
+    // Her sitenin bloklarındaki toplam daire kapasitesini hesapla
+    const blocksWithCapacity = await prisma.blocks.findMany({
+      where: { 
+        site_id: site.id, 
+        deleted_at: null 
+      },
+      select: { apartment_count: true }
+    });
+    
+    const totalCapacity = blocksWithCapacity.reduce((sum, block) => sum + (block.apartment_count || 0), 0);
+    const occupiedCount = site._count?.users || 0;
+    const blockCount = site._count?.blocks || 0;
+    
+    // Ortalama daire/blok hesapla
+    const averageApartmentsPerBlock = blockCount > 0 ? Math.round(totalCapacity / blockCount) : 0;
+    
+    return {
+      ...site,
+      block_count: blockCount,
+      apartment_count: occupiedCount,
+      apartments_per_block: averageApartmentsPerBlock, // Her bloktaki ortalama daire sayısı
+      total_capacity: totalCapacity,
+      occupancy_rate: totalCapacity > 0 ? Math.round((occupiedCount / totalCapacity) * 100) : 0
+    };
+  }));
+
+  return formattedSites;
 }
 
 /**
