@@ -1,9 +1,6 @@
 import prisma from '../../prisma/prismaClient.js';
 import { validateSiteId } from '../../shared/validation.service.js';
 
-/**
- * Site oluşturma
- */
 export async function createSiteService(adminId, siteData) {
   const { site_id, site_name, site_address } = siteData;
 
@@ -17,7 +14,8 @@ export async function createSiteService(adminId, siteData) {
     include: {
       sites_created: { where: { deleted_at: null } },
       company: true,
-      company_employees: true
+      company_employees: true,
+      individual: true  // ✅ Individual ilişkisini ekle
     }
   });
 
@@ -32,23 +30,35 @@ export async function createSiteService(adminId, siteData) {
     companyId = admin.company.id;
   }
 
-  const newSite = await prisma.site.create({
-    data: {
-      site_id,
-      site_name,
-      site_address,
-      site_status: 'ACTIVE',
-      adminId: admin.id,
-      company_id: companyId
+  // ✅ Transaction ile site oluştur ve individual'ı güncelle
+  const result = await prisma.$transaction(async (tx) => {
+    const newSite = await tx.site.create({
+      data: {
+        site_id,
+        site_name,
+        site_address,
+        site_status: 'ACTIVE',
+        adminId: admin.id,
+        company_id: companyId
+      }
+    });
+
+    // ✅ Eğer INDIVIDUAL ise, individuals tablosunu güncelle
+    if (admin.account_type === 'INDIVIDUAL' && admin.individual) {
+      await tx.individuals.update({
+        where: { id: admin.individual.id },
+        data: { site_id: newSite.id }
+      });
     }
+
+    return newSite;
   });
 
   return {
     message: 'Site başarıyla oluşturuldu.',
-    site: newSite
+    site: result
   };
 }
-
 /**
  * Site listesi getir (Admin'e göre filtreleme)
  */

@@ -18,40 +18,40 @@ const router = express.Router();
 router.use(verifyAdminToken);
 
 /**
- * @route   POST /api/announcements
- * @desc    Yeni duyuru oluştur
- * @access  Private (SITE_MANAGER)
- * @body    { title: string, content: string, start_date: date, end_date: date, site_id: string }
- */
-router.post('/', createAnnouncement);
-
-/**
- * @route   GET /api/announcements/site/:site_id
+ * @route   GET /api/sites/:siteId/announcements
  * @desc    Belirli bir sitenin tüm duyurularını listele (aktif, geçmiş, hepsi)
  * @access  Private (SITE_MANAGER)
  */
-router.get('/site/:site_id', getAnnouncementsBySite);
+router.get('/:siteId/announcements', getAnnouncementsBySite);
 
 /**
- * @route   GET /api/announcements/:id/site/:site_id
+ * @route   POST /api/sites/:siteId/announcements
+ * @desc    Yeni duyuru oluştur
+ * @access  Private (SITE_MANAGER)
+ * @body    { title: string, content: string, start_date: date, end_date: date, priority: string }
+ */
+router.post('/:siteId/announcements', createAnnouncement);
+
+/**
+ * @route   GET /api/sites/:siteId/announcements/:id
  * @desc    Tek bir duyuruyu getir
  * @access  Private (SITE_MANAGER)
  */
-router.get('/:id/site/:site_id', getAnnouncementById);
+router.get('/:siteId/announcements/:id', getAnnouncementById);
 
 /**
- * @route   PUT /api/announcements/:id/site/:site_id
+ * @route   PUT /api/sites/:siteId/announcements/:id
  * @desc    Duyuru güncelle
  * @access  Private (SITE_MANAGER)
- * @body    { title?: string, content?: string, start_date?: date, end_date?: date }
+ * @body    { title?: string, content?: string, start_date?: date, end_date?: date, priority?: string }
  */
-router.put('/:id/site/:site_id', updateAnnouncement);
+router.put('/:siteId/announcements/:id', updateAnnouncement);
 
 /**
- * @route   DELETE /api/announcements/:id/site/:site_id
+ * @route   DELETE /api/sites/:siteId/announcements/:id
  * @desc    Duyuru sil
  * @access  Private (SITE_MANAGER)
  */
-router.delete('/:id/site/:site_id', deleteAnnouncement);
+router.delete('/:siteId/announcements/:id', deleteAnnouncement);
 
 export default router;

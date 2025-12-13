@@ -24,7 +24,23 @@ export async function registerIndividual(req, res) {
     return res.status(201).json({
       success: true,
       message: 'Kayıt başarılı. Hesabınızı aktifleştirmek için e-postanızı kontrol edin.',
-      data: result
+      data: {
+        admin: {
+          id: result.admin.id,
+          name: result.admin.full_name,
+          email: result.admin.email,
+          account_type: result.admin.account_type,
+          account_status: result.admin.account_status,
+          is_verified: result.admin.is_verified,
+          created_at: result.admin.created_at
+        },
+        individual: {
+          id: result.individual.id,
+          account_status: result.individual.account_status,
+          expiry_date: result.individual.expiry_date
+        },
+        emailSent: result.emailSent
+      }
     });
 
   } catch (error) {
@@ -46,55 +62,50 @@ export async function registerIndividual(req, res) {
 }
 
 /**
- * Şirket yöneticisi kaydı
- * @route  POST /api/auth/admin/register/company-manager
- * @access Public
+ * @route   POST /api/auth/admin/register/company-manager
+ * @desc    Şirket yöneticisi kaydı
+ * @access  Public
  */
 export async function registerCompanyManager(req, res) {
   try {
     const { full_name, email, password, company_name, company_code } = req.body;
 
+    // Validasyon
     if (!full_name || !email || !password || !company_name || !company_code) {
-      return res.status(400).json({ success: false, message: 'Tüm alanlar zorunludur.' });
+      return res.status(400).json({
+        success: false,
+        message: 'Tüm alanlar zorunludur.'
+      });
     }
 
-    const result = await registerCompanyManagerService({
-      full_name,
-      email,
-      password,
-      company_name,
-      company_code
-    });
+    const result = await registerCompanyManagerService(req.body);
 
     return res.status(201).json({
       success: true,
-      message: 'Kayıt başarılı. Hesabınızı aktifleştirmek için e-postanızı kontrol edin.',
-      data: {
-        admin: {
-          id: result.admin.id,
-          name: result.admin.name,
-          role: result.admin.role,
-          company_name: result.admin.company_name,
-          company_code: result.admin.company_code
-        }
-      }
+      ...result
     });
 
   } catch (error) {
-    console.error('registerCompanyManager controller hatası:', error);
+    console.error('❌ Şirket yöneticisi kayıt hatası:', error);
 
-    let errorMessage = 'Kayıt sırasında beklenmeyen bir hata oluştu.';
-    let statusCode = 500;
-
-    if (error.message.includes('AUTH_ERROR') || error.message.includes('COMPANY_ERROR')) {
-      statusCode = 409;
-      errorMessage = error.message.replace(/.*?:\s/, '');
-    } else if (error.message.includes('VALIDATION_ERROR')) {
-      statusCode = 400;
-      errorMessage = error.message.replace('VALIDATION_ERROR: ', '');
+    if (error.message.startsWith('AUTH_ERROR:')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message.replace('AUTH_ERROR: ', '')
+      });
     }
 
-    return res.status(statusCode).json({ success: false, message: errorMessage });
+    if (error.message.startsWith('VALIDATION_ERROR:')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message.replace('VALIDATION_ERROR: ', '')
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Kayıt sırasında bir hata oluştu.'
+    });
   }
 }
 

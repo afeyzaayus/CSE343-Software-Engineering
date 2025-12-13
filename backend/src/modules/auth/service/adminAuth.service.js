@@ -19,29 +19,58 @@ export async function registerIndividualService({ full_name, email, password }) 
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const verificationLink = `${process.env.BASE_URL}/api/auth/admin/verify-email?token=${verificationToken}`;
 
-    const newAdmin = await prisma.admin.create({
-      data: {
-        full_name,
-        email,
-        password: hashedPassword,
-        account_type: 'INDIVIDUAL',
-        account_status: 'ACTIVE',
-        is_verified: false,
-        verificationToken,
-        tokenExpiry: verificationExpires,
-        created_at: new Date()
-      },
-      select: {
-        id: true,
-        full_name: true,
-        email: true,
-        account_type: true,
-        account_status: true,
-        is_verified: true,
-        created_at: true
-      }
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+    // Transaction kullanarak veritabanı işlemlerini birleştir
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Admin oluştur
+      const newAdmin = await tx.admin.create({
+        data: {
+          full_name,
+          email,
+          password: hashedPassword,
+          account_type: 'INDIVIDUAL',
+          account_status: 'ACTIVE',
+          is_verified: false,
+          verificationToken,
+          tokenExpiry: verificationExpires,
+          created_at: new Date()
+        },
+        select: {
+          id: true,
+          full_name: true,
+          email: true,
+          account_type: true,
+          account_status: true,
+          is_verified: true,
+          created_at: true
+        }
+      });
+
+      // 2. Individual kaydı oluştur - admin ilişkisini connect ile bağla
+      const individual = await tx.individuals.create({
+        data: {
+          admin: {
+            connect: { id: newAdmin.id }
+          },
+          account_status: 'ACTIVE',
+          expiry_date: expiryDate,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      });
+
+      // 3. Admin'e individualId ekle
+      await tx.admin.update({
+        where: { id: newAdmin.id },
+        data: { individualId: individual.id }
+      });
+
+      return { admin: newAdmin, individual };
     });
 
+    // E-posta gönderimi
     let emailSent = false;
     try {
       await sendIndividualVerificationEmail(email, full_name, verificationLink);
@@ -50,7 +79,7 @@ export async function registerIndividualService({ full_name, email, password }) 
       console.error('E-posta gönderme hatası:', emailError);
     }
 
-    return { admin: newAdmin, emailSent };
+    return { ...result, emailSent };
 
   } catch (error) {
     console.error('registerIndividual service hatası:', error);
@@ -66,6 +95,9 @@ export async function registerCompanyManagerService(adminData) {
 
   validateCompanyCode(company_code, 4);
 
+  const expiryDate = new Date();
+  expiryDate.setFullYear(expiryDate.getFullYear() + 1);  
+
   const existingAdmin = await prisma.admin.findUnique({ where: { email } });
   if (existingAdmin) throw new Error('AUTH_ERROR: Bu e-posta adresi zaten kayıtlı.');
 
@@ -79,6 +111,7 @@ export async function registerCompanyManagerService(adminData) {
         company_name,
         company_code,
         account_status: 'ACTIVE',
+        expiry_date: expiryDate,
         created_at: new Date(),
         updated_at: new Date()
       }

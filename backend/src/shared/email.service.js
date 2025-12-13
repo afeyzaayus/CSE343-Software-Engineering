@@ -202,3 +202,38 @@ export async function sendPasswordResetEmail(email, full_name, resetLink) {
     `
   });
 }
+
+/**
+ * Genel amaçlı e-posta gönderme fonksiyonu
+ * 
+ * Kullanım:
+ * await sendEmail({
+ *   to: email,
+ *   subject: 'Başlık',
+ *   html: '<p>İçerik</p>'
+ * });
+ */
+export async function sendEmail({ to, subject, html }) {
+  if (!to) {
+    throw new Error("sendEmail: 'to' alanı zorunludur.");
+  }
+  if (!subject) {
+    throw new Error("sendEmail: 'subject' alanı zorunludur.");
+  }
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    html
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("📨 E-posta başarıyla gönderildi:", to);
+    return info;
+  } catch (err) {
+    console.error("❌ sendEmail hata:", err);
+    throw new Error("E-posta gönderilemedi: " + err.message);
+  }
+}

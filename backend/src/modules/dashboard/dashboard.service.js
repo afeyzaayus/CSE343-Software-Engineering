@@ -4,9 +4,9 @@ import prisma from '../../prisma/prismaClient.js';
  * Dashboard için tüm istatistikleri hesaplar
  */
 export async function getDashboardStatisticsService(siteId) {
-  // 1. SİTE BİLGİSİ
+  // 1. SİTE BİLGİSİ - site_id string ile arama
   const site = await prisma.site.findUnique({
-    where: { id: siteId },
+    where: { site_id: siteId },  // site_id kullan (string)
     include: {
       admin: {
         select: {
@@ -22,24 +22,37 @@ export async function getDashboardStatisticsService(siteId) {
     throw new Error('SITE_ERROR: Site bulunamadı.');
   }
 
-  // 2. DAİRE SAYISI (User tablosundan)
+  // 2. DAİRE SAYISI (User tablosundan) - integer id ile
   const totalApartments = await prisma.user.count({
-    where: { siteId: siteId, deleted_at: null }
+    where: { siteId: site.id, deleted_at: null }
   });
 
-  // 3. AKTİF DUYURULAR
+  // 2.5. BLOK SAYISI VE TOPLAM KAPASİTE - blocks tablosundan
+  const totalBlocks = await prisma.blocks.count({
+    where: { site_id: site.id, deleted_at: null }
+  });
+
+  // Blokların toplam daire kapasitesini hesapla
+  const blocksWithCapacity = await prisma.blocks.findMany({
+    where: { site_id: site.id, deleted_at: null },
+    select: { apartment_count: true }
+  });
+
+  const totalCapacity = blocksWithCapacity.reduce((sum, block) => sum + (block.apartment_count || 0), 0);
+
+  // 3. AKTİF DUYURULAR - integer id ile
   const now = new Date();
   const activeAnnouncementsCount = await prisma.announcements.count({
     where: {
-      siteId: siteId,
+      siteId: site.id,
       start_date: { lte: now },
       end_date: { gte: now }
     }
   });
 
-  // 4. SON 3 DUYURU
+  // 4. SON 3 DUYURU - integer id ile
   const recentAnnouncements = await prisma.announcements.findMany({
-    where: { siteId: siteId },
+    where: { siteId: site.id },
     orderBy: { created_at: 'desc' },
     take: 3,
     select: {
@@ -52,19 +65,59 @@ export async function getDashboardStatisticsService(siteId) {
     }
   });
 
-  // 5. TOPLAM DUYURU SAYISI
+  // 5. TOPLAM DUYURU SAYISI - integer id ile
   const totalAnnouncements = await prisma.announcements.count({
-    where: { siteId }
+    where: { siteId: site.id }
+  });
+
+  // 5.5. ŞİKAYET/TALEP SAYILARI - integer id ile
+  const totalComplaints = await prisma.complaints.count({
+    where: { siteId: site.id }
+  });
+
+  const pendingComplaints = await prisma.complaints.count({
+    where: { 
+      siteId: site.id,
+      status: 'PENDING'
+    }
+  });
+
+  const inProgressComplaints = await prisma.complaints.count({
+    where: { 
+      siteId: site.id,
+      status: 'IN_PROGRESS'
+    }
+  });
+
+  const resolvedComplaints = await prisma.complaints.count({
+    where: { 
+      siteId: site.id,
+      status: 'RESOLVED'
+    }
   });
 
   // 6. İSTATİSTİKLERİ HESAPLA
+  const averageApartmentsPerBlock = totalBlocks > 0 ? Math.round(totalCapacity / totalBlocks) : 0;
+
   const statistics = {
+    // Blok Sayısı
+    blocks: {
+      total: totalBlocks,
+      display: `${totalBlocks} blok`
+    },
+
+    // Daire/Blok - Ortalama daire sayısı
+    apartmentsPerBlock: {
+      average: averageApartmentsPerBlock,
+      display: `${averageApartmentsPerBlock} daire/blok`
+    },
+
     // Daire Doluluk Oranı
     occupancy: {
-      total: totalApartments,
-      occupied: totalApartments, // Şimdilik hepsi dolu kabul
-      percentage: totalApartments > 0 ? 100 : 0,
-      display: `${totalApartments} dolu`
+      total: totalCapacity, // Toplam kapasite
+      occupied: totalApartments, // Dolu daire sayısı
+      percentage: totalCapacity > 0 ? Math.round((totalApartments / totalCapacity) * 100) : 0,
+      display: `${totalApartments}/${totalCapacity} daire`
     },
 
     // Aidat Ödeme Oranı (Placeholder - gelecekte güncellenecek)
@@ -81,12 +134,12 @@ export async function getDashboardStatisticsService(siteId) {
       total: totalAnnouncements
     },
 
-    // Bekleyen Talepler (Placeholder - gelecekte güncellenecek)
+    // Şikayet/Talepler
     requests: {
-      pending: 0,
-      in_progress: 0,
-      completed: 0,
-      total: 0
+      pending: pendingComplaints,
+      in_progress: inProgressComplaints,
+      resolved: resolvedComplaints,
+      total: totalComplaints
     }
   };
 
@@ -116,8 +169,18 @@ export async function getDashboardStatisticsService(siteId) {
  * Son duyuruları getirir
  */
 export async function getRecentAnnouncementsService(siteId, limit = 3) {
+  // Önce site_id ile site'ı bul
+  const site = await prisma.site.findUnique({
+    where: { site_id: siteId }
+  });
+
+  if (!site) {
+    throw new Error('SITE_ERROR: Site bulunamadı.');
+  }
+
+  // Integer id ile duyuruları getir
   const announcements = await prisma.announcements.findMany({
-    where: { siteId: siteId },
+    where: { siteId: site.id },
     orderBy: { created_at: 'desc' },
     take: limit,
     select: {

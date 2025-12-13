@@ -73,12 +73,3 @@ export {
   getSiteByIdService,
   deleteSiteService
 } from './modules/site/site.service.js';
-
-// Account Services
-export {
-  getAllAccountsService,
-  updateAccountStatusService,
-  getDashboardStatsService,
-  getAccountByIdService,
-  updateAccountProfileService
-} from './modules/account/account.service.js';

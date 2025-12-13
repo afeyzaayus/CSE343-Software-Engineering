@@ -12,8 +12,10 @@ const siteId = selectedSite?.site_id;
 // -----------------------------------------
 async function apiRequest(endpoint, data = null, method = 'GET') {
     const headers = { 'Content-Type': 'application/json' };
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    console.log('🔵 API Request:', { method, endpoint, data, hasToken: !!token });
 
     try {
         const options = { method, headers };
@@ -21,10 +23,13 @@ async function apiRequest(endpoint, data = null, method = 'GET') {
 
         const response = await fetch(`${BASE_URL}${endpoint}`, options);
         const result = await response.json();
+        
+        console.log('🔵 API Response:', { status: response.status, ok: response.ok, result });
+        
         return { ok: response.ok, data: result };
     } catch (error) {
-        console.error('API Hatası:', error);
-        return { ok: false, data: { message: 'Bağlantı hatası' } };
+        console.error('❌ API Hatası:', error);
+        return { ok: false, data: { message: 'Bağlantı hatası: ' + error.message } };
     }
 }
 
@@ -70,6 +75,13 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAnnouncements();
     setupAnnouncementForm();
     setupEditForm();
+    
+    // Bugünden önceki tarihleri disable et (bugün dahil kabul et)
+    const today = new Date().toISOString().split('T')[0];
+    const announcementExpiry = document.getElementById('announcementExpiry');
+    if (announcementExpiry) {
+        announcementExpiry.setAttribute('min', today);
+    }
 });
 async function setupAnnouncements() {
     if (!siteId) return;
@@ -80,14 +92,22 @@ async function loadAndRenderAnnouncements(siteId) {
     try {
         const response = await fetchAnnouncements(siteId);
 
+        console.log('📢 API Response:', response);
+
         if (!response.ok) {
             console.error('Duyurular yüklenemedi:', response.data.message);
             return;
         }
 
-        const announcements = response.data.announcements || response.data || [];
-        const active = announcements.active || [];
-        const past = announcements.past || [];
+        // Response formatı: { success: true, data: { active, past, all } }
+        const data = response.data.data || response.data;
+        console.log('📢 Parsed data:', data);
+
+        const active = data.active || [];
+        const past = data.past || [];
+
+        console.log('📢 Active announcements:', active);
+        console.log('📢 Past announcements:', past);
 
         renderActiveAnnouncements(active);
         renderPastAnnouncements(past);
@@ -131,26 +151,29 @@ function renderActiveAnnouncements(announcements) {
     container.innerHTML = announcements.map(a => {
         const colors = { normal: '#3498db', important: '#f39c12', urgent: '#e74c3c' };
         const color = colors[a.priority] || '#3498db';
+        const isEdited = a.created_at !== a.updated_at;
 
         return `
-        <div class="announcement-item" style="border-left:4px solid ${color};padding:15px;margin-bottom:15px;background:#f8f9fa;border-radius:4px;">
-            <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div class="announcement-item" style="border-left:6px solid ${color};padding:20px;margin-bottom:20px;background:white;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);transition:all 0.3s ease;">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:20px;">
                 <div style="flex:1;">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-                        <h4 style="margin:0;color:#2c3e50;">${a.title}</h4>
-                        <span style="font-size:11px;padding:3px 8px;background:${color};color:white;border-radius:3px;">
-                            ${a.priority === 'urgent' ? 'ACİL' : a.priority === 'important' ? 'ÖNEMLİ' : 'NORMAL'}
-                        </span>
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <h3 style="margin:0;color:#2c3e50;font-size:18px;">${a.title}</h3>
+                        ${isEdited ? `<span style="font-size:11px;padding:4px 10px;background:#e67e22;color:white;border-radius:20px;font-weight:600;">✏️ DÜZENLENDİ</span>` : ''}
                     </div>
-                    <p style="margin:0 0 10px 0;color:#7f8c8d;">${a.content}</p>
-                    <div style="font-size:12px;color:#95a5a6;">
-                        <span><strong>Yayın:</strong> ${new Date(a.start_date).toLocaleDateString('tr-TR')}</span> | 
-                        <span><strong>Bitiş:</strong> ${new Date(a.end_date).toLocaleDateString('tr-TR')}</span>
+                    <p style="margin:0 0 12px 0;color:#555;line-height:1.6;font-size:15px;">${a.content}</p>
+                    <div style="font-size:13px;color:#7f8c8d;display:flex;gap:15px;">
+                        <span><strong>📅 Yayın:</strong> ${new Date(a.start_date).toLocaleDateString('tr-TR')}</span>
+                        <span><strong>⏰ Bitiş:</strong> ${new Date(a.end_date).toLocaleDateString('tr-TR')}</span>
                     </div>
                 </div>
-                <div style="display:flex;gap:5px;">
-                    <button class="btn-edit" onclick="openEditModal(${a.id}, '${escapeHtml(a.title)}', '${escapeHtml(a.content)}', '${a.start_date}', '${a.end_date}', '${a.priority}')">Düzenle</button>
-                    <button class="btn-delete" onclick="deleteAnnouncementHandler(${a.id})">Sil</button>
+                <div style="display:flex;gap:10px;flex-direction:column;min-width:110px;">
+                    <button class="btn-edit" onclick="openEditModal(${a.id}, '${escapeHtml(a.title)}', '${escapeHtml(a.content)}', '${a.start_date}', '${a.end_date}', '${a.priority}')" style="padding:10px 16px;background:#3498db;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;transition:background 0.3s;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span>✏️</span> Düzenle
+                    </button>
+                    <button class="btn-delete" onclick="deleteAnnouncementHandler(${a.id})" style="padding:10px 16px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;transition:background 0.3s;display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span>🗑️</span> Sil
+                    </button>
                 </div>
             </div>
         </div>`;
@@ -167,17 +190,19 @@ function renderPastAnnouncements(announcements) {
     }
 
     container.innerHTML = announcements.map(a => `
-        <div class="announcement-item" style="border-left:4px solid #95a5a6;padding:15px;margin-bottom:15px;background:#ecf0f1;border-radius:4px;opacity:0.8;">
-            <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div class="announcement-item" style="border-left:6px solid #95a5a6;padding:20px;margin-bottom:20px;background:#f8f9fa;border-radius:8px;opacity:0.9;box-shadow:0 1px 4px rgba(0,0,0,0.05);">
+            <div style="display:flex;justify-content:space-between;align-items:start;gap:20px;">
                 <div style="flex:1;">
-                    <h4 style="margin:0 0 10px 0;color:#2c3e50;">${a.title}</h4>
-                    <p style="margin:0 0 10px 0;color:#7f8c8d;">${a.content}</p>
-                    <div style="font-size:12px;color:#95a5a6;">
-                        <span><strong>Yayın:</strong> ${new Date(a.start_date).toLocaleDateString('tr-TR')}</span> | 
-                        <span><strong>Bitiş:</strong> ${new Date(a.end_date).toLocaleDateString('tr-TR')}</span>
+                    <h3 style="margin:0 0 12px 0;color:#2c3e50;font-size:18px;">${a.title}</h3>
+                    <p style="margin:0 0 12px 0;color:#555;line-height:1.6;font-size:15px;">${a.content}</p>
+                    <div style="font-size:13px;color:#7f8c8d;display:flex;gap:15px;">
+                        <span><strong>📅 Yayın:</strong> ${new Date(a.start_date).toLocaleDateString('tr-TR')}</span>
+                        <span><strong>⏰ Bitiş:</strong> ${new Date(a.end_date).toLocaleDateString('tr-TR')}</span>
                     </div>
                 </div>
-                <div><button class="btn-delete" onclick="deleteAnnouncementHandler(${a.id})">Sil</button></div>
+                <button class="btn-delete" onclick="deleteAnnouncementHandler(${a.id})" style="padding:10px 16px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;transition:background 0.3s;display:flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap;">
+                    <span>🗑️</span> Sil
+                </button>
             </div>
         </div>
     `).join('');
@@ -201,18 +226,19 @@ function setupAnnouncementForm() {
         const content = document.getElementById('announcementContent').value;
         const startDate = new Date().toISOString().split('T')[0];
         const endDate = document.getElementById('announcementExpiry').value;
-        const priority = document.getElementById('announcementPriority').value;
 
         if (!title || !content || !startDate || !endDate) {
             alert('Tüm alanları doldurun!');
             return;
         }
-        if (new Date(startDate) > new Date(endDate)) {
-            alert('Yayın tarihi bitişten sonra olamaz!');
+        
+        // Tarih karşılaştırması (sadece gün kısmına göre)
+        if (startDate > endDate) {
+            alert('Başlangıç tarihi bitiş tarihinden önce olmalıdır!');
             return;
         }
 
-        const data = { title, content, start_date: startDate, end_date: endDate, priority };
+        const data = { title, content, start_date: startDate, end_date: endDate, priority: 'normal' };
 
         const response = await createAnnouncement(siteId, data);
         if (response.ok) {
@@ -235,7 +261,12 @@ window.openEditModal = function (id, title, content, startDate, endDate, priorit
     document.getElementById('editAnnouncementContent').value = content;
     document.getElementById('editAnnouncementDate').value = startDate.split('T')[0];
     document.getElementById('editAnnouncementExpiry').value = endDate.split('T')[0];
-    document.getElementById('editAnnouncementPriority').value = priority || 'normal';
+    
+    // Min date'i bugünün tarihine ayarla
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('editAnnouncementDate').min = today;
+    document.getElementById('editAnnouncementExpiry').min = today;
+    
     modal.style.display = 'flex';
 };
 
@@ -256,14 +287,23 @@ function setupEditForm() {
         const content = document.getElementById('editAnnouncementContent').value.trim();
         const startDate = document.getElementById('editAnnouncementDate').value;
         const endDate = document.getElementById('editAnnouncementExpiry').value;
-        const priority = document.getElementById('editAnnouncementPriority').value;
 
         if (!title || !content) {
             alert('Başlık ve içerik boş olamaz!');
             return;
         }
 
-        const data = { title, content, start_date: startDate, end_date: endDate, priority };
+        if (!startDate || !endDate) {
+            alert('Lütfen başlangıç ve bitiş tarihlerini girin!');
+            return;
+        }
+
+        if (startDate > endDate) {
+            alert('Başlangıç tarihi bitiş tarihinden önce olmalıdır!');
+            return;
+        }
+
+        const data = { title, content, start_date: startDate, end_date: endDate, priority: 'normal' };
         const response = await updateAnnouncement(siteId, id, data);
 
         if (response.ok) {

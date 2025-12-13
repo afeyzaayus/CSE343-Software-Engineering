@@ -14,13 +14,15 @@ import siteRoutes from './modules/site/site.routes.js';
 
 // Module Routes
 import companyRoutes from './modules/company/routes/company.routes.js';
-import accountRoutes from './modules/account/account.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import announcementRoutes from './modules/announcement/announcement.routes.js';
 import invitationRoutes from './modules/company/routes/invitation.routes.js';
 
-import masterRoutes from './modules/master/masterUser.routes.js';
-import { seedMasterAdmin } from './modules/master/masterUser.service.js';
+import masterAuthRoutes from './modules/master/auth/masterAuth.routes.js' ;
+import masterDashboardRoutes from './modules/master/dashboard/dashboard.routes.js';
+import masterCompanyRoutes from './modules/master/company/company.routes.js' ;
+import individualRoutes from './modules/master/individual/individual.routes.js' ;
+import { seedMasterAdmin } from './modules/master/auth/masterAuth.service.js';
 
 // .env dosyasını yükle
 dotenv.config();
@@ -102,8 +104,10 @@ app.get('/health', async (req, res) => {
 });
 
 // API rotaları
-app.use('/master', masterRoutes);
-
+app.use('/api/auth/master', masterAuthRoutes);
+app.use('/api/master', masterDashboardRoutes);
+app.use('/api/master/company', masterCompanyRoutes);
+app.use('/api/master/individuals', individualRoutes);
 // Auth rotaları
 app.use('/api/auth/admin', adminRoutes);
 app.use('/api/auth/user', userRoutes);
@@ -112,7 +116,6 @@ app.use('/api/sites', siteRoutes);
 // Module rotaları
 app.use('/api/company/invitations', invitationRoutes);
 app.use('/api/company', companyRoutes);
-app.use('/api/accounts', accountRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/announcements', announcementRoutes);
 

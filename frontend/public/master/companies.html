@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şirketler - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+</head>
+<body>
+    <div id="companiesPage" class="page active">
+       <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Site Portal</h1>
+            </div>
+            <div class="header-right">     
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <div class="user-details">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Çıkış</button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav aria-label="Ana menü">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span class="nav-text">Ana Sayfa</span>
+                </a>
+                <a href="companies.html" class="nav-item active">
+                    <span class="icon">🏢</span>
+                    <span class="nav-text">Şirketler</span>
+                </a>
+                <a href="individuals.html" class="nav-item">
+                    <span class="icon">👤</span>
+                    <span class="nav-text">Bireysel Hesaplar</span>
+                </a>
+                <a href="complaints.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span class="nav-text">Şikayetler</span>
+                </a>
+                <a href="masterUsers.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span class="nav-text">Kullanıcılar </span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Companies Content -->
+            <div id="companiesContent" class="content-section active">
+                <div class="section-header">
+                    <h2>Şirketler</h2>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Toplam Şirket</div>
+                            <div class="stat-value" id="totalCompaniesCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Aktif Şirketler</div>
+                            <div class="stat-value" id="activeCompaniesCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-icon">⏸️</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Askıdaki Şirketler</div>
+                            <div class="stat-value" id="suspendedCompaniesCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-danger">
+                        <div class="stat-icon">🗑️</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Silinmiş Şirketler</div>
+                            <div class="stat-value" id="deletedCompaniesCount">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-box">
+                    <input type="text" id="companySearch" placeholder="Şirket ara (ad, kod)..." aria-label="Şirket ara">
+                    <select id="companyStatusFilter" aria-label="Durum filtresi">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="ACTIVE">Aktif</option>
+                        <option value="SUSPENDED">Askıda</option>
+                    </select>
+                    <label class="checkbox-label show-deleted-toggle">
+                        <input type="checkbox" id="showDeletedCompanies">
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Silinmiş şirketleri göster</span>
+                    </label>
+                </div>
+                
+                <div id="companiesList" class="list-container"></div>
+            </div>
+
+            <!-- Company Detail Content -->
+            <div id="companyDetailContent" class="content-section">
+                <button class="btn btn-secondary back-btn" id="backToCompanies">
+                    <span class="btn-icon">←</span>
+                    Geri
+                </button>
+                
+                <div id="companyDetailInfo"></div>
+                
+                <div class="detail-actions">
+                    <div class="action-group primary-actions">
+                        <button id="editCompanyNameBtn" class="btn btn-primary">
+                            <span class="btn-icon">✏️</span>
+                            İsmi Düzenle
+                        </button>
+                        <button id="suspendCompanyBtn" class="btn btn-warning">
+                            <span class="btn-icon">⏸️</span>
+                            Askıya Al
+                        </button>
+                        <button id="activateCompanyBtn" class="btn btn-success" style="display: none;">
+                            <span class="btn-icon">✅</span>
+                            Aktif Et
+                        </button>
+                        <button id="deleteCompanyBtn" class="btn btn-danger">
+                            <span class="btn-icon">🗑️</span>
+                            Sil
+                        </button>
+                    </div>
+                    
+                    <div class="action-group filter-actions">
+                        <label class="checkbox-label show-deleted-toggle inline-filter">
+                            <input type="checkbox" id="showDeletedSites">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">Silinmiş siteleri göster</span>
+                        </label>
+                        <label class="checkbox-label show-deleted-toggle inline-filter">
+                            <input type="checkbox" id="showDeletedEmployees">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">Silinmiş çalışanları göster</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="tabs" role="tablist">
+                    <button class="tab-btn active" data-tab="sites" role="tab" aria-selected="true" aria-controls="sitesTab">
+                        <span class="tab-icon">🏘️</span>
+                        <span class="tab-text">Siteler</span>
+                    </button>
+                    <button class="tab-btn" data-tab="employees" role="tab" aria-selected="false" aria-controls="employeesTab">
+                        <span class="tab-icon">👥</span>
+                        <span class="tab-text">Çalışanlar</span>
+                    </button>
+                </div>
+                
+                <!-- Sites Tab -->
+                <div id="sitesTab" class="tab-content active" role="tabpanel" aria-labelledby="sites-tab">
+                    <div class="section-header">
+                        <h3>Siteler</h3>
+                    </div>
+                    <div id="sitesGrid" class="grid-container"></div>
+                </div>
+                
+                <!-- Employees Tab -->
+                <div id="employeesTab" class="tab-content" role="tabpanel" aria-labelledby="employees-tab">
+                    <div class="section-header">
+                        <h3>Çalışanlar</h3>
+                    </div>
+                    <div id="employeesGrid" class="grid-container"></div>
+                </div>
+            </div>
+
+            <!-- Site Detail Content -->
+            <div id="siteDetailContent" class="content-section">
+                <button class="btn btn-secondary back-btn" id="backToCompanyDetail">
+                    <span class="btn-icon">←</span>
+                    Şirket Detayına Dön
+                </button>
+                <div id="siteDetailInfo"></div>
+                <h3>Site Kullanıcıları</h3>
+                <div id="siteUsersGrid" class="cards-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Edit Company Name Modal -->
+    <div id="editCompanyNameModal" class="modal" role="dialog" aria-labelledby="editCompanyNameModalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="editCompanyNameModalTitle">Şirket İsmini Düzenle</h2>
+                <button type="button" class="close" id="closeEditCompanyNameModal" aria-label="Kapat">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editCompanyNameForm">
+                    <div class="form-group">
+                        <label for="editCompanyName">Şirket İsmi <span class="required">*</span></label>
+                        <input type="text" id="editCompanyName" name="editCompanyName" required aria-required="true">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEditCompanyName">İptal</button>
+                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Admin Role Modal -->
+    <div id="editAdminRoleModal" class="modal" role="dialog" aria-labelledby="editRoleModalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="editRoleModalTitle">Admin Rolünü Düzenle</h2>
+                <button type="button" class="close" id="closeEditRoleModal" aria-label="Kapat">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editAdminRoleForm">
+                    <div class="form-group">
+                        <label>Admin</label>
+                        <p id="editRoleAdminName" class="admin-name-display"></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editAdminRole">Yeni Rol <span class="required">*</span></label>
+                        <select id="editAdminRole" name="editAdminRole" required aria-required="true">
+                            <option value="COMPANY_MANAGER">Şirket Yöneticisi</option>
+                            <option value="COMPANY_EMPLOYEE">Şirket Çalışanı</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelEditRole">İptal</button>
+                        <button type="submit" class="btn btn-primary">Rolü Güncelle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+   
+    </div>
+
+    <script type="module" src="js/companies.js"></script>
+</body>
+</html>

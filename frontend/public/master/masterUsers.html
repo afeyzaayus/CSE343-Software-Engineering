@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kullanıcılar - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+</head>
+<body>
+    <div id="dashboardPage" class="page active">
+         <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Site Portal</h1>
+            </div>
+            <div class="header-right">
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <div class="user-details">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Çıkış</button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    Ana Sayfa
+                </a>
+                <a href="companies.html" class="nav-item">
+                    <span class="icon">🏢</span>
+                    Şirketler
+                </a>
+                <a href="individuals.html" class="nav-item">
+                    <span class="icon">👤</span>
+                    Bireysel Hesaplar
+                </a>
+                <a href="complaints.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    Şikayetler
+                </a>
+                <a href="masterUsers.html" class="nav-item active">
+                    <span class="icon">👥</span>
+                    Kullanıcılar
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="usersContent" class="content-section active">
+                <div class="section-header">
+                    <h2>Master Panel Kullanıcıları</h2>
+                    <button class="btn btn-primary" id="addUserBtn" style="display: none;">
+                        <span class="btn-icon">➕</span> Kullanıcı Davet Et
+                    </button>
+                </div>
+
+                <!-- Filtreler -->
+                <div class="filter-box">
+                    <select id="userRoleFilter">
+                        <option value="all">Tüm Roller</option>
+                        <option value="MASTER_ADMIN">Master Admin</option>
+                        <option value="PRODUCT_OWNER">Product Owner</option>
+                        <option value="BOOKKEEPER">Muhasebe</option>
+                        <option value="DEVELOPER">Geliştirici</option>
+                        <option valude="SUPPORT">Destek</option>
+                    </select>
+                    <select id="userStatusFilter">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="ACTIVE">Aktif</option>
+                        <option value="PASSIVE">Pasif</option>
+                        <option value="PENDING">Beklemede</option>
+                    </select>
+                </div>
+
+                <!-- Kullanıcı Listesi -->
+                <div id="usersList" class="list-container"></div>
+
+                <!-- Bekleyen Davetler -->
+                <div class="section-header" style="margin-top: 2rem; display: none;" id="invitesSection">
+                    <h3>Bekleyen Davetler</h3>
+                </div>
+                <div id="pendingInvitesList" class="invites-container"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Invite User Modal -->
+    <div id="inviteUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yeni Kullanıcı Davet Et</h2>
+                <span class="close" id="closeInviteModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="inviteUserForm">
+                    <div class="form-group">
+                        <label for="inviteEmail">E-posta Adresi *</label>
+                        <input 
+                            type="email" 
+                            id="inviteEmail" 
+                            placeholder="ornek@email.com"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inviteName">Tam İsim *</label>
+                        <input 
+                            type="text" 
+                            id="inviteName" 
+                            placeholder="Ad Soyad"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="inviteRole">Rol Seçin *</label>
+                        <select id="inviteRole" required>
+                            <option value="">-- Rol Seçin --</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                            <option value="BOOKKEEPER">Muhasebe</option>
+                            <option value="DEVELOPER">Geliştirici</option>
+                            <option value="SUPPORT">Destek</option>
+                        </select>
+                    </div>
+
+                    <div class="role-info">
+                        <h4>Rol Açıklamaları:</h4>
+                        <ul>
+                            <li><strong>Product Owner:</strong> Ürün yönetimi ve geliştirme yetkilerine sahip</li>
+                            <li><strong>Muhasebe:</strong> Finansal raporlama ve ödeme yönetimi yetkilerine sahip</li>
+                            <li><strong>Geliştirici:</strong> Sistem geliştirme ve teknik destek yetkilerine sahip</li>
+                            <li><strong>Destek:</strong> Müşteri destek ve şikayet yönetimi yetkilerine sahip</li>
+                        </ul>
+                        <p class="warning">⚠️ Not: Davet edilen kullanıcı email adresine gelen link ile hesabını doğrulayıp kendi şifresini oluşturabilir.</p>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelInvite">İptal</button>
+                        <button type="submit" class="btn btn-primary">Davet Gönder</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Actions Modal (Sadece MASTER_ADMIN için) -->
+    <div id="userActionsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Kullanıcı İşlemleri</h2>
+                <span class="close" id="closeActionsModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="selectedUserInfo" class="user-info-box"></div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-warning" id="changeRoleBtn">
+                        <span class="btn-icon">🔄</span> Rol Değiştir
+                    </button>
+                    <button class="btn btn-success" id="activateUserBtn" style="display: none;">
+                        <span class="btn-icon">✅</span> Aktif Et
+                    </button>
+                    <button class="btn btn-secondary" id="deactivateUserBtn" style="display: none;">
+                        <span class="btn-icon">⏸️</span> Pasif Et
+                    </button>
+                    <button class="btn btn-info" id="restoreUserBtn" style="display: none;">
+                        <span class="btn-icon">♻️</span> Geri Yükle
+                    </button>
+                    <button class="btn btn-danger" id="deleteUserBtn">
+                        <span class="btn-icon">🗑️</span> Kullanıcıyı Sil
+                    </button>
+                    <button class="btn btn-dark" id="hardDeleteUserBtn" style="display: none;">
+                        <span class="btn-icon">❌</span> Tamamen Sil
+                    </button>
+                </div>
+
+                <!-- Rol Değiştirme Formu -->
+                <div id="changeRoleForm" style="display: none; margin-top: 1rem;">
+                    <div class="form-group">
+                        <label for="newRole">Yeni Rol Seçin</label>
+                        <select id="newRole">
+                            <option value="MASTER_ADMIN">Master Admin</option>
+                            <option value="PRODUCT_OWNER">Product Owner</option>
+                            <option value="BOOKKEEPER">Muhasebe</option>
+                            <option value="DEVELOPER">Geliştirici</option>
+                            <option value="SUPPORT">Destek</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="confirmRoleChange">Rolü Güncelle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module" src="js/masterUsers.js"></script>
+    <script type="module" src="js/common.js"></script>
+</body>
+</html>

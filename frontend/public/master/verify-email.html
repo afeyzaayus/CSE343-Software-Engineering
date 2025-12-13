@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doğrulama Hatası - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+    <style>
+        .error-container {
+            max-width: 500px;
+            margin: 100px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .error-icon {
+            font-size: 4rem;
+            color: #ef4444;
+            margin-bottom: 20px;
+        }
+        .error-title {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        .error-message {
+            color: #6b7280;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            display: inline-block;
+            margin: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">❌</div>
+        <h2 class="error-title">Doğrulama Başarısız</h2>
+        <p class="error-message" id="errorMessage">Bir hata oluştu.</p>
+        <div>
+            <a href="login.html" class="btn btn-secondary">Giriş Sayfasına Dön</a>
+            <button onclick="window.close()" class="btn">Pencereyi Kapat</button>
+        </div>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const error = params.get('error');
+        const messageEl = document.getElementById('errorMessage');
+
+        const errorMessages = {
+            'missing_token': 'Doğrulama kodu bulunamadı. Lütfen e-postanızdaki linki kullanın.',
+            'invalid_token': 'Doğrulama kodu geçersiz veya süresi dolmuş. Lütfen yeni bir davet isteyin.',
+            'already_verified': 'Bu hesap zaten doğrulanmış. Giriş sayfasından devam edebilirsiniz.',
+            'user_not_found': 'Kullanıcı bulunamadı.',
+        };
+
+        messageEl.textContent = errorMessages[error] || 'Bilinmeyen bir hata oluştu. Lütfen tekrar deneyin.';
+
+        // Zaten doğrulanmışsa otomatik yönlendir
+        if (error === 'already_verified') {
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -15,34 +15,53 @@ export async function createAnnouncementService(announcementData) {
     throw new Error('SITE_ERROR: Belirtilen Site ID bulunamadı.');
   }
 
-  // 2. Tarih doğrulama
-  const startDate = new Date(start_date);
-  const endDate = new Date(end_date);
+  // 2. Tarih doğrulama (ISO string karşılaştırması)
+  const startDateStr = typeof start_date === 'string' ? start_date.split('T')[0] : start_date;
+  const endDateStr = typeof end_date === 'string' ? end_date.split('T')[0] : end_date;
 
-  if (startDate >= endDate) {
+  if (startDateStr > endDateStr) {
     throw new Error('VALIDATION_ERROR: Başlangıç tarihi bitiş tarihinden önce olmalıdır.');
   }
 
-  // 3. Yeni duyuru oluştur
-  const newAnnouncement = await prisma.announcements.create({
-    data: {
-      title,
-      content,
-      start_date: startDate,
-      end_date: endDate,
-      siteId: site.id
-    },
-    include: {
-      site: {
-        select: {
-          site_id: true,
-          site_name: true
+  const startDate = new Date(start_date);
+  const endDate = new Date(end_date);
+
+  try {
+    // 3. Yeni duyuru oluştur
+    const newAnnouncement = await prisma.announcements.create({
+      data: {
+        title,
+        content,
+        start_date: startDate,
+        end_date: endDate,
+        siteId: site.id
+      },
+      include: {
+        sites: {
+          select: {
+            site_id: true,
+            site_name: true
+          }
         }
       }
-    }
-  });
+    });
 
-  return newAnnouncement;
+    return newAnnouncement;
+  } catch (error) {
+    // Sequence hatası ise reset et
+    if (error.code === 'P2002' && error.meta?.target?.includes('id')) {
+      console.warn('⚠️ ID sequence hatası detected. Resetting sequence...');
+      try {
+        await prisma.$executeRawUnsafe(
+          `ALTER SEQUENCE public."announcements_id_seq" RESTART WITH ${(Date.now() % 1000000) + 1000}`
+        );
+        console.log('✅ Sequence reset edildi');
+      } catch (seqError) {
+        console.error('Sequence reset hatası:', seqError);
+      }
+    }
+    throw error;
+  }
 }
 
 /**
@@ -63,7 +82,7 @@ export async function getAnnouncementsBySiteService(site_id) {
     where: { siteId: site.id },
     orderBy: { created_at: 'desc' },
     include: {
-      site: {
+      sites: {
         select: {
           site_id: true,
           site_name: true
@@ -74,8 +93,8 @@ export async function getAnnouncementsBySiteService(site_id) {
 
   // 3. Duyuruları aktif ve geçmiş olarak ayır
   const now = new Date();
-  const activeAnnouncements = announcements.filter(a => new Date(a.end_date) > now);
-  const pastAnnouncements = announcements.filter(a => new Date(a.end_date) <= now);
+  const activeAnnouncements = announcements.filter(a => new Date(a.end_date) >= now);
+  const pastAnnouncements = announcements.filter(a => new Date(a.end_date) < now);
 
   return {
     active: activeAnnouncements,
@@ -104,7 +123,7 @@ export async function getAnnouncementByIdService(announcementId, site_id) {
       siteId: site.id
     },
     include: {
-      site: {
+      sites: {
         select: {
           site_id: true,
           site_name: true
@@ -163,14 +182,14 @@ export async function updateAnnouncementService(announcementId, site_id, updateD
   if (content) dataToUpdate.content = content;
   if (start_date) dataToUpdate.start_date = new Date(start_date);
   if (end_date) dataToUpdate.end_date = new Date(end_date);
-  dataToUpdate.updated_at = new Date();
+  // updated_at otomatik güncellenir (@updatedAt)
 
   // 5. Duyuruyu güncelle
   const updatedAnnouncement = await prisma.announcements.update({
     where: { id: parseInt(announcementId) },
     data: dataToUpdate,
     include: {
-      site: {
+      sites: {
         select: {
           site_id: true,
           site_name: true

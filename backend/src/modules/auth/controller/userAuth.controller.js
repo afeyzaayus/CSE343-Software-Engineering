@@ -140,7 +140,7 @@ export async function loginUser(req, res) {
     const token = generateToken({
       id: userData.id,
       phone_number: userData.phone_number,
-      siteId: userData.siteId,
+      siteId: userData.site.site_id,
       block_id: userData.block_id,
       role: 'user'
     });

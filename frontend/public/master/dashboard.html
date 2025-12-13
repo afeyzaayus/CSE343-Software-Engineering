@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+</head>
+<body>
+    <div id="dashboardPage" class="page active">
+          <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Site Portal</h1>
+            </div>
+            <div class="header-right">     
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <div class="user-details">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Çıkış</button>
+            </div>
+        </header>
+
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <a href="dashboard.html" class="nav-item active">
+                    <span class="icon">📊</span>
+                    Ana Sayfa
+                </a>
+                <a href="companies.html" class="nav-item">
+                    <span class="icon">🏢</span>
+                    Şirketler
+                </a>
+                <a href="individuals.html" class="nav-item">
+                    <span class="icon">👤</span>
+                    Bireysel Hesaplar
+                </a>
+                <a href="complaints.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    Şikayetler
+                </a>
+                <a href="masterUsers.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    Kullanıcılar                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="dashboardContent" class="content-section active">
+                <h2>Dashboard</h2>
+
+                <!-- İstatistik Kartları -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🏢</div>
+                        <div class="stat-info">
+                            <h3 id="totalCompanies">0</h3>
+                            <p>Toplam Aktif Şirket</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏘️</div>
+                        <div class="stat-info">
+                            <h3 id="totalSites">0</h3>
+                            <p>Toplam Aktif Site</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">👨‍👩‍👧‍👦</div>
+                        <div class="stat-info">
+                            <h3 id="totalResidents">0</h3>
+                            <p>Toplam Aktif Site Sakini</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💰</div>
+                        <div class="stat-info">
+                            <h3 id="totalRevenue">0 ₺</h3>
+                            <p>Yıllık Gelir</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📈</div>
+                        <div class="stat-info" id="monthlyRegistrations">
+                            <h3>0</h3>
+                            <p>Aylık Yeni Kayıtlar</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏰</div>
+                        <div class="stat-info">
+                            <h3 id="expiringAccountsCount">0</h3>
+                            <p>Yenileme Gereken Hesaplar (Son 30 Gün)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TABLI BÖLÜM: Hesaplar -->
+                <div class="section-header">
+                    <h3>Hesaplar</h3>
+                </div>
+
+                <div class="tabs-wrapper">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-tab="expiringTab">
+                            Yenileme Gereken Hesaplar (30 Gün İçinde)
+                        </button>
+                        <button class="tab-btn" data-tab="newRegistrationsTab">
+                            Yeni Kayıtlar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="tab-content-wrapper">
+                    <!-- Yenileme Gereken Hesaplar -->
+                    <div id="expiringTab" class="tab-content active">
+                        <div id="expiringAccounts" class="cards-grid"></div>
+                    </div>
+
+                    <!-- Yeni Kayıtlar -->
+                    <div id="newRegistrationsTab" class="tab-content">
+                        <div id="newRegistrationsList" class="cards-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

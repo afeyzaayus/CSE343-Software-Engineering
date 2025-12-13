@@ -149,6 +149,7 @@ export async function loginUserService(loginData) {
       site: {
         select: {
           id: true,
+          site_id: true,
           site_name: true,
           site_address: true
         }
