@@ -6,11 +6,20 @@ class PaymentsRepo {
   final Dio _dio;
 
   Future<List<Payment>> listMine(String userId) async {
-    final res = await _dio.get('/api/users/$userId/fees');
-    return (res.data as List).map((e) => Payment.fromJson(e)).toList();
-  }
+    try {
+      // DÜZELTME: URL artık /api/payments/user/ID
+      final res = await _dio.get('/api/payments/user/$userId');
+      
+      // Backend: { success: true, data: [...] }
+      final data = res.data['data'];
 
-  Future<void> markPaid({required String userId, required String feeId}) async {
-    await _dio.put('/api/users/$userId/fees/$feeId/pay');
+      if (data is List) {
+        return data.map((e) => Payment.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      print("Ödeme geçmişi hatası: $e");
+      return [];
+    }
   }
 }

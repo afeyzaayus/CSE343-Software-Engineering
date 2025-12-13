@@ -9,6 +9,7 @@ class AuthRepository {
   final Dio _dio;
 
   /// Kullanıcı girişi
+ /// Kullanıcı girişi
   Future<Result<(String accessToken, String refreshToken, User me)>> login(
     String phoneNumber,
     String password,
@@ -18,76 +19,122 @@ class AuthRepository {
     }
 
     try {
-      // 1️⃣ Login isteği
       final res = await _dio.post(
         '/api/auth/user/login',
         data: {'phone_number': phoneNumber, 'password': password},
       );
 
-      // --- DÜZELTME BURADA BAŞLIYOR ---
+      // --- DÜZELTME BAŞLANGICI ---
+      
+      // Backend cevabı { "success": true, "data": { ... } } şeklinde geliyor.
+      // Bu yüzden önce "data" katmanına girmemiz lazım.
+      
+      final responseData = res.data['data']; 
 
-      // HATA SEBEBİ 1: Backend "token" gönderiyor, biz "accessToken" arıyorduk.
-      final access = res.data['token'] as String;
-
-      // HATA SEBEBİ 2: Backend şu an "refreshToken" göndermiyor.
-      // Uygulama çökmesin diye şimdilik boş string veriyoruz.
-      final refresh = '';
-
-      // OPTİMİZASYON: Backend zaten "user" objesini cevabın içinde gönderiyor.
-      // Tekrar GET isteği atıp sunucuyu yormaya gerek yok, gelen veriyi kullanalım.
-      final userMap = res.data['user'];
+      final access = responseData['token'] as String;
+      final refresh = ''; 
+      final userMap = responseData['user'];
       final me = User.fromJson(userMap);
 
-      // ---------------------------------
+      // --- DÜZELTME BİTİŞİ ---
 
-      // 3️⃣ Token ve kullanıcı ID’sini kaydet
       await SecureStore.saveTokens(access, refresh);
-      await SecureStore.saveUserId(
-        me.id.toString(),
-      ); // ID int gelebilir, stringe çeviriyoruz
+      await SecureStore.saveUserId(me.id.toString());
 
       return Ok((access, refresh, me));
     } on DioException catch (e) {
-      return Err(e.response?.data?['message']?.toString() ?? 'Login failed');
+      return Err(e.response?.data?['message']?.toString() ?? 'Giriş başarısız');
     } catch (e) {
-      // JSON parse hatası olursa buraya düşer
+      // Hata burada yakalanıyor:
       return Err("Veri işleme hatası: $e");
     }
   }
 
-  /// Kullanıcı kaydı (register)
-  Future<Result<void>> signup({
-    required String fullName,
-    required String email,
+  /// 1. ADIM: Kayıt Başlatma (Sadece Telefon ve Site ID)
+  Future<Result<void>> initiateSignup({
     required String phoneNumber,
-    required String password,
     required String siteId,
-    String? blockNo,
-    String? apartmentNo,
   }) async {
     if (AppConfig.useMockApi) return Ok(null);
 
     try {
+      // DÜZELTİLDİ: Artık backend'deki doğru adrese gidiyor
       await _dio.post(
-        '/api/auth/user/register',
+        '/api/auth/user/initiate-password-setup', 
         data: {
-          'full_name': fullName,
-          'email': email,
           'phone_number': phoneNumber,
-          'password': password,
           'site_id': siteId,
-          'block_no': blockNo,
-          'apartment_no': apartmentNo,
         },
       );
       return Ok(null);
     } on DioException catch (e) {
-      // Backend bazen "error" key’i döner
       final errMsg =
           e.response?.data?['error'] ??
           e.response?.data?['message'] ??
-          'Sign up failed';
+          'İşlem başlatılamadı';
       return Err(errMsg.toString());
+    }
+  }
+
+  /// 2. ADIM: Şifre Belirleme ve Doğrulama
+  Future<Result<void>> completeSignup({
+    required String phoneNumber,
+    required String code,
+    required String password,
+  }) async {
+    if (AppConfig.useMockApi) return Ok(null);
+
+    try {
+      // DÜZELTİLDİ: Backend set-password bekliyor
+      await _dio.post(
+        '/api/auth/user/set-password', 
+        data: {
+          'phone_number': phoneNumber,
+          'code': code,
+          'password': password,
+          'password_confirm': password,
+        },
+      );
+      return Ok(null);
+    } on DioException catch (e) {
+      String errMsg = 'Doğrulama başarısız oldu';
+      final data = e.response?.data;
+
+      if (data is Map<String, dynamic>) {
+        errMsg = data['error'] ?? data['message'] ?? errMsg;
+      } else if (data is String) {
+        errMsg = data;
+      } else if (data is List && data.isNotEmpty) {
+        errMsg = data.first.toString();
+      }
+
+      return Err(errMsg);
+    }
+  }
+
+  /// Şifremi Unuttum (Telefon İle)
+  Future<Result<void>> forgotPassword(String phoneNumber) async {
+    try {
+      await _dio.post('/api/auth/user/forgot-password', 
+        data: {'phone_number': phoneNumber});
+      return Ok(null);
+    } on DioException catch (e) {
+       return Err(e.response?.data?['message'] ?? 'Hata');
+    }
+  }
+
+  /// Şifre Sıfırla (Telefon İle)
+  Future<Result<void>> resetPassword(String phoneNumber, String code, String newPass) async {
+    try {
+      await _dio.post('/api/auth/user/reset-password', 
+        data: {
+            'phone_number': phoneNumber,
+            'code': code, 
+            'newPassword': newPass
+        });
+      return Ok(null);
+    } on DioException catch (e) {
+       return Err(e.response?.data?['message'] ?? 'Hata');
     }
   }
 
@@ -97,71 +144,5 @@ class AuthRepository {
       await _dio.post('/api/auth/logout');
     } catch (_) {}
     await SecureStore.clear();
-  }
-
-  /// OTP Doğrulama (Kodu gönder)
-  Future<Result<void>> verifyOtp({
-    required String phoneNumber,
-    required String code,
-  }) async {
-    if (AppConfig.useMockApi) return Ok(null);
-
-    try {
-      // Backend'deki endpoint'ine göre burayı düzenle.
-      // Genelde /api/auth/verify-otp veya /api/auth/confirm gibidir.
-      await _dio.post(
-        '//api/auth/user/verify-phone',
-        data: {'phone_number': phoneNumber, 'code': code},
-      );
-      return Ok(null);
-    } on DioException catch (e) {
-      String errMsg = 'Doğrulama başarısız oldu'; // Varsayılan mesaj
-      final data = e.response?.data;
-
-      // 1. Eğer gelen veri bir Map (JSON Objesi) ise:
-      if (data is Map<String, dynamic>) {
-        errMsg = data['error'] ?? data['message'] ?? errMsg;
-      }
-      // 2. Eğer gelen veri direkt bir Yazı (String) ise:
-      else if (data is String) {
-        errMsg = data;
-      }
-      // 3. Eğer gelen veri bir Liste (Array) ise (Hata burada çıkıyordu):
-      else if (data is List && data.isNotEmpty) {
-        errMsg = data.first.toString(); // Listenin ilk elemanını al
-      }
-
-      return Err(errMsg);
-    }
-  }
-
- 
-
-  // Şifremi Unuttum (Telefon İle)
-  Future<Result<void>> forgotPassword(String phoneNumber) async {
-    try {
-      await _dio.post('/api/auth/user/forgot-password', 
-        data: {'phone_number': phoneNumber}); // JSON key değişti
-      return Ok(null);
-    } on DioException catch (e) {
-       // ... hata kodları aynı ...
-       return Err(e.response?.data?['message'] ?? 'Hata');
-    }
-  }
-
-  // Şifre Sıfırla (Telefon İle)
-  Future<Result<void>> resetPassword(String phoneNumber, String code, String newPass) async {
-    try {
-      await _dio.post('/api/auth/user/reset-password', 
-        data: {
-            'phone_number': phoneNumber, // JSON key değişti
-            'code': code, 
-            'newPassword': newPass
-        });
-      return Ok(null);
-    } on DioException catch (e) {
-       // ... hata kodları aynı ...
-       return Err(e.response?.data?['message'] ?? 'Hata');
-    }
   }
 }

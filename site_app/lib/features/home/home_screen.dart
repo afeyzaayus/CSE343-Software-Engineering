@@ -13,11 +13,11 @@ final announcementsRepoProvider =
 
 /// Aktif kullanıcının siteId’sine göre duyuruları getiren provider
 final announcementsFutureProvider =
-    FutureProvider<List<Announcement>>((ref) async {
-  final user = ref.read(authStateProvider).user!;
+    FutureProvider.autoDispose<List<Announcement>>((ref) async {
+  final user = ref.read(authStateProvider).user;
+  if (user == null) return [];
   final repo = ref.read(announcementsRepoProvider);
-  // /api/sites/{siteId}/announcements
-  return repo.listBySite(user.siteId);
+  return repo.listBySite(user.siteCode.toString());
 });
 
 class HomeScreen extends ConsumerWidget {
@@ -37,33 +37,31 @@ class HomeScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(user.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(user.siteName, style: Theme.of(context).textTheme.labelSmall),
+            Text(user.siteName, style: const TextStyle(fontWeight: FontWeight.w600)),
+            // Text(user.siteName, ...), // User modelinizde varsa ekleyin
           ],
         ),
         actions: [
           IconButton(
-            onPressed: () => context.push('/profile'),
-            icon: const Icon(Icons.person),
+            onPressed: () => ref.read(authStateProvider.notifier).logout(),
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
       body: asyncAnnouncements.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Failed to load announcements.'),
-                const SizedBox(height: 8),
-                FilledButton(
-                  onPressed: () => ref.invalidate(announcementsFutureProvider),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              const Text('Duyurular yüklenemedi.'),
+              FilledButton(
+                onPressed: () => ref.invalidate(announcementsFutureProvider),
+                child: const Text('Tekrar Dene'),
+              ),
+            ],
           ),
         ),
         data: (items) {
@@ -72,9 +70,9 @@ class HomeScreen extends ConsumerWidget {
               onRefresh: () async => ref.invalidate(announcementsFutureProvider),
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 160),
-                  Center(child: Text('No announcements yet.')),
+                children: [
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.3),
+                  const Center(child: Text('Henüz duyuru yok.')),
                 ],
               ),
             );
@@ -86,21 +84,141 @@ class HomeScreen extends ConsumerWidget {
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final a = items[i];
+                
+                // Tarih formatlama
                 final hh = a.createdAt.hour.toString().padLeft(2, '0');
                 final mm = a.createdAt.minute.toString().padLeft(2, '0');
-                return ListTile(
-                  title: Text(a.title),
-                  subtitle: Text(a.body),
-                  trailing: Text('$hh:$mm'),
+                final dd = a.createdAt.day.toString().padLeft(2, '0');
+                final mon = a.createdAt.month.toString().padLeft(2, '0');
+                final dateStr = '$dd.$mon $hh:$mm';
+
+                return Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    // DEĞİŞİKLİK: Artık BottomSheet açıyor
+                    onTap: () => _showDetailBottomSheet(context, a, dateStr),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.all(16),
+                      title: Text(
+                        a.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          a.body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      trailing: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.expand_more, size: 20, color: Colors.grey),
+                          const SizedBox(height: 4),
+                          Text(
+                            '$dd.$mon', 
+                            style: const TextStyle(fontSize: 12, color: Colors.grey)
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 );
               },
             ),
           );
         },
       ),
+    );
+  }
+
+  // --- ALTTAN ÇIKAN PANEL (BOTTOM SHEET) ---
+  void _showDetailBottomSheet(BuildContext context, Announcement a, String dateStr) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Panelin tam boyuta kadar uzamasını sağlar
+      backgroundColor: Colors.transparent, // Köşelerin yuvarlak olması için
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.5, // Ekranın yarısı kadar açılsın
+          minChildSize: 0.3,     // En az bu kadar küçülsün
+          maxChildSize: 0.9,     // En fazla %90'a kadar büyüsün
+          builder: (_, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ListView( // SingleChildScrollView yerine ListView kullandık (controller için)
+                controller: scrollController,
+                children: [
+                  const SizedBox(height: 12),
+                  // Tutma Çubuğu (Gri Çizgi)
+                  Center(
+                    child: Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Başlık
+                  Text(
+                    a.title,
+                    style: const TextStyle(
+                      fontSize: 22, 
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Tarih Bilgisi
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                      const SizedBox(width: 6),
+                      Text(
+                        dateStr,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
+                    ],
+                  ),
+
+                  const Divider(height: 32, thickness: 1),
+
+                  // İçerik Metni
+                  Text(
+                    a.body,
+                    style: const TextStyle(
+                      fontSize: 16, 
+                      height: 1.6, // Satır aralığı okunabilirlik için
+                      color: Colors.black87
+                    ),
+                  ),
+                  
+                  // Alt boşluk (Güvenli alan)
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

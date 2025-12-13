@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../core/auth/auth_controller.dart';
 import '../../core/network/dio_provider.dart';
 import '../../core/repos/requests_repo.dart';
@@ -14,14 +13,18 @@ class NewRequestScreen extends ConsumerStatefulWidget {
 class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleCtrl = TextEditingController();
-  final _descCtrl = TextEditingController();
+  final _contentCtrl = TextEditingController();
+  
+  // Varsayılan Kategori
+  String _selectedCategory = 'MAINTENANCE';
+  final List<String> _categories = ['MAINTENANCE', 'COMPLAINT', 'REQUEST', 'OTHER'];
 
   bool _sending = false;
 
   @override
   void dispose() {
     _titleCtrl.dispose();
-    _descCtrl.dispose();
+    _contentCtrl.dispose();
     super.dispose();
   }
 
@@ -31,7 +34,7 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
     final user = ref.read(authStateProvider).user;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User not found. Please re-login.')),
+        const SnackBar(content: Text('User session not found.')),
       );
       return;
     }
@@ -40,74 +43,111 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
 
     setState(() => _sending = true);
     try {
-      await repo.create(
-        siteId: user.siteId,              // ✅ /api/sites/{siteId}/requests
+      // Backend: createComplaint controller'ı
+await repo.create(
+        // DÜZELTME: siteCode ("E993EU") gönderiliyor
+        siteId: user.siteCode, 
+        userId: user.id, // String ID ("2")
         title: _titleCtrl.text.trim(),
-        description: _descCtrl.text.trim(),
+        content: _contentCtrl.text.trim(),
+        category: _selectedCategory,
       );
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request sent')),
+        const SnackBar(content: Text('Request created successfully!')),
       );
-      Navigator.pop(context);             // Requests listesine geri dön
+      Navigator.pop(context); // Listeye dön
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
 
-  String? _req(String? v) {
-    if (v == null || v.trim().isEmpty) return 'Required';
-    if (v.trim().length < 3) return 'Too short';
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Request')),
-      body: Padding(
+      appBar: AppBar(title: const Text('New Request / Complaint')),
+      body: SingleChildScrollView( // Klavye açılınca taşmasın diye
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
-          child: Column(children: [
-            TextFormField(
-              controller: _titleCtrl,
-              decoration: const InputDecoration(labelText: 'Subject'),
-              textInputAction: TextInputAction.next,
-              validator: _req,
-              autofocus: true,
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: TextFormField(
-                controller: _descCtrl,
-                decoration: const InputDecoration(labelText: 'Description'),
-                maxLines: null,
-                expands: true,
-                validator: _req,
-                textInputAction: TextInputAction.newline,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Kategori Seçimi
+              const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedCategory,
+                    isExpanded: true,
+                    items: _categories.map((c) {
+                      return DropdownMenuItem(
+                        value: c,
+                        child: Text(c),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedCategory = val);
+                    },
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _sending ? null : _submit,
-                icon: _sending
-                    ? const SizedBox(
-                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                label: Text(_sending ? 'Sending...' : 'Send'),
+              const SizedBox(height: 16),
+
+              // Başlık
+              TextFormField(
+                controller: _titleCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+                textInputAction: TextInputAction.next,
+                validator: (v) => (v == null || v.trim().length < 3) ? 'Title is too short' : null,
               ),
-            ),
-          ]),
+              const SizedBox(height: 16),
+
+              // İçerik
+              TextFormField(
+                controller: _contentCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Content',
+                  alignLabelWithHint: true,
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+                validator: (v) => (v == null || v.trim().length < 5) ? 'Please explain in detail' : null,
+              ),
+              const SizedBox(height: 24),
+
+              // Gönder Butonu
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: _sending ? null : _submit,
+                  icon: _sending
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.send),
+                  label: Text(_sending ? 'Sending...' : 'Create Request'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.blue[700],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

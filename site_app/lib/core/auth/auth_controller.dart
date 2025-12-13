@@ -7,19 +7,31 @@ import 'auth_repository.dart';
 /// ---- STATE ----
 class AuthState {
   final bool isLoggedIn;
+  final bool isLoading;
   final User? user;
   final String? error;
 
-  const AuthState({required this.isLoggedIn, this.user, this.error});
+  const AuthState({
+    required this.isLoggedIn,
+    this.isLoading = false,
+    this.user,
+    this.error,
+  });
 
-  AuthState copyWith({bool? isLoggedIn, User? user, String? error}) =>
+  AuthState copyWith({
+    bool? isLoggedIn,
+    bool? isLoading,
+    User? user,
+    String? error,
+  }) =>
       AuthState(
         isLoggedIn: isLoggedIn ?? this.isLoggedIn,
+        isLoading: isLoading ?? this.isLoading,
         user: user ?? this.user,
         error: error,
       );
 
-  static const empty = AuthState(isLoggedIn: false);
+  static const empty = AuthState(isLoggedIn: false, isLoading: false);
 }
 
 /// ---- PROVIDERS ----
@@ -38,96 +50,100 @@ class AuthController extends StateNotifier<AuthState> {
   AuthController(this._ref) : super(AuthState.empty);
   final Ref _ref;
 
-  /// POST /api/auth/user/login  + GET /api/users/{userId}
- Future<void> login(String phoneNumber, String password) async { // email yerine phoneNumber
-    state = state.copyWith(error: null);
+  /// Login İşlemi
+  Future<void> login(String phoneNumber, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
 
     final repo = _ref.read(authRepositoryProvider);
-    
-    // Repository'i yeni parametreyle çağır
-    final res = await repo.login(phoneNumber, password); 
+    final res = await repo.login(phoneNumber, password);
 
     switch (res) {
-      case Ok(data: final v): 
-        state = AuthState(isLoggedIn: true, user: v.$3);
+      case Ok(data: final v):
+        state = AuthState(isLoggedIn: true, isLoading: false, user: v.$3);
       case Err(message: final m):
-        state = state.copyWith(error: m);
+        state = state.copyWith(isLoading: false, error: m);
     }
   }
 
-  /// POST /api/auth/user/register
-  /// Geriye bool döner: True ise SMS gönderildi (Dialog aç), False ise hata var.
-  Future<bool> signup({
-    required String fullName,
+  /// ADIM 1: Kayıt Başlatma (Sadece Telefon + SiteID)
+  Future<bool> initiateSignup({
     required String phoneNumber,
-    required String email,
-    required String password,
     required String siteId,
-    String? blockNo,
-    String? apartmentNo,
   }) async {
-    //state = state.copyWith(error: null); // Hata durumunu sıfırla
-
+    state = state.copyWith(isLoading: true, error: null);
     final repo = _ref.read(authRepositoryProvider);
 
-    final r = await repo.signup(
-      fullName: fullName,
+    final r = await repo.initiateSignup(
       phoneNumber: phoneNumber,
-      email: email,
-      password: password,
       siteId: siteId,
-      blockNo: blockNo,
-      apartmentNo: apartmentNo,
     );
 
     switch (r) {
       case Ok():
-        return true; // Başarılı, UI dialog açabilir
+        state = state.copyWith(isLoading: false);
+        return true; 
       case Err(message: final m):
-        state = state.copyWith(error: m);
-        return false; // Başarısız
-    }
-  }
-
-  /// OTP Doğrulama Metodu
-  Future<bool> verifyOtp(String phoneNumber, String code) async {
-    state = state.copyWith(error: null);
-    final repo = _ref.read(authRepositoryProvider);
-
-    final result = await repo.verifyOtp(phoneNumber: phoneNumber, code: code);
-
-    switch (result) {
-      case Ok():
-        // Doğrulama başarılı ise, dilersen burada otomatik login de yaptırabilirsin.
-        return true;
-      case Err(message: final m):
-        state = state.copyWith(error: m);
+        state = state.copyWith(isLoading: false, error: m);
         return false;
     }
   }
 
+  /// ADIM 2: Kayıt Tamamlama (Telefon + Kod + Şifre)
+  Future<bool> completeSignup({
+    required String phoneNumber,
+    required String code,
+    required String password,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final repo = _ref.read(authRepositoryProvider);
+
+    final result = await repo.completeSignup(
+      phoneNumber: phoneNumber, 
+      code: code,
+      password: password
+    );
+
+    switch (result) {
+      case Ok():
+        state = state.copyWith(isLoading: false);
+        return true;
+      case Err(message: final m):
+        state = state.copyWith(isLoading: false, error: m);
+        return false;
+    }
+  }
+
+  /// Şifremi Unuttum (SMS Gönder)
+  Future<bool> forgotPassword(String phoneNumber) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final r = await _ref.read(authRepositoryProvider).forgotPassword(phoneNumber);
+    
+    state = state.copyWith(isLoading: false);
+
+    if (r is Err) {
+      state = state.copyWith(error: r.message);
+      return false;
+    }
+    return true;
+  }
+
+  /// Şifre Sıfırlama (SMS Kodu ile yeni şifre belirle)
+  Future<bool> resetPassword(String phoneNumber, String code, String newPass) async {
+    state = state.copyWith(isLoading: true, error: null);
+    final r = await _ref.read(authRepositoryProvider).resetPassword(phoneNumber, code, newPass);
+    
+    state = state.copyWith(isLoading: false);
+
+    if (r is Err) {
+      state = state.copyWith(error: r.message);
+      return false;
+    }
+    return true;
+  }
+
+  /// Çıkış Yap
   Future<void> logout() async {
     await _ref.read(authRepositoryProvider).logout();
     state = AuthState.empty;
-  }
-
-  Future<bool> forgotPassword(String email) async {
-    state = state.copyWith(error: null);
-    final r = await _ref.read(authRepositoryProvider).forgotPassword(email);
-    if (r is Err) {
-      state = state.copyWith(error: r.message);
-      return false;
-    }
-    return true;
-  }
-
-  Future<bool> resetPassword(String email, String code, String newPass) async {
-    state = state.copyWith(error: null);
-    final r = await _ref.read(authRepositoryProvider).resetPassword(email, code, newPass);
-    if (r is Err) {
-      state = state.copyWith(error: r.message);
-      return false;
-    }
-    return true;
   }
 }

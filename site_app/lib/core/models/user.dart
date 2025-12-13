@@ -2,11 +2,12 @@ class User {
   final String id;
   final String name;
   final String email;
-  final String phoneNumber; // Email yerine phone_number yaptım
-  final String siteId;
-  final String siteName;
-  final String? blockNo; // Yeni ekledim (Backend'de var)
-  final String? apartmentNo; // Yeni ekledim (Backend'de var)
+  final String phoneNumber;
+  final String siteId;     // Veritabanı ID'si (Örn: "5")
+  final String siteCode;   // Site Kodu (Örn: "E993EU") - Backend'den geliyorsa
+  final String siteName;   // Site Adı (Örn: "Gül4")
+  final String? blockNo;   // Backend 'block_id' gönderiyor
+  final String? apartmentNo;
 
   User({
     required this.id,
@@ -14,31 +15,47 @@ class User {
     required this.email,
     required this.phoneNumber,
     required this.siteId,
+    required this.siteCode,
     required this.siteName,
     this.blockNo,
     this.apartmentNo,
   });
 
-  factory User.fromJson(Map<String, dynamic> j) => User(
-    // 1. HATA BURADAYDI: id int geliyor, toString() ile String yaptık.
-    id: j['id'].toString(),
+  factory User.fromJson(Map<String, dynamic> j) {
+    return User(
+      // 1. ID: Backend int gönderiyor, String'e çeviriyoruz
+      id: j['id'].toString(),
 
-    // 2. Backend 'full_name' gönderiyor, onu alıyoruz.
-    name: j['full_name'] ?? '',
+      // 2. İsim: Backend 'full_name' gönderiyor
+      name: j['full_name'] ?? '',
 
-    email: j['email'] ?? '',
+      // 3. Email: Backend göndermiyorsa boş string
+      email: j['email'] ?? '',
 
-    // 3. Backend 'phone_number' gönderiyor.
-    phoneNumber: j['phone_number'] ?? '',
+      // 4. Telefon: Backend 'phone_number' gönderiyor
+      phoneNumber: j['phone_number'] ?? '',
 
-    // 4. siteId int geliyor, toString() ile String yaptık.
-    siteId: j['siteId']?.toString() ?? '',
+      // 5. Site ID: Ana objede 'siteId' (int) olarak var
+      siteId: j['siteId']?.toString() ?? '',
 
-    // 5. Backend'de siteName yoksa boş gelsin
-    siteName: j['site_name'] ?? '',
+      // --- İÇ İÇE OBJE PARSING (ÖNEMLİ) ---
+      // Backend cevabında "site": { "site_name": "...", "site_id": "..." } var.
+      // Bu yüzden j['site'] üzerinden erişiyoruz.
 
-    // Ekstra alanlar (İsteğe bağlı)
-    blockNo: j['block_no']?.toString(),
-    apartmentNo: j['apartment_no']?.toString(),
-  );
+      // Site Adı:
+      siteName: j['site']?['site_name'] ?? '',
+
+      // Site Kodu (E993EU): Eğer backend login servisine eklediysen buradan gelir.
+      // Eklemediysen boş gelir, uygulama çökmez.
+      siteCode: j['site']?['site_id'] ?? '',
+
+      // ------------------------------------
+
+      // 6. Blok: Backend loglarında 'block_id' görünüyor
+      blockNo: j['block_id']?.toString(),
+
+      // 7. Daire: Backend 'apartment_no' gönderiyor
+      apartmentNo: j['apartment_no']?.toString(),
+    );
+  }
 }
