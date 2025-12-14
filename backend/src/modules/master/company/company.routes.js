@@ -10,13 +10,9 @@ import {
     getCompanyStatsHandler,
     getCompanyAdminsHandler,
     updateAdminRoleHandler,
-    updateAdminStatusHandler,
-    softDeleteAdminHandler,
     restoreAdminHandler,
     hardDeleteAdminHandler,
     getCompanySitesHandler,
-    updateSiteStatusHandler,
-    softDeleteSiteHandler,
     restoreSiteHandler,
     hardDeleteSiteHandler,
     updateCompanyHandler
@@ -75,14 +71,6 @@ router.get('/:id/admins', getCompanyAdminsHandler);
 // PATCH /api/master/company/admins/:id/role
 router.patch('/admins/:id/role', updateAdminRoleHandler);
 
-// Admin durumunu değiştir (ACTIVE / SUSPENDED)
-// PATCH /api/master/company/admins/:id/status
-router.patch('/admins/:id/status', updateAdminStatusHandler);
-
-// Admin'i soft delete yap
-// DELETE /api/master/company/admins/:id/soft
-router.delete('/admins/:id/soft', softDeleteAdminHandler);
-
 // Soft delete edilmiş admin'i geri yükle
 // PATCH /api/master/company/admins/:id/restore
 router.patch('/admins/:id/restore', restoreAdminHandler);
@@ -98,14 +86,6 @@ router.delete('/admins/:id/hard', hardDeleteAdminHandler);
 // Şirkete bağlı siteleri listele (query params: ?includeDeleted=true&status=ACTIVE)
 // GET /api/master/company/:id/sites
 router.get('/:id/sites', getCompanySitesHandler);
-
-// Site durumunu değiştir (ACTIVE / SUSPENDED)
-// PATCH /api/master/company/sites/:id/status
-router.patch('/sites/:id/status', updateSiteStatusHandler);
-
-// Site'yi soft delete yap
-// DELETE /api/master/company/sites/:id/soft
-router.delete('/sites/:id/soft', softDeleteSiteHandler);
 
 // Soft delete edilmiş site'yi geri yükle
 // PATCH /api/master/company/sites/:id/restore

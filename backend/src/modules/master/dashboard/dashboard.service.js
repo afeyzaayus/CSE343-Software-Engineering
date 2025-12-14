@@ -36,6 +36,15 @@ export async function getActiveUserCounts(){
     return activeUserCount;
 }
 
+export async function getActiveIndividualCounts() {
+    const activeIndividualCount = await prisma.individuals.count({
+        where: {
+            account_status: 'ACTIVE'
+        }
+    });
+    return activeIndividualCount;
+}
+
 export async function getAdminsWithExpiringAccounts() {
     const today = new Date();
     const thresholdDate = new Date();
@@ -160,58 +169,262 @@ export async function getMonthlyNewRegistrations() {
     const pastDate = new Date();
     pastDate.setDate(now.getDate() - 30);
 
-    const total = await prisma.admin.count({
-        where: {
-            created_at: {
-                gte: pastDate,
-                lte: now
+    // Sadece aktif ve silinmemiş kayıtlar
+    const [companyCount, individualCount] = await Promise.all([
+        prisma.companies.count({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
             }
-        }
-    });
+        }),
+        prisma.individuals.count({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
+            }
+        })
+    ]);
 
-    return total;
+    return companyCount + individualCount;
 }
 // Son 30 gün içinde kaydolan adminlerin detaylı listesi (Yeni Kayıtlar tab için)
 export async function getRecentNewRegistrations() {
-    // Türkiye saati için UTC+3
     const now = new Date();
     const pastDate = new Date(now);
     pastDate.setDate(now.getDate() - 30);
-    
-    // Günün başlangıcını almak için saati sıfırla (opsiyonel)
     pastDate.setHours(0, 0, 0, 0);
-    
-    console.log('Tarih aralığı:', {
-        from: pastDate.toISOString(),
-        to: now.toISOString(),
-        fromLocal: pastDate.toLocaleString('tr-TR'),
-        toLocal: now.toLocaleString('tr-TR')
+
+    // Sadece aktif ve silinmemiş kayıtlar
+    const [recentCompanies, recentIndividuals] = await Promise.all([
+        prisma.companies.findMany({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
+            },
+            include: {
+                admins: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        email: true,
+                        account_type: true,
+                        account_status: true,
+                        deleted_at: true,
+                        last_login: true,
+                    }
+                },
+                sites: {
+                    select: {
+                        id: true,
+                        site_name: true,
+                        site_address: true,
+                        site_status: true,
+                        deleted_at: true,
+                    }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        }),
+        prisma.individuals.findMany({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
+            },
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        email: true,
+                        account_type: true,
+                        account_status: true,
+                        deleted_at: true,
+                        last_login: true,
+                    }
+                },
+                site: {
+                    select: {
+                        id: true,
+                        site_name: true,
+                        site_address: true,
+                        site_status: true,
+                        deleted_at: true,
+                    }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        })
+    ]);
+
+    // Şirket kayıtlarını formatla
+    const formattedCompanies = recentCompanies.map(company => {
+        const manager = Array.isArray(company.admins)
+            ? company.admins.find(a => a.account_type === 'COMPANY_MANAGER' && a.account_status === 'ACTIVE')
+            : null;
+        return {
+            type: 'COMPANY',
+            id: company.id,
+            name: company.company_name,
+            code: company.company_code,
+            created_at: company.created_at,
+            account_status: company.account_status,
+            expiry_date: company.expiry_date,
+            deleted_at: company.deleted_at,
+            manager_full_name: manager?.full_name || null,
+            manager_email: manager?.email || null,
+            admins: Array.isArray(company.admins) ? company.admins : [],
+            sites: Array.isArray(company.sites) ? company.sites : []
+        };
     });
 
-    const recentAdmins = await prisma.admin.findMany({
-        where: {
-            created_at: {
-                gte: pastDate
-                // lte kaldırıldı, gelecek tarihleri de dahil et
-            }
-        },
-        select: {
-            id: true,
-            full_name: true,
-            email: true,
-            account_type: true,
-            company_name: true,
-            company_code: true,
-            created_at: true,
-        },
-        orderBy: {
-            created_at: 'desc'
-        }
+    // Bireysel kayıtları formatla
+    const formattedIndividuals = recentIndividuals.map(ind => ({
+    type: 'INDIVIDUAL',
+    id: ind.id,
+    full_name: ind.admin?.full_name || ind.full_name || 'N/A', // admin yoksa individuals.full_name kullan
+    email: ind.admin?.email || ind.email || 'N/A',             // admin yoksa individuals.email kullan
+    account_type: ind.admin?.account_type || 'INDIVIDUAL',
+    account_status: ind.account_status,
+    expiry_date: ind.expiry_date,
+    created_at: ind.created_at,
+    updated_at: ind.updated_at,
+    deleted_at: ind.deleted_at,
+    admin: ind.admin || null,
+    site: ind.site
+}));
+
+    // Hepsini birleştir ve tarihe göre sırala
+    const allRecent = [...formattedCompanies, ...formattedIndividuals].sort(
+        (a, b) => b.created_at - a.created_at
+    );
+
+    return allRecent;
+}
+
+/**
+ * Son 30 gün içinde yapılan yeni kayıtların hem sayısını hem detaylarını döndürür
+ * { count: number, list: array }
+ */
+export async function getMonthlyNewRegistrationsWithDetails() {
+    const now = new Date();
+    const pastDate = new Date(now);
+    pastDate.setDate(now.getDate() - 30);
+    pastDate.setHours(0, 0, 0, 0);
+
+    // Sadece aktif ve silinmemiş kayıtlar
+    const [recentCompanies, recentIndividuals] = await Promise.all([
+        prisma.companies.findMany({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
+            },
+            include: {
+                admins: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        email: true,
+                        account_type: true,
+                        account_status: true,
+                        deleted_at: true,
+                        last_login: true,
+                    }
+                },
+                sites: {
+                    select: {
+                        id: true,
+                        site_name: true,
+                        site_address: true,
+                        site_status: true,
+                        deleted_at: true,
+                    }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        }),
+        prisma.individuals.findMany({
+            where: {
+                created_at: { gte: pastDate, lte: now },
+                account_status: 'ACTIVE',
+                deleted_at: null
+            },
+            include: {
+                admin: {
+                    select: {
+                        id: true,
+                        full_name: true,
+                        email: true,
+                        account_type: true,
+                        account_status: true,
+                        deleted_at: true,
+                        last_login: true,
+                    }
+                },
+                site: {
+                    select: {
+                        id: true,
+                        site_name: true,
+                        site_address: true,
+                        site_status: true,
+                        deleted_at: true,
+                    }
+                }
+            },
+            orderBy: { created_at: 'desc' }
+        })
+    ]);
+
+    // Şirket kayıtlarını formatla
+    const formattedCompanies = recentCompanies.map(company => {
+        const manager = Array.isArray(company.admins)
+            ? company.admins.find(a => a.account_type === 'COMPANY_MANAGER' && a.account_status === 'ACTIVE')
+            : null;
+        return {
+            type: 'COMPANY',
+            id: company.id,
+            name: company.company_name,
+            code: company.company_code,
+            created_at: company.created_at,
+            account_status: company.account_status,
+            expiry_date: company.expiry_date,
+            deleted_at: company.deleted_at,
+            manager_full_name: manager?.full_name || null,
+            manager_email: manager?.email || null,
+            admins: Array.isArray(company.admins) ? company.admins : [],
+            sites: Array.isArray(company.sites) ? company.sites : []
+        };
     });
 
-    console.log('Bulunan kayıtlar:', recentAdmins.length);
-    
-    return recentAdmins;
+    // Bireysel kayıtları formatla
+    const formattedIndividuals = recentIndividuals.map(ind => ({
+        type: 'INDIVIDUAL',
+        id: ind.id,
+        full_name: ind.admin?.full_name || ind.full_name || 'N/A',
+        email: ind.admin?.email || ind.email || 'N/A',
+        account_type: ind.admin?.account_type || 'INDIVIDUAL',
+        account_status: ind.account_status,
+        expiry_date: ind.expiry_date,
+        created_at: ind.created_at,
+        updated_at: ind.updated_at,
+        deleted_at: ind.deleted_at,
+        admin: ind.admin || null,
+        site: ind.site
+    }));
+
+    // Hepsini birleştir ve tarihe göre sırala
+    const allRecent = [...formattedCompanies, ...formattedIndividuals].sort(
+        (a, b) => b.created_at - a.created_at
+    );
+
+    return {
+        count: allRecent.length,
+        list: allRecent
+    };
 }
 
 // Hesabın süresini uzat

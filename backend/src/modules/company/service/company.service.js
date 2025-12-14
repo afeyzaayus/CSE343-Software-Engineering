@@ -150,7 +150,11 @@ export async function getCompanyEmployeesService(adminId) {
     let employees;
     try {
       employees = await prisma.company_employees.findMany({
-        where: { company_id: admin.companyId },
+        where: { 
+          company_id: admin.companyId,
+          status: { not: 'DELETED' },           // <-- SADECE SİLİNMEYENLER
+          deleted_at: null                      // <-- Silinmişler hariç
+        },
         include: {
           admins: {
             select: {
@@ -179,33 +183,35 @@ export async function getCompanyEmployeesService(adminId) {
       // Eğer ilişkide isim karışıklığı varsa manuel join yap
       console.error('❌ İlişki hatası:', relationError.message);
       employees = await Promise.all(
-        employeesRaw.map(async (emp) => {
-          const adminData = await prisma.admin.findUnique({
-            where: { id: emp.admin_id },
-            select: {
-              id: true,
-              full_name: true,
-              email: true,
-              account_status: true,
-              last_login: true
-            }
-          });
+        employeesRaw
+          .filter(emp => emp.status !== 'DELETED' && emp.deleted_at === null) // <-- SADECE SİLİNMEYENLER
+          .map(async (emp) => {
+            const adminData = await prisma.admin.findUnique({
+              where: { id: emp.admin_id },
+              select: {
+                id: true,
+                full_name: true,
+                email: true,
+                account_status: true,
+                last_login: true
+              }
+            });
 
-          const access = await prisma.employee_site_access.findMany({
-            where: { employee_id: emp.id },
-            include: {
-              sites: {
-                select: {
-                  id: true,
-                  site_id: true,
-                  site_name: true
+            const access = await prisma.employee_site_access.findMany({
+              where: { employee_id: emp.id },
+              include: {
+                sites: {
+                  select: {
+                    id: true,
+                    site_id: true,
+                    site_name: true
+                  }
                 }
               }
-            }
-          });
+            });
 
-          return { ...emp, admins: adminData, employee_site_access: access };
-        })
+            return { ...emp, admins: adminData, employee_site_access: access };
+          })
       );
       console.log('✅ Manuel join tamamlandı');
     }
@@ -393,30 +399,36 @@ export async function deleteEmployeeService(managerId, employeeId) {
 
     const adminId = employee.admin_id;
 
-    // 🔥 HARD DELETE — TAMAMEN SİLME
+    // SOFT DELETE — Durum güncelleme ve silinme tarihi ekleme
     await prisma.$transaction(async (tx) => {
-
-      // 1) Site erişimlerini sil
+      // 1) Site erişimlerini sil (opsiyonel: soft delete yapılacaksa burada da status/deleted_at kullanılabilir)
       await tx.employee_site_access.deleteMany({
         where: { employee_id: employeeId }
       });
 
-      // 2) Şirket çalışanı tablosundan sil
-      await tx.company_employees.delete({
-        where: { id: employeeId }
+      // 2) Şirket çalışanı tablosunda soft delete
+      await tx.company_employees.update({
+        where: { id: employeeId },
+        data: {
+          status: 'DELETED',
+          deleted_at: new Date()
+        }
       });
 
-      // 3) Admin tablosundan sil
-      await tx.admin.delete({
-        where: { id: adminId }
+      // 3) Admin tablosunda soft delete
+      await tx.admin.update({
+        where: { id: adminId },
+        data: {
+          account_status: 'DELETED',
+          deleted_at: new Date()
+        }
       });
-
     });
 
-    console.log(`🗑️ Çalışan tamamen silindi: employeeId=${employeeId}, adminId=${adminId}`);
+    console.log(`🗑️ Çalışan soft delete yapıldı: employeeId=${employeeId}, adminId=${adminId}`);
 
     return {
-      message: 'Çalışan tamamen silindi (hard delete)',
+      message: 'Çalışan başarıyla silindi (soft delete)',
       employee: {
         id: employeeId,
         admin_id: adminId,

@@ -12,13 +12,9 @@ import {
     getTotalCompanyCounts,
     getCompanyAdmins,
     updateAdminRole,
-    updateAdminStatus,
-    softDeleteAdmin,
     restoreAdmin,
     hardDeleteAdmin,
     getCompanySites,
-    updateSiteStatus,
-    softDeleteSite,
     restoreSite,
     hardDeleteSite,
     updateCompanyById
@@ -409,77 +405,6 @@ export async function updateAdminRoleHandler(req, res) {
     }
 }
 
-/**
- * PATCH /api/master/admins/:id/status
- * Admin durumunu değiştir
- */
-export async function updateAdminStatusHandler(req, res) {
-    try {
-        const adminId = parseInt(req.params.id);
-        const { status } = req.body;
-
-        if (isNaN(adminId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz admin ID.',
-            });
-        }
-
-        if (!['ACTIVE', 'SUSPENDED'].includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz durum.',
-            });
-        }
-
-        const updatedAdmin = await updateAdminStatus(adminId, status);
-
-        res.json({
-            success: true,
-            message: 'Admin durumu başarıyla güncellendi.',
-            data: updatedAdmin,
-        });
-    } catch (error) {
-        console.error('Update admin status error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Admin durumu güncellenirken bir hata oluştu.',
-            error: error.message,
-        });
-    }
-}
-
-/**
- * DELETE /api/master/admins/:id/soft
- * Admin'i soft delete yap
- */
-export async function softDeleteAdminHandler(req, res) {
-    try {
-        const adminId = parseInt(req.params.id);
-
-        if (isNaN(adminId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz admin ID.',
-            });
-        }
-
-        const deletedAdmin = await softDeleteAdmin(adminId);
-
-        res.json({
-            success: true,
-            message: 'Admin başarıyla silindi (soft delete).',
-            data: deletedAdmin,
-        });
-    } catch (error) {
-        console.error('Soft delete admin error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Admin silinirken bir hata oluştu.',
-            error: error.message,
-        });
-    }
-}
 
 /**
  * PATCH /api/master/admins/:id/restore
@@ -580,78 +505,6 @@ export async function getCompanySitesHandler(req, res) {
         res.status(500).json({
             success: false,
             message: 'Siteler getirilirken bir hata oluştu.',
-            error: error.message,
-        });
-    }
-}
-
-/**
- * PATCH /api/master/sites/:id/status
- * Site durumunu değiştir
- */
-export async function updateSiteStatusHandler(req, res) {
-    try {
-        const siteId = parseInt(req.params.id);
-        const { status } = req.body;
-
-        if (isNaN(siteId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz site ID.',
-            });
-        }
-
-        if (!['ACTIVE', 'SUSPENDED'].includes(status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz durum.',
-            });
-        }
-
-        const updatedSite = await updateSiteStatus(siteId, status);
-
-        res.json({
-            success: true,
-            message: 'Site durumu başarıyla güncellendi.',
-            data: updatedSite,
-        });
-    } catch (error) {
-        console.error('Update site status error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Site durumu güncellenirken bir hata oluştu.',
-            error: error.message,
-        });
-    }
-}
-
-/**
- * DELETE /api/master/sites/:id/soft
- * Site'yi soft delete yap
- */
-export async function softDeleteSiteHandler(req, res) {
-    try {
-        const siteId = parseInt(req.params.id);
-
-        if (isNaN(siteId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Geçersiz site ID.',
-            });
-        }
-
-        const deletedSite = await softDeleteSite(siteId);
-
-        res.json({
-            success: true,
-            message: 'Site başarıyla silindi (soft delete).',
-            data: deletedSite,
-        });
-    } catch (error) {
-        console.error('Soft delete site error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Site silinirken bir hata oluştu.',
             error: error.message,
         });
     }

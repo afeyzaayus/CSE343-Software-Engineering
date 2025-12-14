@@ -24,6 +24,10 @@ import masterCompanyRoutes from './modules/master/company/company.routes.js' ;
 import individualRoutes from './modules/master/individual/individual.routes.js' ;
 import { seedMasterAdmin } from './modules/master/auth/masterAuth.service.js';
 
+// Yeni eklenen şikayet rotalarını import et
+import adminComplaintRoutes from './modules/admin_complaint/routes/admin.complaint.routes.js';
+import masterComplaintRoutes from './modules/admin_complaint/routes/master.complaint.routes.js';
+
 // .env dosyasını yükle
 dotenv.config();
 
@@ -108,6 +112,13 @@ app.use('/api/auth/master', masterAuthRoutes);
 app.use('/api/master', masterDashboardRoutes);
 app.use('/api/master/company', masterCompanyRoutes);
 app.use('/api/master/individuals', individualRoutes);
+
+// Admin şikayet rotaları
+app.use('/api/admin/complaints', adminComplaintRoutes);
+
+// Master şikayet rotaları
+app.use('/api/master/complaints', masterComplaintRoutes);
+
 // Auth rotaları
 app.use('/api/auth/admin', adminRoutes);
 app.use('/api/auth/user', userRoutes);

@@ -186,7 +186,7 @@ export const activateEmployee = async (req, res) => {
 
 
 /**
- * Çalışanı sil
+ * Çalışanı sil (soft delete)
  * @route DELETE /api/company/employees/:id
  */
 export const deleteEmployee = async (req, res) => {
@@ -201,6 +201,7 @@ export const deleteEmployee = async (req, res) => {
       });
     }
 
+    // Soft delete işlemi
     const result = await deleteEmployeeService(managerId, employeeId);
 
     return res.status(200).json({
@@ -212,9 +213,10 @@ export const deleteEmployee = async (req, res) => {
   } catch (error) {
     console.error('❌ deleteEmployee controller hatası:', error);
 
+    // Soft delete için özel hata mesajı
     return res.status(500).json({
       success: false,
-      error: error.message || 'Çalışan silinirken bir hata oluştu'
+      error: error.message || 'Çalışan silinirken bir hata oluştu (soft delete)'
     });
   }
 };

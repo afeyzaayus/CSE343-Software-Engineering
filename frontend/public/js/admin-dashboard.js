@@ -1,4 +1,3 @@
-
 const API_BASE_URL = 'http://localhost:3000/api';
 
 // Token'ı localStorage'dan al
@@ -36,64 +35,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// UI'ı doldur
 function setupUI(userData) {
     // Kullanıcı bilgileri
     const userName = userData.name || userData.full_name || 'Kullanıcı';
     const userRole = userData.role || userData.account_type || 'USER';
-    
+
     document.getElementById('userName').textContent = userName;
     document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
     document.getElementById('userType').textContent = getRoleText(userRole);
-    
-    // Şirket kodu banner'ı
-    const companyCodeBanner = document.getElementById('companyCodeBanner');
-    const companyCodeEl = document.getElementById('companyCode');
-    const companyCodeDesc = document.getElementById('companyCodeDesc');
-    
-    // Tab navigasyonu
+
+    // Şirket kodu stat kartı
+    const companyCodeDisplay = document.getElementById('companyCodeDisplay');
+    if (companyCodeDisplay) {
+        companyCodeDisplay.textContent = userData.company_code || '-';
+        // Kopyalama için tıklanabilir yap
+        companyCodeDisplay.style.cursor = "pointer";
+        companyCodeDisplay.title = "Kopyalamak için tıkla";
+        companyCodeDisplay.onclick = function () {
+            if (companyCodeDisplay.textContent && companyCodeDisplay.textContent !== '-' && companyCodeDisplay.textContent !== 'KOD YOK') {
+                navigator.clipboard.writeText(companyCodeDisplay.textContent)
+                    .then(() => showToast("📋 Şirket kodu kopyalandı: " + companyCodeDisplay.textContent, "success"))
+                    .catch(() => showToast("Kopyalama başarısız!", "error"));
+            } else {
+                showToast("Kopyalanacak şirket kodu yok!", "error");
+            }
+        };
+    }
+
+    // Tab navigasyonu ve diğer alanlar
     const tabNavigation = document.querySelector('.tab-navigation');
     const employeesTabBtn = document.querySelectorAll('.tab-btn')[1];
     const employeesTabContent = document.getElementById('employeesTab');
-    
+
     if (userRole === 'INDIVIDUAL') {
-        // ========== BİREYSEL HESAP ==========
-        // Şirket kodu yok
-        if (companyCodeBanner) companyCodeBanner.style.display = 'none';
         document.getElementById('siteLimit').textContent = '1';
-        
-        // Tab navigasyonunu tamamen gizle (sadece Siteler olacak)
         if (tabNavigation) tabNavigation.style.display = 'none';
         if (employeesTabContent) employeesTabContent.style.display = 'none';
-        
     } else if (userRole === 'COMPANY_MANAGER') {
-        // ========== ŞİRKET YÖNETİCİSİ ==========
-        // Şirket kodunu göster
-        if (companyCodeBanner) companyCodeBanner.style.display = 'flex';
-        if (companyCodeEl) companyCodeEl.textContent = userData.company_code || 'KOD YOK';
-        if (companyCodeDesc) companyCodeDesc.textContent = 'Bu kodu çalışanlarınızla paylaşarak onları sisteme davet edebilirsiniz';
         document.getElementById('siteLimit').textContent = '∞';
-        
-        // Tab navigasyonunu göster (gelecekte çalışan yönetimi için)
         if (tabNavigation) tabNavigation.style.display = 'flex';
-        
     } else if (userRole === 'COMPANY_EMPLOYEE') {
-        // ========== ŞİRKET ÇALIŞANI ==========
-        // Şirket kodunu göster (sadece görüntüleme)
-        if (companyCodeBanner) companyCodeBanner.style.display = 'flex';
-        if (companyCodeEl) companyCodeEl.textContent = userData.company_code || 'KOD YOK';
-        if (companyCodeDesc) companyCodeDesc.textContent = 'Şirket kodunuz (Sadece görüntüleme)';
         document.getElementById('siteLimit').textContent = '∞';
-        
-        // Site oluşturma butonunu gizle
         const createBtn = document.getElementById('createSiteBtn');
         if (createBtn) createBtn.style.display = 'none';
-        
-        // Tab navigasyonunu gizle (çalışanlar sitelerle ilgilenmez)
         if (tabNavigation) tabNavigation.style.display = 'none';
         if (employeesTabContent) employeesTabContent.style.display = 'none';
     }
-    
+
     console.log(`✅ UI kuruldu: ${userName} (${userRole})`);
 }
 
@@ -475,7 +463,7 @@ function editSite(siteId) {
 
 // Site silme onayı
 function deleteSiteConfirm(siteId, siteName) {
-    if (confirm(`"${siteName}" sitesini silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz! Site ve bağlı tüm bloklar silinecek.`)) {
+    if (confirm(`"${siteName}" sitesini silmek istediğinizden emin misiniz?\n\n⚠️ ite ve bağlı tüm bloklar silinecek.`)) {
         deleteSite(siteId);
     }
 }
@@ -878,7 +866,7 @@ async function activateEmployee(employeeId) {
  * Çalışanı silme onayı
  */
 function deleteEmployeeConfirm(employeeId, employeeName) {
-    if (confirm(`"${employeeName}" adlı çalışanı silmek istediğinize emin misiniz?\n\n⚠️ Bu işlem geri alınamaz! Çalışan tüm site erişimlerini kaybedecek.`)) {
+    if (confirm(`"${employeeName}" adlı çalışanı silmek istediğinize emin misiniz?\n\n⚠️ Çalışan tüm site erişimlerini kaybedecek.`)) {
         deleteEmployee(employeeId);
     }
 }
@@ -924,6 +912,7 @@ async function deleteEmployee(employeeId) {
         showToast('❌ ' + err.message, 'error');
     }
 }
+
 // Davetleri getir
 async function fetchInvitations() {
     try {
@@ -1185,11 +1174,336 @@ function copyInviteLink(link) {
         });
 }
 
-// Sayfa yüklendiğinde çalışan ve davet listelerini getir
+// Şikayetleri getir
+async function fetchComplaints() {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/admin/complaints`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Şikayetler alınamadı');
+        }
+
+        const data = await response.json();
+        if (Array.isArray(data)) {
+            renderComplaintList(data);
+        } else if (data.success && data.data && Array.isArray(data.data.complaints)) {
+            renderComplaintList(data.data.complaints);
+        } else {
+            renderComplaintList([]);
+        }
+    } catch (err) {
+        console.error('❌ Şikayet listesi hatası:', err);
+        showToast(err.message, 'error');
+        renderComplaintList([]);
+    }
+}
+function getCategoryText(category) {
+    switch (category) {
+        case 'TECHNICAL_SUPPORT': return 'Teknik Destek';
+        case 'RESTORE': return 'Geri Yükleme';
+        case 'REQUEST': return 'Talep';
+        case 'FEATURE_REQUEST': return 'Yeni Özellik';
+        case 'GENERAL': return 'Genel';
+        case 'OTHER': return 'Diğer';
+        default: return category || '';
+    }
+}
+// Şikayet listesini render et (master_note ile)
+function renderComplaintList(complaints) {
+    const list = document.getElementById('complaintList');
+    if (!list) return;
+
+    list.innerHTML = '';
+
+    if (!complaints || complaints.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <h3>Henüz Şikayet Yok</h3>
+                <p>Yeni bir şikayet oluşturarak başlayabilirsiniz.</p>
+            </div>
+        `;
+        return;
+    }
+
+    complaints.forEach(complaint => {
+        const item = document.createElement('div');
+        item.className = 'complaint-card';
+
+        let statusClass = 'badge-pending';
+        let statusText = 'Bekliyor';
+        if (complaint.status === 'RESOLVED') {
+            statusClass = 'badge-resolved';
+            statusText = 'Çözüldü';
+        } else if (complaint.status === 'REJECTED') {
+            statusClass = 'badge-rejected';
+            statusText = 'Reddedildi';
+        } else if (complaint.status === 'IN_PROGRESS') {
+            statusClass = 'badge-in_progress';
+            statusText = 'İşlemde';
+        }
+
+        // Master note'u göster (sadece IN_PROGRESS veya RESOLVED durumunda)
+        let masterNoteHtml = '';
+        if (complaint.master_note && (complaint.status === 'IN_PROGRESS' || complaint.status === 'RESOLVED')) {
+            masterNoteHtml = `
+                <div class="complaint-master-note">
+                    <span class="master-note-label">Yönetici Yanıtı</span>
+                    <p class="master-note-text">${complaint.master_note}</p>
+                </div>
+            `;
+        }
+
+        item.innerHTML = `
+            <div class="complaint-header">
+                <span class="complaint-title">${complaint.title}</span>
+                <span class="site-badge ${statusClass}">${statusText}</span>
+            </div>
+            <div class="complaint-content">${complaint.content}</div>
+            ${masterNoteHtml}
+            <div class="complaint-meta">
+                <span>${getCategoryText(complaint.category)}</span>
+                <span class="complaint-date">${complaint.created_at ? new Date(complaint.created_at).toLocaleDateString('tr-TR') : ''}</span>
+            </div>
+            <div class="complaint-actions">
+                <button class="btn btn-edit-complaint" onclick="editComplaint(${complaint.id})">Düzenle</button>
+                <button class="btn btn-delete-complaint" onclick="deleteComplaintConfirm(${complaint.id})">Sil</button>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// Şikayet oluşturma modalı aç
+function openCreateComplaintModal() {
+    document.getElementById('createComplaintModal').style.display = 'flex';
+    document.getElementById('createComplaintForm').reset();
+}
+// Şikayet oluşturma modalı kapat
+function closeCreateComplaintModal() {
+    document.getElementById('createComplaintModal').style.display = 'none';
+}
+
+// Şikayet düzenleme modalı aç
+function openEditComplaintModal() {
+    document.getElementById('editComplaintModal').style.display = 'flex';
+}
+
+// Şikayet düzenleme modalı kapat
+function closeEditComplaintModal() {
+    document.getElementById('editComplaintModal').style.display = 'none';
+}
+
+// Şikayet düzenle modalını doldur
+function editComplaint(id) {
+    fetch(`${API_BASE_URL}/admin/complaints/${id}`, {
+        headers: { "Authorization": `Bearer ${getAuthToken()}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const c = data.complaint;
+        if (c && c.id) {
+            document.getElementById('editComplaintId').value = c.id;
+            document.getElementById('editComplaintTitle').value = c.title;
+            document.getElementById('editComplaintContent').value = c.content;
+            document.getElementById('editComplaintCategory').value = c.category;
+            openEditComplaintModal();
+        } else {
+            showToast("Şikayet bulunamadı!", "error");
+        }
+    });
+}
+
+// Şikayet oluşturma submit
+document.getElementById('createComplaintForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const title = document.getElementById('createComplaintTitle').value.trim();
+    const content = document.getElementById('createComplaintContent').value.trim();
+    const category = document.getElementById('createComplaintCategory').value;
+
+    const userData = JSON.parse(localStorage.getItem('user'));
+    const adminId = userData?.id || userData?.adminId;
+    const accountType = userData?.role || userData?.account_type;
+
+    if (!title || !content || !category) {
+        showToast("Lütfen tüm alanları doldurun!", "error");
+        return;
+    }
+
+    const payload = { title, content, category, adminId, accountType };
+    const token = getAuthToken();
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/complaints`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "İşlem başarısız");
+        closeCreateComplaintModal();
+        showToast("Şikayetiniz iletildi.", "success");
+        fetchComplaints();
+    } catch (err) {
+        showToast(err.message, "error");
+    }
+};
+
+// Şikayet düzenleme submit
+document.getElementById('editComplaintForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('editComplaintId').value;
+    const title = document.getElementById('editComplaintTitle').value.trim();
+    const content = document.getElementById('editComplaintContent').value.trim();
+    const category = document.getElementById('editComplaintCategory').value;
+
+    const userData = JSON.parse(localStorage.getItem('user'));
+    const adminId = userData?.id || userData?.adminId;
+    const accountType = userData?.role || userData?.account_type;
+
+    if (!title || !content || !category) {
+        showToast("Lütfen tüm alanları doldurun!", "error");
+        return;
+    }
+
+    const payload = { title, content, category, adminId, accountType };
+    const token = getAuthToken();
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/admin/complaints/${id}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "İşlem başarısız");
+        closeEditComplaintModal();
+        showToast("Şikayet güncellendi!", "success");
+        fetchComplaints();
+    } catch (err) {
+        showToast(err.message, "error");
+    }
+};
+
+// Şikayet silme onayı
+function deleteComplaintConfirm(id) {
+    if (confirm("Bu şikayeti silmek istediğinize emin misiniz?")) {
+        deleteComplaint(id);
+    }
+}
+
+// Şikayet sil
+async function deleteComplaint(id) {
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/admin/complaints/${id}`, {
+            method: 'DELETE',
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Şikayet silinemedi");
+        showToast("Şikayet silindi!", "success");
+        fetchComplaints();
+    } catch (err) {
+        showToast(err.message, "error");
+    }
+}
+
+// Şikayet oluştur/düzenle submit
+document.getElementById('complaintForm').onsubmit = async function(e) {
+    e.preventDefault();
+    const id = document.getElementById('complaintId').value;
+    const title = document.getElementById('complaintTitle').value.trim();
+    const content = document.getElementById('complaintContent').value.trim();
+    const category = document.getElementById('complaintCategory').value;
+
+    // KULLANICI BİLGİLERİNİ AL
+    const userData = JSON.parse(localStorage.getItem('user'));
+    const adminId = userData?.id || userData?.adminId;
+    const accountType = userData?.role || userData?.account_type;
+
+    if (!title || !content || !category) {
+        showToast("Lütfen tüm alanları doldurun!", "error");
+        return;
+    }
+
+    // GÜNCEL PAYLOAD
+    const payload = { title, content, category, adminId, accountType };
+
+    const token = getAuthToken();
+
+    try {
+        let url = `${API_BASE_URL}/admin/complaints`;
+        let method = "POST";
+        if (id) {
+            url += `/${id}`;
+            method = "PUT";
+        }
+        const res = await fetch(url, {
+            method,
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "İşlem başarısız");
+        closeComplaintModal();
+        showToast(id ? "Şikayet güncellendi!" : "Şikayetiniz iletildi.", "success");
+        fetchComplaints();
+        // Modal başlığını ve butonunu sıfırla
+        document.getElementById('complaintModalTitle').textContent = "📝 Yeni Şikayet Oluştur";
+        document.getElementById('complaintSubmitText').textContent = "📤 Gönder";
+        document.getElementById('complaintForm').reset();
+        document.getElementById('complaintId').value = "";
+    } catch (err) {
+        showToast(err.message, "error");
+    }
+};
+
+// Şikayet modalı açıldığında formu sıfırla
+function openComplaintModal() {
+    document.getElementById('createComplaintModal').style.display = 'flex';
+    document.getElementById('createComplaintForm').reset();
+}
+function closeComplaintModal() {
+    document.getElementById('createComplaintModal').style.display = 'none';
+}
+// Tab değiştirme fonksiyonunu güncelle
+function switchTab(tab) {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    
+    tabBtns.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(c => c.classList.remove('active'));
+
+    if (tab === 'sites') {
+        tabBtns[0].classList.add('active');
+        document.getElementById('sitesTab').classList.add('active');
+    } else if (tab === 'employees') {
+        tabBtns[1].classList.add('active');
+        document.getElementById('employeesTab').classList.add('active');
+    } else if (tab === 'complaints') {
+        tabBtns[2].classList.add('active');
+        document.getElementById('complaintsTab').classList.add('active');
+        fetchComplaints();
+    }
+}
+
+// Sayfa yüklendiğinde şikayet tabı varsa şikayetleri getir
 document.addEventListener('DOMContentLoaded', function() {
-    // Eğer çalışanlar sayfasındaysak
-    if (document.getElementById('employeeList') || document.getElementById('invitationList')) {
-        fetchEmployees();
-        fetchInvitations();
+    if (document.getElementById('complaintList')) {
+        fetchComplaints();
     }
 });

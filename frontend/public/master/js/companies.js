@@ -178,34 +178,7 @@ async function updateAdminRole(adminId, newRole) {
     return response.json();
 }
 
-async function updateAdminStatus(adminId, status) {
-    const response = await fetch(`${API_BASE_URL}/master/company/admins/${adminId}/status`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status: status }),
-    });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Durum güncellenemedi');
-    }
-
-    return response.json();
-}
-
-async function softDeleteAdmin(adminId) {
-    const response = await fetch(`${API_BASE_URL}/master/company/admins/${adminId}/soft`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Çalışan silinemedi');
-    }
-
-    return response.json();
-}
 
 async function restoreAdmin(adminId) {
     const response = await fetch(`${API_BASE_URL}/master/company/admins/${adminId}/restore`, {
@@ -255,35 +228,6 @@ async function fetchCompanySites(companyId, filters = {}) {
 
     const data = await response.json();
     return data.data || data.sites || data;
-}
-
-async function updateSiteStatus(siteId, status) {
-    const response = await fetch(`${API_BASE_URL}/master/company/sites/${siteId}/status`, {
-        method: 'PATCH',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ status: status }),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Durum güncellenemedi');
-    }
-
-    return response.json();
-}
-
-async function softDeleteSite(siteId) {
-    const response = await fetch(`${API_BASE_URL}/master/company/sites/${siteId}/soft`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Site silinemedi');
-    }
-
-    return response.json();
 }
 
 async function restoreSite(siteId) {
@@ -518,23 +462,8 @@ function getSiteActionButtons(site) {
                 <span class="btn-icon">🗑️</span> Kalıcı Sil
             </button>
         `;
-    } else {
-        const siteStatus = site.site_status || site.status;
-        const statusButton = siteStatus === 'ACTIVE'
-            ? `<button class="btn btn-warning btn-xs" onclick="handleSuspendSite(${site.id})">
-                   <span class="btn-icon">⏸️</span> Askıya Al
-               </button>`
-            : `<button class="btn btn-success btn-xs" onclick="handleActivateSite(${site.id})">
-                   <span class="btn-icon">▶️</span> Aktif Et
-               </button>`;
-        
-        return `
-            ${statusButton}
-            <button class="btn btn-danger btn-xs" onclick="handleSoftDeleteSite(${site.id})">
-                <span class="btn-icon">🗑️</span> Sil
-            </button>
-        `;
     }
+    return ''; // Silinmemişse hiçbir şey döndür
 }
 
 async function loadCompanyEmployees(companyId) {
@@ -590,27 +519,9 @@ function getEmployeeActionButtons(employee) {
                 <span class="btn-icon">🗑️</span> Kalıcı Sil
             </button>
         `;
-    } else {
-        const statusButton = employee.account_status === 'ACTIVE'
-            ? `<button class="btn btn-warning btn-xs" onclick="handleSuspendAdmin(${employee.id})">
-                   <span class="btn-icon">⏸️</span> Askıya Al
-               </button>`
-            : `<button class="btn btn-success btn-xs" onclick="handleActivateAdmin(${employee.id})">
-                   <span class="btn-icon">▶️</span> Aktif Et
-               </button>`;
-        
-        return `
-            <button class="btn btn-primary btn-xs" onclick="handleEditAdminRole(${employee.id}, '${employee.full_name || employee.name}', '${employee.account_type}')">
-                <span class="btn-icon">✏️</span> Rol Değiştir
-            </button>
-            ${statusButton}
-            <button class="btn btn-danger btn-xs" onclick="handleSoftDeleteAdmin(${employee.id})">
-                <span class="btn-icon">🗑️</span> Sil
-            </button>
-        `;
     }
+    return ''; // Silinmemişse hiçbir şey döndür
 }
-
 // ===========================
 // MODAL FONKSİYONLARI
 // ===========================
@@ -949,14 +860,8 @@ document.addEventListener('DOMContentLoaded', () => {
 window.viewCompanyDetail = viewCompanyDetail;
 window.handleRestoreCompany = handleRestoreCompany;
 window.handleHardDeleteCompany = handleHardDeleteCompany;
-window.handleActivateSite = handleActivateSite;
-window.handleSuspendSite = handleSuspendSite;
-window.handleSoftDeleteSite = handleSoftDeleteSite;
 window.handleRestoreSite = handleRestoreSite;
 window.handleHardDeleteSite = handleHardDeleteSite;
 window.handleEditAdminRole = handleEditAdminRole;
-window.handleActivateAdmin = handleActivateAdmin;
-window.handleSuspendAdmin = handleSuspendAdmin;
-window.handleSoftDeleteAdmin = handleSoftDeleteAdmin;
 window.handleRestoreAdmin = handleRestoreAdmin;
 window.handleHardDeleteAdmin = handleHardDeleteAdmin;

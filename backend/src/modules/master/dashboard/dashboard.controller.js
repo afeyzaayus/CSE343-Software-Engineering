@@ -2,10 +2,10 @@ import {
     getActiveCompanyCounts,
     getActiveSiteCounts,
     getActiveUserCounts,
+    getActiveIndividualCounts,
     getAdminsWithExpiringAccounts,
     calculateAnnualRevenue,
-    getMonthlyNewRegistrations,
-    getRecentNewRegistrations,
+    getMonthlyNewRegistrationsWithDetails, // <-- GÜNCELLENDİ
     extendAccountSubscription
 } from './dashboard.service.js';
 
@@ -15,18 +15,18 @@ export async function fetchDashboardMetrics(req, res) {
             activeCompanyCount,
             activeSiteCount,
             activeUserCount,
+            activeIndividualCount,
             expiringAdmins,
             annualRevenue,
-            monthlyNewRegistrations,
-            recentRegistrations
+            monthlyNewRegistrationsWithDetails
         ] = await Promise.all([
             getActiveCompanyCounts(),
             getActiveSiteCounts(),
             getActiveUserCounts(),
+            getActiveIndividualCounts(),
             getAdminsWithExpiringAccounts(),
             calculateAnnualRevenue(),
-            getMonthlyNewRegistrations(),
-            getRecentNewRegistrations()
+            getMonthlyNewRegistrationsWithDetails() // <-- GÜNCELLENDİ
         ]);
 
         return res.status(200).json({
@@ -35,6 +35,7 @@ export async function fetchDashboardMetrics(req, res) {
                 totalCompanies: activeCompanyCount,
                 totalSites: activeSiteCount,
                 totalResidents: activeUserCount,
+                totalIndividuals: activeIndividualCount,
                 expiringAccounts: expiringAdmins.map(admin => ({
                     id: admin.id,
                     full_name: admin.full_name,
@@ -46,16 +47,8 @@ export async function fetchDashboardMetrics(req, res) {
                     days_remaining: admin.daysRemaining
                 })),
                 totalRevenue: annualRevenue,
-                monthlyRegistrations: monthlyNewRegistrations,
-                newRegistrations: recentRegistrations.map(admin => ({
-                    id: admin.id,
-                    full_name: admin.full_name,
-                    email: admin.email,
-                    account_type: admin.account_type,
-                    company_name: admin.company_name,
-                    company_code: admin.company_code,
-                    created_at: admin.created_at
-                }))
+                monthlyRegistrations: monthlyNewRegistrationsWithDetails.count, // <-- GÜNCELLENDİ
+                newRegistrations: monthlyNewRegistrationsWithDetails.list      // <-- GÜNCELLENDİ
             }
         });
 

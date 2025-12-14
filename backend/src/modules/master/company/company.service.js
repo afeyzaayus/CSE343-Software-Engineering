@@ -343,7 +343,9 @@ export async function getTotalCompanyCounts() {
     return await prisma.companies.count();
 }
 
-// ...existing code...
+// ===========================
+// ŞİRKET BİLGİLERİ
+// ===========================
 
 // Şirket bilgilerini güncelle
 export async function updateCompanyById(companyId, updateData) {
@@ -379,8 +381,6 @@ export async function updateCompanyById(companyId, updateData) {
         throw error;
     }
 }
-
-// ...existing code...
 
 // ===========================
 // ŞİRKET ÇALIŞANLARI (ADMINS)
@@ -433,45 +433,47 @@ export async function updateAdminRole(adminId, newRole) {
 }
 
 /**
- * Admin durumunu değiştir (ACTIVE / SUSPENDED)
- * Sadece admin etkilenir, bağlı kayıtlar etkilenmez
- */
-export async function updateAdminStatus(adminId, status) {
-    const updatedAdmin = await prisma.admin.update({
-        where: { id: adminId },
-        data: { account_status: status },
-    });
-    return updatedAdmin;
-}
-
-/**
- * Admin'i soft delete yap
- * Sadece admin etkilenir, bağlı kayıtlar etkilenmez
- */
-export async function softDeleteAdmin(adminId) {
-    const deletedAdmin = await prisma.admin.update({
-        where: { id: adminId },
-        data: { 
-            deleted_at: new Date(),
-            account_status: 'DELETED'
-        },
-    });
-    return deletedAdmin;
-}
-
-/**
  * Soft delete edilmiş admin'i geri yükle
- * Sadece admin etkilenir, bağlı kayıtlar etkilenmez
+ * Admin ve bağlı company_employees kaydını geri aktif eder
  */
 export async function restoreAdmin(adminId) {
-    const restoredAdmin = await prisma.admin.update({
+    // Admin kaydını bul
+    const admin = await prisma.admin.findUnique({
         where: { id: adminId },
-        data: { 
-            deleted_at: null,
-            account_status: 'ACTIVE'
-        },
+        select: { id: true }
     });
-    return restoredAdmin;
+    if (!admin) throw new Error('Admin bulunamadı');
+
+    // company_employees kaydını bul
+    const employee = await prisma.company_employees.findFirst({
+        where: { admin_id: adminId }
+    });
+
+    // Transaction ile hem admin hem employee kaydını geri yükle
+    const result = await prisma.$transaction(async (tx) => {
+        const restoredAdmin = await tx.admin.update({
+            where: { id: adminId },
+            data: { 
+                deleted_at: null,
+                account_status: 'ACTIVE'
+            },
+        });
+
+        let restoredEmployee = null;
+        if (employee) {
+            restoredEmployee = await tx.company_employees.update({
+                where: { id: employee.id },
+                data: {
+                    status: 'ACTIVE',
+                    deleted_at: null
+                }
+            });
+        }
+
+        return { restoredAdmin, restoredEmployee };
+    });
+
+    return result;
 }
 
 /**
@@ -522,67 +524,6 @@ export async function getCompanySites(companyId, filters = {}) {
     return sites;
 }
 
-
-/**
- * Site durumunu değiştir
- * İlişkili tüm kullanıcılar da aynı duruma güncellenir
- */
-export async function updateSiteStatus(siteId, status) {
-    const result = await prisma.$transaction(async (tx) => {
-        // Site durumunu güncelle
-        const updatedSite = await tx.site.update({
-            where: { id: siteId },
-            data: { site_status: status },
-        });
-
-        // İlişkili tüm kullanıcıların durumunu güncelle
-        await tx.user.updateMany({
-            where: { 
-                siteId: siteId, // site_id değil siteId
-                deleted_at: null
-            },
-            data: { 
-                account_status: status 
-            },
-        });
-
-        return updatedSite;
-    });
-
-    return result;
-}
-
-/**
- * Site'yi soft delete yap
- * İlişkili tüm kullanıcılar da soft delete edilir
- */
-export async function softDeleteSite(siteId) {
-    const now = new Date();
-
-    const result = await prisma.$transaction(async (tx) => {
-        // Kullanıcıları soft delete yap
-        await tx.user.updateMany({
-            where: { siteId: siteId }, // site_id değil siteId
-            data: { 
-                deleted_at: now,
-                account_status: 'DELETED'
-            },
-        });
-
-        // Site'yi soft delete yap
-        const deletedSite = await tx.site.update({
-            where: { id: siteId },
-            data: { 
-                deleted_at: now,
-                site_status: 'DELETED'
-            },
-        });
-
-        return deletedSite;
-    });
-
-    return result;
-}
 
 /**
  * Soft delete edilmiş site'yi geri yükle

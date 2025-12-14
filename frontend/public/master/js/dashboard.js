@@ -31,10 +31,10 @@ async function loadDashboardData() {
 
         const result = await response.json();
         console.log('API Response:', result);
-        
+
         const stats = result.data || result;
         console.log('Stats Data:', stats);
-        
+
         updateStats(stats);
     } catch (error) {
         console.error('Dashboard yükleme hatası:', error);
@@ -45,18 +45,17 @@ async function loadDashboardData() {
 // İstatistikleri güncelle
 function updateStats(stats) {
     console.log('Updating stats with:', stats);
-    
+
     document.getElementById('totalCompanies').textContent = stats.totalCompanies || 0;
+    document.getElementById('totalIndividuals').textContent = stats.totalIndividuals || 0;
     document.getElementById('totalSites').textContent = stats.totalSites || 0;
     document.getElementById('totalResidents').textContent = stats.totalResidents || 0;
     document.getElementById('totalRevenue').textContent = formatCurrency(stats.totalRevenue || 0);
 
-    // Aylık kayıt sayısını newRegistrations array'inin uzunluğundan al
+    // Aylık kayıt sayısını backend'den gelen monthlyRegistrations ile güncelle
     const monthlyRegsEl = document.querySelector('#monthlyRegistrations h3');
     if (monthlyRegsEl) {
-        const monthlyCount = (stats.newRegistrations || []).length;
-        console.log('Monthly registrations count:', monthlyCount);
-        monthlyRegsEl.textContent = monthlyCount;
+        monthlyRegsEl.textContent = stats.monthlyRegistrations || (stats.newRegistrations ? stats.newRegistrations.length : 0);
     }
 
     // Yenileme gereken hesaplar
@@ -71,6 +70,7 @@ function updateStats(stats) {
     // Yeni kayıtlar
     displayNewRegistrations(stats.newRegistrations || []);
 }
+
 function displayExpiringAccounts(accounts) {
     const container = document.getElementById('expiringAccounts');
     if (!container) return;
@@ -83,13 +83,13 @@ function displayExpiringAccounts(accounts) {
     container.innerHTML = accounts.map(account => {
         const expiry = new Date(account.expiry_date);
         const diffDays = Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
-        
+
         const urgencyClass = diffDays <= 7 ? 'urgent' : diffDays <= 15 ? 'warning' : 'normal';
-        
+
         // Hesap tipi kontrolü
         const isCompany = account.account_type === 'COMPANY_MANAGER' || account.account_type === 'COMPANY_EMPLOYEE';
         const displayName = isCompany ? account.company_name : account.full_name;
-        
+
         return `
             <div class="account-card ${urgencyClass}">
                 <div class="account-header">
@@ -130,7 +130,7 @@ function displayExpiringAccounts(accounts) {
     cards.forEach(card => {
         const checkbox = card.querySelector('.payment-confirmed');
         const extendBtn = card.querySelector('.btn-extend');
-        
+
         // Checkbox değiştiğinde butonu aktif/pasif yap
         checkbox.addEventListener('change', (e) => {
             extendBtn.disabled = !e.target.checked;
@@ -156,7 +156,7 @@ async function extendSubscription(accountId, accountName, accountType, checkbox)
     if (!confirm(`${accountName} hesabının kullanım süresini 1 yıl uzatmak istediğinize emin misiniz?`)) {
         return;
     }
-    
+
     try {
         const token = getToken();
         const response = await fetch(`${API_BASE_URL}/master/accounts/${accountId}/extend-subscription`, {
@@ -170,62 +170,44 @@ async function extendSubscription(accountId, accountName, accountType, checkbox)
                 accountType: accountType 
             })
         });
-        
+
         if (!response.ok) {
             throw new Error('Abonelik uzatılamadı');
         }
-        
+
         const result = await response.json();
         showToast(`${accountName} hesabının kullanım süresi başarıyla 1 yıl uzatıldı!`, 'success');
-        
+
         // Checkbox'ı sıfırla
         if (checkbox) {
             checkbox.checked = false;
         }
-        
+
         // Dashboard'u yenile
         loadDashboardData();
-        
+
     } catch (error) {
         console.error('Hata:', error);
         showToast('Abonelik uzatılırken bir hata oluştu.', 'error');
     }
 }
 
-
 // Yeni kayıtları göster
 function displayNewRegistrations(list) {
     const container = document.getElementById('newRegistrationsList');
     if (!container) return;
-
-    console.log('Yeni kayıtlar verisi:', list);
-    console.log('Toplam yeni kayıt sayısı:', list.length);
 
     if (!list.length) {
         container.innerHTML = '<p class="empty-message">Yeni kayıt bulunmuyor.</p>';
         return;
     }
 
-    list.forEach((item, index) => {
-        const registrationDate = new Date(item.created_at);
-        const now = new Date();
-        const daysAgo = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
-        
-        console.log(`Kayıt #${index + 1}:`, {
-            name: item.full_name || item.company_name,
-            created_at: item.created_at,
-            created_at_parsed: registrationDate.toLocaleString('tr-TR'),
-            days_ago: daysAgo,
-            is_within_30_days: daysAgo <= 30
-        });
-    });
-
     container.innerHTML = list.map(item => {
         const registrationDate = new Date(item.created_at);
         const now = new Date();
         const daysAgo = Math.floor((now - registrationDate) / (1000 * 60 * 60 * 24));
         const hoursAgo = Math.floor((now - registrationDate) / (1000 * 60 * 60));
-        
+
         let timeAgoText;
         if (daysAgo === 0) {
             if (hoursAgo === 0) {
@@ -240,26 +222,47 @@ function displayNewRegistrations(list) {
         } else {
             timeAgoText = `${daysAgo} gün önce`;
         }
-        
-        return `
-            <div class="account-card new-registration">
-                <div class="account-header">
-                    <h4>${item.company_name || item.full_name}</h4>
-                    <span class="account-type-badge">${getAccountTypeLabel(item.account_type)}</span>
+
+        // Şirket mi bireysel mi kontrolü
+        if (item.type === 'COMPANY') {
+            return `
+                <div class="account-card new-registration">
+                    <div class="account-header">
+                        <h4>${item.name || '-'}</h4>
+                        <span class="account-type-badge">Şirket</span>
+                    </div>
+                    <div class="account-details">
+                        ${item.code ? `<p class="company-code">🔑 Kod: ${item.code}</p>` : ''}
+                        ${item.manager_full_name ? `<p class="manager-info">👤 Yönetici: ${item.manager_full_name}</p>` : ''}
+                        ${item.manager_email ? `<p class="account-email">📧 ${item.manager_email}</p>` : ''}
+                        <p class="registration-date">📅 Kayıt tarihi: ${registrationDate.toLocaleDateString('tr-TR')} ${registrationDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <div class="days-ago-container">
+                        <span class="days-ago">
+                            🆕 ${timeAgoText}
+                        </span>
+                    </div>
                 </div>
-                <div class="account-details">
-                    ${item.email ? `<p class="account-email">📧 ${item.email}</p>` : ''}
-                    ${item.company_name ? `<p class="company-info">🏢 ${item.company_name}</p>` : ''}
-                    ${item.company_code ? `<p class="company-code">🔑 Kod: ${item.company_code}</p>` : ''}
-                    <p class="registration-date">📅 Kayıt tarihi: ${registrationDate.toLocaleDateString('tr-TR')} ${registrationDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+            `;
+        } else {
+            return `
+                <div class="account-card new-registration">
+                    <div class="account-header">
+                        <h4>${item.full_name || '-'}</h4>
+                        <span class="account-type-badge">${getAccountTypeLabel(item.account_type)}</span>
+                    </div>
+                    <div class="account-details">
+                        ${item.email ? `<p class="account-email">📧 ${item.email}</p>` : ''}
+                        <p class="registration-date">📅 Kayıt tarihi: ${registrationDate.toLocaleDateString('tr-TR')} ${registrationDate.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <div class="days-ago-container">
+                        <span class="days-ago">
+                            🆕 ${timeAgoText}
+                        </span>
+                    </div>
                 </div>
-                <div class="days-ago-container">
-                    <span class="days-ago">
-                        🆕 ${timeAgoText}
-                    </span>
-                </div>
-            </div>
-        `;
+            `;
+        }
     }).join('');
 }
 
@@ -277,13 +280,15 @@ function initTabs() {
 
             btn.classList.add('active');
             const target = document.getElementById(targetId);
-            if (target) target.classList.add('active');
+            if (target) {
+                target.classList.add('active');
+            }
         });
     });
 }
 
-// Sayfa yüklendiğinde
+// Sayfa yüklendiğinde çalışacaklar
 document.addEventListener('DOMContentLoaded', () => {
-    initTabs();
     loadDashboardData();
+    initTabs();
 });

@@ -1,607 +1,844 @@
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
-            min-height: 100vh;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1a5276, #154360);
-            color: white;
-            padding: 20px 30px;
-            border-radius: 20px 20px 0 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .header h1 {
-            font-size: 22px;
-            margin: 0;
-            font-weight: 600;
-        }
-
-        .user-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .user-avatar {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            border: 3px solid white;
-        }
-
-        .user-info .admin-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .user-info .admin-type {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-
-        .logout-btn {
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: white;
-            color: #1a5276;
-        }
-
-        .dashboard-content {
-            background: white;
-            padding: 30px;
-            border-radius: 0 0 20px 20px;
-        }
-
-        /* İSTATİSTİKLER */
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-
-        .stat-card {
-            background: linear-gradient(145deg, #f8f9fa, #ffffff);
-            border-radius: 16px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .stat-icon {
-            font-size: 2rem;
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, #e8f4fc, #d6eaf8);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-info .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1a5276;
-        }
-
-        .stat-info h4 {
-            font-size: 13px;
-            color: #666;
-            margin: 0;
-            font-weight: 500;
-        }
-
-        /* ŞİRKET KODU BANNER */
-        .company-code-banner {
-            background: linear-gradient(135deg, #2e86c1, #1a5276);
-            border-radius: 16px;
-            padding: 25px;
-            margin-bottom: 25px;
-            color: white;
-        }
-
-        .banner-content {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .banner-icon {
-            font-size: 2.5rem;
-        }
-
-        .banner-text {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .banner-text h3 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
-        }
-
-        .banner-text p {
-            margin: 0;
-            font-size: 14px;
-            opacity: 0.9;
-        }
-
-        .banner-code {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: rgba(255,255,255,0.15);
-            padding: 12px 20px;
-            border-radius: 12px;
-        }
-
-        .banner-code span {
-            font-family: 'Courier New', monospace;
-            font-size: 24px;
-            font-weight: bold;
-            letter-spacing: 4px;
-        }
-
-        .btn-copy-code {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .btn-copy-code:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        /* TAB NAVİGASYON */
-        .tab-navigation {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-            background: #f0f2f5;
-            padding: 6px;
-            border-radius: 12px;
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 14px 20px;
-            border: none;
-            background: transparent;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 15px;
-            font-weight: 600;
-            color: #666;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .tab-btn:hover {
-            color: #1a5276;
-        }
-
-        .tab-btn.active {
-            background: white;
-            color: #1a5276;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        /* SECTION HEADER */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            color: #1a5276;
-            margin: 0;
-        }
-
-        /* SİTE KARTLARI */
-        .site-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .site-card {
-            background: white;
-            border-radius: 16px;
-            padding: 25px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s;
-        }
-
-        .site-card:hover {
-            border-color: #2e86c1;
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .site-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 12px;
-        }
-
-        .site-card h3 {
-            color: #1a5276;
-            margin: 0;
-            font-size: 17px;
-        }
-
-        .site-badge {
-            background: #e8f4fc;
-            color: #2e86c1;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .site-address {
-            color: #666;
-            font-size: 14px;
-            margin: 0 0 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .site-stats {
-            display: flex;
-            gap: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #eee;
-        }
-
-        .site-stat {
-            text-align: center;
-            flex: 1;
-        }
-
-        .site-stat span {
-            display: block;
-            font-size: 20px;
-            font-weight: bold;
-            color: #2e86c1;
-        }
-
-        .site-stat small {
-            color: #999;
-            font-size: 11px;
-        }
-
-        .site-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            transition: all 0.3s;
-            flex: 1;
-        }
-
-        .btn-edit {
-            background: #f0f2f5;
-            color: #333;
-        }
-
-        .btn-edit:hover {
-            background: #e8f4fc;
-            color: #1a5276;
-        }
-
-        .btn-delete {
-            background: #fee;
-            color: #c33;
-        }
-
-        .btn-delete:hover {
-            background: #fdd;
-        }
-
-        .btn-manage {
-            background: linear-gradient(135deg, #2e86c1, #3498db);
-            color: white;
-        }
-
-        .btn-manage:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(46, 134, 193, 0.4);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #2e86c1, #3498db);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: #f0f2f5;
-            color: #333;
-        }
-
-        /* FLOATING ACTION BUTTON */
-        .create-site-btn {
-            padding: 14px 30px;
-            background: linear-gradient(135deg, #2e86c1, #3498db);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 15px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 15px rgba(46, 134, 193, 0.3);
-            transition: all 0.3s;
-        }
-
-        .create-site-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(46, 134, 193, 0.4);
-        }
-
-        /* MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-dialog {
-            background: white;
-            border-radius: 20px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 25px 30px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .modal-header h3 {
-            margin: 0;
-            color: #1a5276;
-            font-size: 20px;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 28px;
-            color: #999;
-            cursor: pointer;
-            transition: color 0.3s;
-            line-height: 1;
-        }
-
-        .modal-close:hover {
-            color: #333;
-        }
-
-        .modal-body {
-            padding: 25px 30px 30px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #2e86c1;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            margin-top: 25px;
-        }
-
-        .modal-actions .btn {
-            padding: 15px 30px;
-        }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            grid-column: 1 / -1;
-        }
-
-        .empty-icon {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-            opacity: 0.6;
-        }
-
-        .empty-state h3 {
-            color: #666;
-            font-size: 18px;
-            margin: 0 0 8px 0;
-        }
-
-        .empty-state p {
-            color: #999;
-            font-size: 14px;
-            margin: 0 0 20px 0;
-        }
-
-        /* TOAST */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            padding: 15px 25px;
-            background: #333;
-            color: white;
-            border-radius: 12px;
-            font-size: 14px;
-            z-index: 2000;
-            animation: slideUp 0.3s ease;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-        }
-
-        .toast.success {
-            background: linear-gradient(135deg, #27ae60, #2ecc71);
-        }
-
-        .toast.error {
-            background: linear-gradient(135deg, #c0392b, #e74c3c);
-        }
-
-        .toast.hidden {
-            display: none;
-        }
-
-        /* ANİMASYONLAR */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(20px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        /* RESPONSİVE */
-        @media (max-width: 768px) {
-            .banner-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .banner-code {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .stats {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .site-list {
-                grid-template-columns: 1fr;
-            }
-
-            .section-header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
-        }
-
-        /* Invitation List */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+.header {
+    background: linear-gradient(135deg, #1a5276, #154360);
+    color: white;
+    padding: 20px 30px;
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.header h1 {
+    font-size: 22px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.user-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: bold;
+    border: 3px solid white;
+}
+
+.user-info .admin-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.user-info .admin-type {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.logout-btn {
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.logout-btn:hover {
+    background: white;
+    color: #1a5276;
+}
+
+.dashboard-content {
+    background: white;
+    padding: 30px;
+    border-radius: 0 0 20px 20px;
+}
+
+/* İSTATİSTİKLER */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-card {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    font-size: 2rem;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #e8f4fc, #d6eaf8);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-info .value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a5276;
+}
+
+.stat-info h4 {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Şirket Kodu kartı özel stili */
+.stat-card-companycode {
+    background: linear-gradient(135deg, #2e86c1, #1a5276);
+    color: #fff;
+    box-shadow: 0 4px 24px rgba(41,128,217,0.12);
+    justify-self: end; /* sağa sabitle */
+}
+
+.stat-card-companycode .stat-icon {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+}
+
+.stat-card-companycode .stat-info .value,
+.stat-card-companycode .stat-info h4 {
+    color: #fff;
+}
+
+/* TAB NAVİGASYON */
+.tab-navigation {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    background: #f0f2f5;
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    color: #666;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    color: #1a5276;
+}
+
+.tab-btn.active {
+    background: white;
+    color: #1a5276;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* SECTION HEADER */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-title {
+    font-size: 18px;
+    color: #1a5276;
+    margin: 0;
+}
+
+/* SİTE KARTLARI */
+.site-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.site-card {
+    background: white;
+    border-radius: 16px;
+    padding: 25px;
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+}
+
+.site-card:hover {
+    border-color: #2e86c1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.site-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.site-card h3 {
+    color: #1a5276;
+    margin: 0;
+    font-size: 17px;
+}
+
+.site-badge {
+    background: #e8f4fc;
+    color: #2e86c1;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.site-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.site-badge.inactive {
+    background: #ccc;
+}
+
+.site-badge.suspended {
+    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.site-address {
+    color: #666;
+    font-size: 14px;
+    margin: 0 0 15px 0;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.site-stats {
+    display: flex;
+    gap: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.site-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.site-stat span {
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    color: #2e86c1;
+}
+
+.site-stat small {
+    color: #999;
+    font-size: 11px;
+}
+
+.site-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.site-actions button {
+    flex: 1;
+    min-width: 120px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all 0.3s;
+    flex: 1;
+}
+
+.btn-edit {
+    background: #f0f2f5;
+    color: #333;
+}
+
+.btn-edit:hover {
+    background: #e8f4fc;
+    color: #1a5276;
+}
+
+.btn-delete {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-delete:hover {
+    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.btn-delete:active {
+    transform: translateY(0);
+}
+
+.btn-manage {
+    background: linear-gradient(135deg, #2e86c1, #3498db);
+    color: white;
+}
+
+.btn-manage:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(46, 134, 193, 0.4);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #2e86c1, #3498db);
+    color: white;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* FLOATING ACTION BUTTON */
+.create-site-btn {
+    padding: 14px 30px;
+    background: linear-gradient(135deg, #2e86c1, #3498db);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(46, 134, 193, 0.3);
+    transition: all 0.3s;
+}
+
+.create-site-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 134, 193, 0.4);
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-dialog {
+    background: white;
+    border-radius: 16px;
+    max-width: 540px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.modal-header h3 {
+    margin: 0;
+    color: #1a5276;
+    font-size: 20px;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: #999;
+    cursor: pointer;
+    transition: color 0.3s;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: #333;
+}
+
+.modal-body {
+    padding: 25px 30px 30px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: border-color 0.3s;
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 100px;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #2e86c1;
+}
+
+.info-box {
+    background: #f0f8ff;
+    border-left: 4px solid #2e86c1;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.info-box p {
+    margin: 5px 0;
+    color: #555;
+    font-size: 13px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 25px;
+}
+
+.modal-actions .btn {
+    padding: 15px 30px;
+}
+
+/* ŞİKAYET LİSTESİ */
+.complaint-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+/* Boş Durum */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: white;
+    border-radius: 16px;
+    border: 2px dashed #e0e0e0;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    color: #333;
+    margin: 12px 0 8px 0;
+}
+
+.empty-state p {
+    color: #999;
+    font-size: 14px;
+}
+
+/* Şikayet Kartı */
+.complaint-card {
+    background: white;
+    border: 2px solid #e0e0e0;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.complaint-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #2e86c1, #1a5276);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.complaint-card:hover {
+    border-color: #2e86c1;
+    box-shadow: 0 4px 20px rgba(46, 134, 193, 0.15);
+    transform: translateY(-3px);
+}
+
+.complaint-card:hover::before {
+    opacity: 1;
+}
+
+/* Şikayet Başlığı */
+.complaint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 15px;
+}
+
+.complaint-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a5276;
+    margin: 0;
+    flex: 1;
+    line-height: 1.4;
+}
+
+/* Durum Badge'leri */
+.site-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.badge-pending {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+    border: 1px solid #fcd34d;
+}
+
+.badge-in_progress {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+}
+
+.badge-resolved {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.badge-rejected {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}
+
+/* Şikayet İçeriği */
+.complaint-content {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 12px 0;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border-left: 3px solid #e0e0e0;
+}
+
+/* Master Note (Yönetici Yanıtı) */
+.complaint-master-note {
+    margin: 15px 0 12px 0;
+    padding: 14px;
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 2px solid #fed7aa;
+    border-radius: 12px;
+    position: relative;
+}
+
+.complaint-master-note::before {
+    content: '👨‍💼';
+    position: absolute;
+    top: -12px;
+    left: 12px;
+    font-size: 20px;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 2px solid #fed7aa;
+}
+
+.master-note-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: #c2410c;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    padding-left: 36px;
+}
+
+.master-note-text {
+    color: #7c2d12;
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+    padding-left: 8px;
+}
+
+/* Meta Bilgiler */
+.complaint-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid #eee;
+    font-size: 12px;
+    color: #999;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.complaint-meta > span:first-child {
+    background: #e8f4fc;
+    color: #2e86c1;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.complaint-date {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.complaint-date::before {
+    content: '📅';
+    font-size: 14px;
+}
+
+/* Aksiyon Butonları */
+.complaint-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.btn-edit-complaint {
+    flex: 1;
+    background: linear-gradient(135deg, #f0f2f5, #e8ecef);
+    color: #333;
+    padding: 10px 18px;
+    border: 1px solid #d0d4d8;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-edit-complaint::before {
+    content: '✏️';
+    font-size: 14px;
+}
+
+.btn-edit-complaint:hover {
+    background: linear-gradient(135deg, #e8f4fc, #d6ecf9);
+    color: #1a5276;
+    border-color: #2e86c1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 134, 193, 0.2);
+}
+
+.btn-delete-complaint {
+    flex: 1;
+    background: linear-gradient(135deg, #fee, #fdd);
+    color: #c33;
+    padding: 10px 18px;
+    border: 1px solid #fcc;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.btn-delete-complaint::before {
+    content: '🗑️';
+    font-size: 14px;
+}
+
+.btn-delete-complaint:hover {
+    background: linear-gradient(135deg, #fcc, #fbb);
+    border-color: #c33;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(204, 51, 51, 0.2);
+}
+
+.btn-edit-complaint:active,
+.btn-delete-complaint:active {
+    transform: translateY(0);
+}
+/* EMPTY STATE */
+.empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    grid-column: 1 / -1;
+}
+
+.empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 15px;
+    opacity: 0.6;
+}
+
+.empty-state h3 {
+    color: #666;
+    font-size: 18px;
+    margin: 0 0 8px 0;
+}
+
+.empty-state p {
+    color: #999;
+    font-size: 14px;
+    margin: 0 0 20px 0;
+}
+
+/* INVITATION LIST */
 .invitation-list {
     display: flex;
     flex-direction: column;
@@ -640,18 +877,6 @@
     margin: 5px 0;
 }
 
-/* Site Badge güncelleme */
-.site-badge.active {
-    background: #d4edda;
-    color: #155724;
-
-}
-
-.site-badge.inactive {
-    background: #ccc;
-}
-
-/* Davet Silme Butonu */
 .btn-delete-invite {
     background: #dc3545;
     color: white;
@@ -670,27 +895,77 @@
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
-.btn-delete-invite:active {
-    transform: translateY(0);
+/* TOAST */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 15px 25px;
+    background: #333;
+    color: white;
+    border-radius: 12px;
+    font-size: 14px;
+    z-index: 2000;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
 }
 
-/* Davet Kartı Düzenlemesi */
-.invitation-card {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    border: 1px solid #e0e0e0;
-    transition: all 0.3s ease;
+.toast.success {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
 }
 
-.invitation-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border-color: #2563eb;
+.toast.error {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
 }
 
-/* Responsive düzenleme */
+.toast.hidden {
+    display: none;
+}
+
+/* ANİMASYONLAR */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* RESPONSİVE */
 @media (max-width: 768px) {
+    .company-code-banner-compact {
+        max-width: 100%;
+    }
+
+    .compact-banner-content {
+        justify-content: center;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .site-list {
+        grid-template-columns: 1fr;
+    }
+
+    .section-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .site-actions {
+        flex-direction: column;
+    }
+    
+    .site-actions button {
+        width: 100%;
+        min-width: auto;
+    }
+
     .invitation-card > div {
         flex-direction: column;
         align-items: flex-start !important;
@@ -702,192 +977,20 @@
         align-items: center !important;
         gap: 10px !important;
     }
-}
 
-/* admin-dashboard.css dosyanıza ekleyin */
-
-/* Suspended (Askıda) badge */
-.site-badge.suspended {
-    background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
-    color: white;
-    font-weight: 600;
-}
-
-/* Secondary button (Askıya Al) */
-.btn-secondary {
-    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
-    color: white;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-secondary:hover {
-    background: linear-gradient(135deg, #5a6268 0%, #495057 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-}
-
-.btn-secondary:active {
-    transform: translateY(0);
-}
-
-/* Primary button (Aktif Et) - zaten var ama emin olmak için */
-.btn-primary {
-    background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(46, 134, 193, 0.3);
-}
-
-/* Delete button - zaten var ama güncellenmiş hali */
-.btn-delete {
-    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-    color: white;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-delete:hover {
-    background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-}
-
-.btn-delete:active {
-    transform: translateY(0);
-}
-
-/* Site actions container */
-.site-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-}
-
-.site-actions button {
-    flex: 1;
-    min-width: 120px;
-}
-
-/* Responsive - mobil için */
-@media (max-width: 600px) {
-    .site-actions {
+    .complaint-header {
         flex-direction: column;
+        align-items: flex-start;
     }
-    
-    .site-actions button {
-        width: 100%;
-        min-width: auto;
-    }
-}
 
-/* Responsive - mobil için */
-@media (max-width: 600px) {
-    .site-actions {
+    .complaint-meta {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
-    
-    .site-actions button {
-        width: 100%;
-        min-width: auto;
-    }
-}
 
-/* Edit Modal Özel Stilleri */
-.modal-dialog.edit-modal {
-    max-width: 700px;
-}
-
-.edit-modal .modal-header {
-    background: linear-gradient(135deg, #1a5276, #2e86c1);
-    color: white;
-    border-radius: 20px 20px 0 0;
-}
-
-.edit-modal .modal-header h3 {
-    color: white;
-}
-
-.edit-modal .modal-close {
-    color: white;
-    opacity: 0.9;
-}
-
-.edit-modal .modal-close:hover {
-    opacity: 1;
-}
-
-.edit-modal .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-}
-
-.edit-modal .form-group.full-width {
-    grid-column: 1 / -1;
-}
-
-.edit-modal input:focus,
-.edit-modal select:focus {
-    border-color: #2e86c1;
-    box-shadow: 0 0 0 3px rgba(46, 134, 193, 0.1);
-}
-
-.edit-modal .modal-actions {
-    padding-top: 10px;
-    border-top: 1px solid #eee;
-}
-
-.edit-modal .btn-primary {
-    background: linear-gradient(135deg, #2e86c1, #3498db);
-    flex: 2;
-}
-
-.edit-modal .btn-secondary {
-    background: #f0f2f5;
-    color: #666;
-    flex: 1;
-}
-
-.edit-modal .btn-secondary:hover {
-    background: #e8eaed;
-    color: #333;
-}
-
-/* Form İkon Desteği */
-.form-group-icon {
-    position: relative;
-}
-
-.form-group-icon input {
-    padding-left: 45px;
-}
-
-.form-icon {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-    font-size: 18px;
-}
-
-@media (max-width: 768px) {
-    .edit-modal .form-row {
-        grid-template-columns: 1fr;
+    .modal-dialog {
+        max-width: 98vw;
+        width: 95%;
     }
 }

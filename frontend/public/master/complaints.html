@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="dashboardPage" class="page active">
-          <!-- Header -->
+        <!-- Header -->
         <header class="header">
             <div class="header-left">
                 <h1>Site Portal</h1>
@@ -54,17 +54,36 @@
         <!-- Main Content -->
         <main class="main-content">
             <div id="complaintsContent" class="content-section active">
-                <div class="complaints-summary">
-                    <div class="summary-pill">
-                        Toplam: <span id="totalComplaintsCount">0</span>
-                    </div>
-                    <div class="summary-pill success">
-                        Çözülen: <span id="resolvedComplaintsCountSmall">0</span>
-                    </div>
-                    <div class="summary-pill warning">
-                        Bekleyen: <span id="pendingComplaintsCount">0</span>
-                    </div>
+                 <div class="section-header">
+                    <h2>Şikayetler</h2>
                 </div>
+                <!-- Statistics Cards -->
+                 <div class="stats-grid">   
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <h3 id="totalComplaintsCount">0</h3>
+                            <p>Toplam Şikayet</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="resolvedComplaintsCount">0</h3>
+                            <p>Çözülen Şikayet</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingComplaintsCount">0</h3>
+                            <p>Bekleyen Şikayet</p>
+                        </div>
+                    </div>
+                 </div>  
+                <!-- Şikayet Listesi -->
+
+
 
                 <div id="complaintsEmptyState" class="empty-state" style="display:none;">
                     <div class="empty-icon">📝</div>
@@ -74,17 +93,32 @@
 
                 <h2>Şikayetler</h2>
                 <div class="filter-box">
+                    <input type="text" id="complaintSearch" placeholder="Şikayet ara (ad, kod)..." aria-label="Şikayet ara">
                     <select id="complaintFilter">
                         <option value="all">Tüm Şikayetler</option>
                         <option value="pending">Bekleyen</option>
+                        <option value="in_progress">İşlemde</option>
                         <option value="resolved">Çözülen</option>
+                        <option value="rejected">Reddedilen</option>
                     </select>
                 </div>
                 <div id="complaintsList" class="list-container"></div>
             </div>
+
+            <!-- Şikayet Detay Modalı -->
+            <div class="modal" id="complaintDetailModal" style="display:none;">
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3>Şikayet Detayı</h3>
+                        <button class="modal-close" onclick="closeComplaintDetailModal()">×</button>
+                    </div>
+                    <div class="modal-body" id="complaintDetailBody"></div>
+                    <div class="modal-actions" id="complaintDetailActions"></div>
+                </div>
+            </div>
         </main>
     </div>
 
-    <script type="module" src="js/complaints.js"></script>
+<script type="module" src="js/complaints.js"></script>
 </body>
 </html>

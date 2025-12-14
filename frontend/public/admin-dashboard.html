@@ -53,19 +53,11 @@
                     <h4>Site Limiti</h4>
                 </div>
             </div>
-        </div>
-
-        <!-- Şirket Kodu Banner -->
-        <div class="company-code-banner" id="companyCodeBanner" style="display: none;">
-            <div class="banner-content">
-                <div class="banner-icon">🔑</div>
-                <div class="banner-text">
-                    <h3>Şirket Kodunuz</h3>
-                    <p id="companyCodeDesc">Bu kodu çalışanlarınızla paylaşarak onları sisteme davet edebilirsiniz</p>
-                </div>
-                <div class="banner-code">
-                    <span id="companyCode">-</span>
-                    <button class="btn-copy-code" onclick="copyCompanyCode()">📋 Kopyala</button>
+            <div class="stat-card stat-card-companycode">
+                <div class="stat-icon">🔑</div>
+                <div class="stat-info">
+                    <div class="value" id="companyCodeDisplay">-</div>
+                    <h4>Şirket Kodu</h4>
                 </div>
             </div>
         </div>
@@ -79,6 +71,10 @@
             <button class="tab-btn" onclick="switchTab('employees')">
                 <span>👥</span>
                 Çalışanlar
+            </button>
+            <button class="tab-btn" onclick="switchTab('complaints')">
+                <span>📝</span>
+                Şikayetler
             </button>
         </div>
 
@@ -120,6 +116,21 @@
                 </div>
             </div>
         </div>
+
+        <!-- Şikayetler Tab -->
+        <div id="complaintsTab" class="tab-content">
+            <div class="section-header">
+                <h2 class="section-title">Şikayet Yönetimi</h2>
+                <button class="create-site-btn" onclick="openComplaintModal()">
+                    <span>+</span>
+                    Yeni Şikayet Oluştur
+                </button>
+            </div>
+
+            <div id="complaintList" class="complaint-list">
+                <!-- Şikayetler buraya gelecek -->
+            </div>
+        </div>
     </div>
 </div>
 
@@ -132,7 +143,6 @@
         </div>
         <div class="modal-body">
             <form id="createSiteForm">
-                
                 <div class="form-group">
                     <label>Site ID *</label>
                     <input type="text" id="siteId" placeholder="Örn: SITE001" required>
@@ -157,7 +167,6 @@
                     <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">İptal</button>
                     <button type="submit" class="btn btn-primary">✨ Site Oluştur</button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -170,10 +179,8 @@
             <h3>✏️ Siteyi Düzenle</h3>
             <button class="modal-close" onclick="closeEditModal()">×</button>
         </div>
-
         <div class="modal-body">
             <form id="editSiteForm">
-
                 <div class="form-group">
                     <label>Site ID (Değiştirilemez)</label>
                     <input type="text" id="editSiteId" readonly>
@@ -197,7 +204,6 @@
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">İptal</button>
                     <button type="submit" class="btn btn-primary">💾 Kaydet</button>
                 </div>
-
             </form>
         </div>
     </div>
@@ -228,10 +234,89 @@
     </div>
 </div>
 
+<!-- Şikayet Oluştur Modalı -->
+<div class="modal" id="createComplaintModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>📝 Yeni Şikayet Oluştur</h3>
+            <button class="modal-close" onclick="closeCreateComplaintModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="createComplaintForm">
+                <div class="form-group">
+                    <label>Konu *</label>
+                    <input type="text" id="createComplaintTitle" placeholder="Şikayet konusunu giriniz" required>
+                </div>
+                <div class="form-group">
+                    <label>Açıklama *</label>
+                    <textarea id="createComplaintContent" rows="5" placeholder="Detaylı açıklama yazınız..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="createComplaintCategory" required>
+                        <option value="">Kategori Seçiniz</option>
+                        <option value="TECHNICAL_SUPPORT">Teknik Destek</option>
+                        <option value="RESTORE">Geri Yükleme</option>
+                        <option value="REQUEST">Talep</option>
+                        <option value="FEATURE_REQUEST">Yeni Özellik</option>
+                        <option value="GENERAL">Genel</option>
+                        <option value="OTHER">Diğer</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateComplaintModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary">📤 Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Şikayet Düzenle Modalı -->
+<div class="modal" id="editComplaintModal">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3>📝 Şikayet Düzenle</h3>
+            <button class="modal-close" onclick="closeEditComplaintModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="editComplaintForm">
+                <input type="hidden" id="editComplaintId">
+                <div class="form-group">
+                    <label>Konu *</label>
+                    <input type="text" id="editComplaintTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Açıklama *</label>
+                    <textarea id="editComplaintContent" rows="5" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Kategori *</label>
+                    <select id="editComplaintCategory" required>
+                        <option value="">Kategori Seçiniz</option>
+                        <option value="TECHNICAL_SUPPORT">Teknik Destek</option>
+                        <option value="RESTORE">Geri Yükleme</option>
+                        <option value="REQUEST">Talep</option>
+                        <option value="FEATURE_REQUEST">Yeni Özellik</option>
+                        <option value="GENERAL">Genel</option>
+                        <option value="OTHER">Diğer</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditComplaintModal()">İptal</button>
+                    <button type="submit" class="btn btn-primary">💾 Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast hidden" id="toast"></div>
 
 <script src="js/admin-dashboard.js"></script>
-
 </body>
+
+
+</html></body>
 </html>

@@ -1722,3 +1722,349 @@ body {
 #invitesSection {
     animation: slideDown 0.5s ease;
 }
+/* Şikayet Detay Modalı */
+#complaintDetailModal {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.4);
+    align-items: center;
+    justify-content: center;
+}
+#complaintDetailModal[style*="display: flex"] {
+    display: flex !important;
+}
+#complaintDetailModal .modal-dialog {
+    background: #fff;
+    border-radius: 10px;
+    max-width: 480px;
+    width: 95%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    animation: modalSlideIn 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+#complaintDetailModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 24px 8px 24px;
+    border-bottom: 1px solid #eee;
+}
+#complaintDetailModal .modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--primary);
+}
+#complaintDetailModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.7rem;
+    color: #888;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+#complaintDetailModal .modal-close:hover {
+    color: #e74c3c;
+}
+#complaintDetailModal .modal-body {
+    padding: 18px 24px;
+    font-size: 1rem;
+    color: var(--dark);
+}
+#complaintDetailModal .modal-actions {
+    padding: 18px 24px 24px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+#complaintDetailModal label {
+    font-weight: 500;
+    margin-bottom: 6px;
+    display: block;
+}
+#complaintDetailModal select,
+#complaintDetailModal textarea {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+#complaintDetailModal textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+#complaintDetailModal .btn {
+    margin-top: 4px;
+    min-width: 120px;
+}
+/* Şikayet Listesi Container */
+#complaintsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+}
+
+/* Boş Durum */
+#complaintsEmptyState {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+}
+
+#complaintsEmptyState i {
+    font-size: 48px;
+    color: #d1d5db;
+    margin-bottom: 16px;
+}
+
+/* İstatistik Kartları */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 0 20px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #3b82f6;
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 8px 0;
+    font-weight: 500;
+}
+
+.stat-card .stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+/* Şikayet Kartı */
+.complaint-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+}
+
+.complaint-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    border-color: #3b82f6;
+}
+
+/* Şikayet Başlığı */
+.complaint-header {
+    margin-bottom: 12px;
+}
+
+.complaint-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.complaint-title {
+    font-size: 18px;
+    color: #1f2937;
+    font-weight: 600;
+    line-height: 1.4;
+    flex: 1;
+}
+
+/* Meta Bilgiler */
+.complaint-meta {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.complaint-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #6b7280;
+    padding: 4px 12px;
+    background: #f3f4f6;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.complaint-category::before {
+    content: "📋";
+    font-size: 14px;
+}
+
+.complaint-date {
+    font-size: 13px;
+    color: #9ca3af;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.complaint-date::before {
+    content: "📅";
+    font-size: 14px;
+}
+
+/* Şikayet İçeriği */
+.complaint-content {
+    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.6;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+}
+
+/* Badge Stilleri */
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.badge-status {
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Durum Badge'leri */
+.badge-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.badge-in_progress {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
+.badge-resolved {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.badge-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* Responsive Tasarım */
+@media (max-width: 768px) {
+    #complaintsList {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .complaint-item {
+        padding: 16px;
+    }
+
+    .complaint-title {
+        font-size: 16px;
+    }
+
+    .complaint-title-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .complaint-meta {
+        gap: 12px;
+    }
+
+    .stats-container {
+        padding: 0 12px;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-card .stat-number {
+        font-size: 28px;
+    }
+}
+
+/* Yükleme Durumu */
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #6b7280;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f4f6;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Hover Efektleri */
+.complaint-item:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Focus Stilleri (Erişilebilirlik) */
+.complaint-item:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Kategorilere Özel İkonlar */
+.complaint-category[data-category="service"]::before {
+    content: "🛠️";
+}
+
+.complaint-category[data-category="product"]::before {
+    content: "📦";
+}
+
+.complaint-category[data-category="billing"]::before {
+    content: "💳";
+}
+
+.complaint-category[data-category="other"]::before {
+    content: "📋";
+}
