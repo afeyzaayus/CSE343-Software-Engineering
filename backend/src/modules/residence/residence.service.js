@@ -24,7 +24,8 @@ class ResidenceService {
         },
         select: {
           id: true,
-          block_name: true
+          block_name: true,
+          apartment_count: true
         },
         orderBy: {
           block_name: 'asc'
@@ -204,6 +205,7 @@ class ResidenceService {
           resident_count: dataWithoutId.resident_count || 1,
           plates: dataWithoutId.plates,
           resident_type: residentType,
+          account_status: 'ACTIVE',
           updated_at: new Date()
         },
         select: {
@@ -438,6 +440,40 @@ class ResidenceService {
     } catch (error) {
       console.error('❌ [DELETE BLOCK] Error:', error.message);
       throw new Error(`Blok silinemedi: ${error.message}`);
+    }
+  }
+
+  async updateBlock(blockId, data) {
+    try {
+      const { block_name, apartment_count } = data;
+
+      const block = await prisma.blocks.findUnique({
+        where: { id: parseInt(blockId) }
+      });
+
+      if (!block) {
+        throw new Error('Blok bulunamadı');
+      }
+
+      const updateData = {};
+      if (block_name !== undefined) {
+        updateData.block_name = block_name;
+      }
+      if (apartment_count !== undefined) {
+        updateData.apartment_count = apartment_count;
+      }
+
+      const updatedBlock = await prisma.blocks.update({
+        where: { id: parseInt(blockId) },
+        data: updateData
+      });
+
+      console.log(`✅ [UPDATE BLOCK] Block "${updatedBlock.block_name}" güncellendi`);
+
+      return updatedBlock;
+    } catch (error) {
+      console.error('❌ [UPDATE BLOCK] Error:', error.message);
+      throw new Error(`Blok güncellenemedi: ${error.message}`);
     }
   }
 }

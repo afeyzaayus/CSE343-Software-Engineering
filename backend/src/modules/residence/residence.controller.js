@@ -356,6 +356,40 @@ class ResidenceController {
       });
     }
   }
+
+  // Update a block
+  async updateBlock(req, res) {
+    try {
+      const { blockId } = req.params;
+      
+      console.log('🏗️  [UPDATE BLOCK] Request received:');
+      console.log('  - BlockId:', blockId);
+      console.log('  - Request Body:', JSON.stringify(req.body, null, 2));
+      
+      if (!blockId) {
+        return res.status(400).json({
+          success: false,
+          message: 'Block ID is required'
+        });
+      }
+      
+      const block = await residenceService.updateBlock(blockId, req.body);
+      
+      console.log('✅ [UPDATE BLOCK] Block updated successfully:', block.id);
+      
+      res.status(200).json({
+        success: true,
+        message: 'Blok başarıyla güncellendi',
+        data: block
+      });
+    } catch (error) {
+      console.error('❌ [UPDATE BLOCK] Error:', error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 export default new ResidenceController();

@@ -7,6 +7,11 @@ const ITEMS_PER_PAGE = 5;
 // Keep track of expanded blocks and shown items
 const blockStates = {};
 
+// Store original data for search
+let allResidents = [];
+let allBlocks = [];
+let currentSearchQuery = '';
+
 // Fetch residents
 async function fetchResidents(siteId) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
@@ -91,6 +96,33 @@ async function deleteBlock(siteId, blockId) {
     }
 }
 
+// Update block
+async function updateBlock(siteId, blockId, data) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = { 
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks/${blockId}`, {
+            method: 'PUT',
+            headers,
+            body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Blok güncellenemedi');
+        }
+        const result = await res.json();
+        return result.data;
+    } catch (err) {
+        console.error('Update block error:', err);
+        alert(err.message);
+        throw err;
+    }
+}
+
 // Create resident
 async function createResident(siteId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
@@ -162,15 +194,25 @@ async function renderResidents() {
             fetchBlocks(SITE_ID)
         ]);
 
+        // Store data for search functionality
+        allResidents = residents;
+        allBlocks = blocks;
+
+        // Apply search filter if there's an active search
+        const residentsToDisplay = currentSearchQuery ? filterResidents(residents) : residents;
+
         // Group residents by block
         const residentsGroupedByBlock = {};
         blocks.forEach(block => {
             residentsGroupedByBlock[block.id] = [];
         });
 
-        residents.forEach(resident => {
+        residentsToDisplay.forEach(resident => {
+            console.log(`   Adding resident: ${resident.full_name} to block ${resident.block_id}, apartment ${resident.apartment_no}`);
             if (residentsGroupedByBlock[resident.block_id]) {
                 residentsGroupedByBlock[resident.block_id].push(resident);
+            } else {
+                console.warn(`   ⚠️ Block ${resident.block_id} not found for resident ${resident.full_name}`);
             }
         });
 
@@ -181,11 +223,18 @@ async function renderResidents() {
             return;
         }
 
+        // Show no results message if searching
+        if (currentSearchQuery && residentsToDisplay.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-search"></i> Aramanızla eşleşen sakin bulunamadı</div>';
+            return;
+        }
+
         // Create block cards
         blocks.forEach(block => {
             const blockResidents = residentsGroupedByBlock[block.id] || [];
+            console.log(`🏢 Block: ${block.block_name} (ID: ${block.id}) - Residents: ${blockResidents.length}`);
             
-            // Initialize block state
+            // Initialize block state (preserve expanded state if already set)
             if (!blockStates[block.id]) {
                 blockStates[block.id] = {
                     expanded: false,
@@ -209,8 +258,6 @@ function createBlockCard(block, residents) {
     card.id = `block-${block.id}`;
 
     const state = blockStates[block.id];
-    const visibleResidents = residents.slice(0, state.itemsShown);
-    const hasMoreItems = residents.length > state.itemsShown;
 
     const header = document.createElement('div');
     header.className = 'block-header';
@@ -232,39 +279,35 @@ function createBlockCard(block, residents) {
     if (residents.length === 0) {
         content.innerHTML = '<div class="empty-block"><i class="fas fa-info-circle"></i> Bu blokta sakin bulunmamaktadır</div>';
     } else {
-        const listDiv = document.createElement('div');
-        listDiv.className = 'residents-list';
-
-        visibleResidents.forEach(resident => {
-            const residentItem = createResidentItem(resident);
-            listDiv.appendChild(residentItem);
+        // Group residents by apartment
+        const residentsGroupedByApartment = {};
+        residents.forEach(resident => {
+            const apartmentNo = resident.apartment_no;
+            if (!residentsGroupedByApartment[apartmentNo]) {
+                residentsGroupedByApartment[apartmentNo] = [];
+            }
+            residentsGroupedByApartment[apartmentNo].push(resident);
         });
 
-        content.appendChild(listDiv);
+        const apartmentsContainer = document.createElement('div');
+        apartmentsContainer.className = 'apartments-container';
 
-        // Add "Show More" button if needed
-        if (hasMoreItems || state.itemsShown > ITEMS_PER_PAGE) {
-            const showMoreDiv = document.createElement('div');
-            showMoreDiv.className = 'show-more-btn';
-
-            const button = document.createElement('button');
-            if (hasMoreItems) {
-                button.innerHTML = `<i class="fas fa-chevron-down"></i> Daha Fazla Göster (${residents.length - state.itemsShown} kalan)`;
-                button.onclick = (e) => {
-                    e.stopPropagation();
-                    expandBlockItems(block.id, residents);
-                };
-            } else {
-                button.innerHTML = `<i class="fas fa-chevron-up"></i> Daha Az Göster`;
-                button.onclick = (e) => {
-                    e.stopPropagation();
-                    collapseBlockItems(block.id);
-                };
+        // Show all apartments from 1 to apartment_count
+        const apartmentCount = block.apartment_count || Object.keys(residentsGroupedByApartment).length;
+        for (let i = 1; i <= apartmentCount; i++) {
+            const apartmentNo = i.toString();
+            const apartmentResidents = residentsGroupedByApartment[apartmentNo] || [];
+            
+            // If searching, only show apartments with residents
+            if (currentSearchQuery && apartmentResidents.length === 0) {
+                continue;
             }
-
-            showMoreDiv.appendChild(button);
-            content.appendChild(showMoreDiv);
+            
+            const apartmentCard = createApartmentCard(block, apartmentNo, apartmentResidents);
+            apartmentsContainer.appendChild(apartmentCard);
         }
+
+        content.appendChild(apartmentsContainer);
     }
 
     card.appendChild(header);
@@ -273,48 +316,105 @@ function createBlockCard(block, residents) {
     return card;
 }
 
-// Create a resident item element
-function createResidentItem(resident) {
+// Create apartment card
+function createApartmentCard(block, apartmentNo, residents) {
+    const card = document.createElement('div');
+    card.className = 'apartment-card';
+
+    const header = document.createElement('div');
+    header.className = 'apartment-header';
+
+    header.innerHTML = `
+        <div class="apartment-header-title">
+            <i class="fas fa-door-open"></i>
+            <h4>Daire ${apartmentNo}</h4>
+            <span class="apartment-resident-count">${residents.length} kişi</span>
+        </div>
+    `;
+
+    const content = document.createElement('div');
+    content.className = 'apartment-content';
+
+    if (residents.length === 0) {
+        content.innerHTML = '<div class="empty-apartment"><i class="fas fa-user-slash"></i> Bu dairede sakin bulunmamaktadır</div>';
+    } else {
+        const residentsDiv = document.createElement('div');
+        residentsDiv.className = 'residents-in-apartment';
+
+        residents.forEach(resident => {
+            const residentDiv = createResidentInApartmentItem(resident);
+            residentsDiv.appendChild(residentDiv);
+        });
+
+        content.appendChild(residentsDiv);
+    }
+
+    // Add button to add resident to this apartment
+    const addResidentDiv = document.createElement('div');
+    addResidentDiv.className = 'add-resident-to-apartment';
+
+    const addBtn = document.createElement('button');
+    addBtn.innerHTML = '<i class="fas fa-plus"></i> Kişi Ekle';
+    addBtn.onclick = () => openAddResidentToApartmentModal(block.id, apartmentNo);
+
+    addResidentDiv.appendChild(addBtn);
+    content.appendChild(addResidentDiv);
+
+    card.appendChild(header);
+    card.appendChild(content);
+
+    return card;
+}
+
+// Create resident item in apartment
+function createResidentInApartmentItem(resident) {
     const item = document.createElement('div');
-    item.className = 'resident-item';
+    item.className = 'resident-in-apartment';
 
     const statusText = resident.resident_type === 'OWNER' ? 'Ev Sahibi' : 
                       resident.resident_type === 'HIRER' ? 'Kiracı' : '-';
     const statusClass = resident.resident_type === 'OWNER' ? 'owner' : 'hirer';
 
     const info = document.createElement('div');
-    info.className = 'resident-info';
+    info.className = 'resident-in-apartment-info';
+
+    // Highlight search query in text
+    const highlightedName = highlightText(resident.full_name, currentSearchQuery);
+    const highlightedPhone = highlightText(resident.phone_number || '-', currentSearchQuery);
+    const highlightedPlates = highlightText(resident.plates || '-', currentSearchQuery);
 
     info.innerHTML = `
-        <div class="resident-name">${resident.apartment_no} No - ${resident.full_name}</div>
-        <div class="resident-details">
-            <div class="resident-detail-item">
+        <div class="resident-in-apartment-name">${highlightedName}</div>
+        <div class="resident-in-apartment-details">
+            <div class="resident-in-apartment-detail">
                 <i class="fas fa-phone" style="color: #2e86c1;"></i>
-                <span>${resident.phone_number || '-'}</span>
+                <span>${highlightedPhone}</span>
             </div>
-            <div class="resident-detail-item">
+            <div class="resident-in-apartment-detail">
                 <i class="fas fa-car" style="color: #2e86c1;"></i>
-                <span>${resident.plates || '-'}</span>
+                <span>${highlightedPlates}</span>
             </div>
-            <div class="resident-detail-item">
+            <div class="resident-in-apartment-detail">
                 <i class="fas fa-users" style="color: #2e86c1;"></i>
                 <span>${resident.resident_count || 1} kişi</span>
             </div>
-            <span class="resident-type ${statusClass}">${statusText}</span>
+            <span class="resident-in-apartment-type ${statusClass}">${statusText}</span>
         </div>
     `;
 
     const actions = document.createElement('div');
-    actions.className = 'resident-actions';
+    actions.className = 'resident-in-apartment-actions';
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn btn-sm btn-primary';
-    editBtn.innerHTML = '<i class="fas fa-edit"></i> Düzenle';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+    editBtn.title = 'Düzenle';
     editBtn.onclick = () => openEditModal(resident);
 
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'btn btn-sm btn-danger';
-    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Sil';
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+    deleteBtn.title = 'Sil';
     deleteBtn.onclick = () => deleteResidentConfirm(resident);
 
     actions.appendChild(editBtn);
@@ -341,62 +441,6 @@ function toggleBlockExpand(blockId) {
         content.classList.add('collapsed');
         icon.style.transform = 'rotate(0deg)';
     }
-}
-
-// Expand to show more items
-async function expandBlockItems(blockId, residents) {
-    const state = blockStates[blockId];
-    state.itemsShown += ITEMS_PER_PAGE;
-
-    const content = document.getElementById(`content-${blockId}`);
-    const listDiv = content.querySelector('.residents-list');
-
-    // Get the new items to display
-    const visibleResidents = residents.slice(0, state.itemsShown);
-    const hasMoreItems = residents.length > state.itemsShown;
-
-    // Clear and rebuild the list
-    listDiv.innerHTML = '';
-    visibleResidents.forEach(resident => {
-        const residentItem = createResidentItem(resident);
-        listDiv.appendChild(residentItem);
-    });
-
-    // Update the show more button
-    const showMoreDiv = content.querySelector('.show-more-btn');
-    if (showMoreDiv) {
-        showMoreDiv.remove();
-    }
-
-    if (hasMoreItems || state.itemsShown > ITEMS_PER_PAGE) {
-        const newShowMoreDiv = document.createElement('div');
-        newShowMoreDiv.className = 'show-more-btn';
-
-        const button = document.createElement('button');
-        if (hasMoreItems) {
-            button.innerHTML = `<i class="fas fa-chevron-down"></i> Daha Fazla Göster (${residents.length - state.itemsShown} kalan)`;
-            button.onclick = (e) => {
-                e.stopPropagation();
-                expandBlockItems(blockId, residents);
-            };
-        } else {
-            button.innerHTML = `<i class="fas fa-chevron-up"></i> Daha Az Göster`;
-            button.onclick = (e) => {
-                e.stopPropagation();
-                collapseBlockItems(blockId);
-            };
-        }
-
-        newShowMoreDiv.appendChild(button);
-        content.appendChild(newShowMoreDiv);
-    }
-}
-
-// Collapse to show fewer items
-function collapseBlockItems(blockId) {
-    const state = blockStates[blockId];
-    state.itemsShown = ITEMS_PER_PAGE;
-    renderResidents();
 }
 
 // Update block dropdowns in modals
@@ -442,6 +486,10 @@ async function openAddModal() {
 function closeAddModal() {
     document.getElementById('addApartmentModal').style.display = 'none';
     document.getElementById('addApartmentForm').reset();
+    // Remove readonly if it was set for apartment context
+    const doorNoInput = document.getElementById('addApartmentForm').querySelector('input[name="doorNo"]');
+    doorNoInput.readOnly = false;
+    delete doorNoInput.dataset.apartmentContext;
 }
 
 // Open edit modal
@@ -520,10 +568,16 @@ async function renderBlocksList() {
                     Kapasite: ${block.apartment_count || 0} daire
                 </p>
             </div>
-            <button onclick="deleteBlockConfirm(${block.id}, '${block.block_name}')" 
-                    class="btn btn-sm btn-danger">
-                <i class="fas fa-trash"></i> Sil
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="openEditBlockModal(${block.id}, '${block.block_name}', ${block.apartment_count || 0})" 
+                        class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit"></i> Düzenle
+                </button>
+                <button onclick="deleteBlockConfirm(${block.id}, '${block.block_name}')" 
+                        class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash"></i> Sil
+                </button>
+            </div>
         </div>
     `).join('');
 }
@@ -540,7 +594,6 @@ async function deleteBlockConfirm(blockId, blockName) {
         
         // Reload everything
         await renderBlocksList();
-        await populateBlockFilter();
         await updateBlockDropdowns();
         renderResidents();
     } catch (err) {
@@ -548,13 +601,52 @@ async function deleteBlockConfirm(blockId, blockName) {
     }
 }
 
+// Open edit block modal
+async function openEditBlockModal(blockId, blockName, apartmentCount) {
+    document.getElementById('editBlockId').value = blockId;
+    document.getElementById('editBlockName').value = blockName;
+    document.getElementById('editApartmentCount').value = apartmentCount;
+    document.getElementById('editBlockModal').style.display = 'flex';
+}
+
+// Close edit block modal
+function closeEditBlockModal() {
+    document.getElementById('editBlockModal').style.display = 'none';
+    document.getElementById('editBlockForm').reset();
+}
+
+// Open modal to add resident to apartment
+function openAddResidentToApartmentModal(blockId, apartmentNo) {
+    console.log('📝 Opening add resident modal for block:', blockId, 'apartment:', apartmentNo);
+    // Set apartment info for the add form
+    const form = document.getElementById('addApartmentForm');
+    const blockSelect = form.querySelector('select[name="block"]');
+    const doorNoInput = form.querySelector('input[name="doorNo"]');
+    
+    console.log('   Block select options:', Array.from(blockSelect.options).map(o => `${o.value}: ${o.textContent}`));
+    
+    // Find the block to select it
+    blockSelect.value = blockId;
+    doorNoInput.value = apartmentNo;
+    doorNoInput.readOnly = true;
+    
+    console.log('   After setting values - blockSelect.value:', blockSelect.value, 'doorNoInput.value:', doorNoInput.value);
+    
+    // Store the apartment context
+    doorNoInput.dataset.apartmentContext = 'true';
+    
+    document.getElementById('addApartmentModal').style.display = 'flex';
+    doorNoInput.focus();
+}
+
 // Handle add form submit
 document.getElementById('addApartmentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    const blockId = parseInt(formData.get('block'));
     const data = {
-        block_id: parseInt(formData.get('block')),
+        block_id: blockId,
         apartment_no: formData.get('doorNo'),
         full_name: formData.get('name'),
         phone_number: formData.get('phone'),
@@ -563,10 +655,19 @@ document.getElementById('addApartmentForm').addEventListener('submit', async (e)
         resident_type: formData.get('status')
     };
 
+    console.log('📤 Form submitted with data:', data);
+
     try {
         await createResident(SITE_ID, data);
         alert('Sakin başarıyla eklendi!');
         closeAddModal();
+        
+        // Ensure the block is expanded when we re-render
+        if (blockStates[blockId]) {
+            blockStates[blockId].expanded = true;
+        }
+        
+        console.log('🔄 Re-rendering after adding resident...');
         renderResidents();
     } catch (err) {
         console.error('Add resident failed:', err);
@@ -578,8 +679,9 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
     e.preventDefault();
     
     const residentId = document.getElementById('editResidentId').value;
+    const blockId = parseInt(document.getElementById('editBlock').value);
     const data = {
-        block_id: parseInt(document.getElementById('editBlock').value),
+        block_id: blockId,
         apartment_no: document.getElementById('editDoorNo').value,
         full_name: document.getElementById('editName').value,
         phone_number: document.getElementById('editPhone').value,
@@ -592,6 +694,12 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
         await updateResident(SITE_ID, residentId, data);
         alert('Sakin başarıyla güncellendi!');
         closeEditModal();
+        
+        // Ensure the block is expanded when we re-render
+        if (blockStates[blockId]) {
+            blockStates[blockId].expanded = true;
+        }
+        
         renderResidents();
     } catch (err) {
         console.error('Update resident failed:', err);
@@ -613,6 +721,31 @@ document.getElementById('manageBlocksBtn').addEventListener('click', openManageB
 document.getElementById('closeManageBlocksModal').addEventListener('click', () => {
     document.getElementById('manageBlocksModal').style.display = 'none';
 });
+document.getElementById('closeEditBlockModal').addEventListener('click', closeEditBlockModal);
+
+// Handle edit block form submit
+document.getElementById('editBlockForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const blockId = parseInt(document.getElementById('editBlockId').value);
+    const data = {
+        block_name: document.getElementById('editBlockName').value,
+        apartment_count: parseInt(document.getElementById('editApartmentCount').value)
+    };
+
+    try {
+        await updateBlock(SITE_ID, blockId, data);
+        alert('Blok başarıyla güncellendi!');
+        closeEditBlockModal();
+        
+        // Reload everything
+        await renderBlocksList();
+        await updateBlockDropdowns();
+        renderResidents();
+    } catch (err) {
+        console.error('Update block failed:', err);
+    }
+});
 
 // Handle create block form submit
 document.getElementById('createBlockForm').addEventListener('submit', async (e) => {
@@ -632,7 +765,6 @@ document.getElementById('createBlockForm').addEventListener('submit', async (e) 
         document.getElementById('createBlockForm').reset();
         
         // Reload blocks and update dropdowns
-        await populateBlockFilter();
         await updateBlockDropdowns();
         renderResidents();
     } catch (err) {
@@ -640,12 +772,76 @@ document.getElementById('createBlockForm').addEventListener('submit', async (e) 
     }
 });
 
+// Highlight search query in text
+function highlightText(text, query) {
+    if (!query) return text;
+    
+    const query_lower = query.toLowerCase();
+    const text_lower = text.toLowerCase();
+    
+    if (!text_lower.includes(query_lower)) {
+        return text;
+    }
+    
+    // Find all occurrences and replace with highlighted version
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<mark style="background-color: #ffeb3b; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
+}
+
+// Search functionality
+function filterResidents(residents) {
+    if (!currentSearchQuery) return residents;
+    
+    const query = currentSearchQuery.toLowerCase().trim();
+    
+    return residents.filter(resident => {
+        const fullName = (resident.full_name || '').toLowerCase();
+        const phone = (resident.phone_number || '').toLowerCase();
+        const plates = (resident.plates || '').toLowerCase();
+        
+        return fullName.includes(query) || phone.includes(query) || plates.includes(query);
+    });
+}
+
+function performSearch() {
+    const searchInput = document.getElementById('searchInput');
+    currentSearchQuery = searchInput.value.trim();
+    console.log('🔍 Searching for:', currentSearchQuery);
+    renderResidents();
+}
+
+function clearSearch() {
+    currentSearchQuery = '';
+    document.getElementById('searchInput').value = '';
+    console.log('🔍 Search cleared');
+    renderResidents();
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
     // Sayfa başlığını güncelle
     const pageTitle = document.getElementById('page-title');
     if (pageTitle && selectedSite?.site_name) {
         pageTitle.textContent = `Daire Sahipleri - ${selectedSite.site_name}`;
+    }
+
+    // Search event listeners
+    const searchInput = document.getElementById('searchInput');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    
+    if (searchInput) {
+        // Real-time search as user types
+        searchInput.addEventListener('input', performSearch);
+        // Also search on Enter key
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    }
+    
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', clearSearch);
     }
 
     await updateBlockDropdowns();
