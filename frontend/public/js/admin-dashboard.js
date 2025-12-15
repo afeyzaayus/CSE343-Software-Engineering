@@ -34,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchInvitations();
     }
 });
-
 function setupUI(userData) {
     // Kullanıcı bilgileri
     const userName = userData.name || userData.full_name || 'Kullanıcı';
@@ -44,10 +43,12 @@ function setupUI(userData) {
     document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();
     document.getElementById('userType').textContent = getRoleText(userRole);
 
-    // Şirket kodu stat kartı
     const companyCodeDisplay = document.getElementById('companyCodeDisplay');
+    const companyCodeCard = document.getElementById('companyCodeCard');
+
     if (companyCodeDisplay) {
         companyCodeDisplay.textContent = userData.company_code || '-';
+
         // Kopyalama için tıklanabilir yap
         companyCodeDisplay.style.cursor = "pointer";
         companyCodeDisplay.title = "Kopyalamak için tıkla";
@@ -60,26 +61,56 @@ function setupUI(userData) {
                 showToast("Kopyalanacak şirket kodu yok!", "error");
             }
         };
+
+        // INDIVIDUAL ise şirket kodu kartını gizle
+        if (userRole === 'INDIVIDUAL' && companyCodeCard) {
+            companyCodeCard.style.display = 'none';
+        }
     }
 
-    // Tab navigasyonu ve diğer alanlar
-    const tabNavigation = document.querySelector('.tab-navigation');
-    const employeesTabBtn = document.querySelectorAll('.tab-btn')[1];
-    const employeesTabContent = document.getElementById('employeesTab');
+    // Stat card'ları kontrol et (Şirket kodu, Bekleyen Davetler, Çalışanlar)
+    const pendingInvitesCard = document.getElementById('pendingInvitesCard');
+    const employeesCountCard = document.getElementById('employeesCountCard');
 
     if (userRole === 'INDIVIDUAL') {
+        // Bireysel hesaplarda tüm şirket stat card'larını gizle
+        if (companyCodeCard) companyCodeCard.style.display = 'none';
+        if (pendingInvitesCard) pendingInvitesCard.style.display = 'none';
+        if (employeesCountCard) employeesCountCard.style.display = 'none';
+    }
+
+    // Tab navigasyonu ve görünürlük ayarları
+    const tabNavigation = document.querySelector('.tab-navigation');
+    const sitesTabBtn = document.querySelectorAll('.tab-btn')[0]; // Siteler tab
+    const employeesTabBtn = document.querySelectorAll('.tab-btn')[1]; // Çalışanlar tab
+    const complaintsTabBtn = document.querySelectorAll('.tab-btn')[2]; // Şikayetler tab
+    
+    const sitesTabContent = document.getElementById('sitesTab');
+    const employeesTabContent = document.getElementById('employeesTab');
+    const complaintsTabContent = document.getElementById('complaintsTab');
+
+    if (userRole === 'INDIVIDUAL') {
+        // Bireysel: Site + Şikayet tabı
         document.getElementById('siteLimit').textContent = '1';
-        if (tabNavigation) tabNavigation.style.display = 'none';
+        if (employeesTabBtn) employeesTabBtn.style.display = 'none';
         if (employeesTabContent) employeesTabContent.style.display = 'none';
+        if (tabNavigation) tabNavigation.style.display = 'flex';
+        
     } else if (userRole === 'COMPANY_MANAGER') {
+        // Şirket Yöneticisi: Site + Çalışan + Şikayet tabı
         document.getElementById('siteLimit').textContent = '∞';
         if (tabNavigation) tabNavigation.style.display = 'flex';
+        
     } else if (userRole === 'COMPANY_EMPLOYEE') {
+        // Şirket Çalışanı: Sadece Site tabı
         document.getElementById('siteLimit').textContent = '∞';
         const createBtn = document.getElementById('createSiteBtn');
         if (createBtn) createBtn.style.display = 'none';
-        if (tabNavigation) tabNavigation.style.display = 'none';
+        if (employeesTabBtn) employeesTabBtn.style.display = 'none';
+        if (complaintsTabBtn) complaintsTabBtn.style.display = 'none';
         if (employeesTabContent) employeesTabContent.style.display = 'none';
+        if (complaintsTabContent) complaintsTabContent.style.display = 'none';
+        if (tabNavigation) tabNavigation.style.display = 'flex';
     }
 
     console.log(`✅ UI kuruldu: ${userName} (${userRole})`);
@@ -1178,7 +1209,10 @@ function copyInviteLink(link) {
 async function fetchComplaints() {
     try {
         const token = getAuthToken();
-        const response = await fetch(`${API_BASE_URL}/admin/complaints`, {
+        const userData = JSON.parse(localStorage.getItem('user'));
+        const adminId = userData?.id || userData?.adminId;
+        // adminId'yi query parametresi olarak ekle
+        const response = await fetch(`${API_BASE_URL}/admin/complaints?adminId=${adminId}`, {
             headers: { "Authorization": `Bearer ${token}` }
         });
 

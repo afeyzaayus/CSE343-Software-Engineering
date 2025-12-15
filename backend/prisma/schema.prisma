@@ -364,3 +364,11 @@ enum AdminComplaintCategory {
 
   @@schema("public")
 }
+
+model settings {
+  id    Int    @id @default(autoincrement())
+  key   String @unique
+  value String
+  
+  @@schema("public")
+}

@@ -71,12 +71,17 @@ async function getAdminComplaintDetailController(req, res) {
     }
 }
 
-/**
- * Admin şikayetlerini listeleme controller'ı
- */
 async function getAdminComplaintsListController(req, res) {
     try {
-        const complaints = await getAdminComplaintsListService();
+        // adminId'yi auth'dan veya query/body'den alın (örnek: JWT'den veya req.query.adminId'den)
+        // Örneğin JWT ile:
+        // const adminId = req.user.id;
+        // Eğer query ile geliyorsa:
+        const adminId = Number(req.query.adminId);
+        if (!adminId) {
+            return res.status(400).json({ success: false, message: "adminId zorunludur." });
+        }
+        const complaints = await getAdminComplaintsListService(adminId);
         return res.status(200).json({
             success: true,
             data: { complaints }

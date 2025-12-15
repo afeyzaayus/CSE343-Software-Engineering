@@ -5,10 +5,13 @@ import {
     getActiveIndividualCounts,
     getAdminsWithExpiringAccounts,
     calculateAnnualRevenue,
-    getMonthlyNewRegistrationsWithDetails, // <-- GÜNCELLENDİ
-    extendAccountSubscription
+    getMonthlyNewRegistrationsWithDetails,
+    extendAccountSubscription,
+    getAccountPrices,
+    updateAccountPrice
 } from './dashboard.service.js';
 
+// Dashboard metriklerini getir
 export async function fetchDashboardMetrics(req, res) {
     try {
         const [
@@ -26,7 +29,7 @@ export async function fetchDashboardMetrics(req, res) {
             getActiveIndividualCounts(),
             getAdminsWithExpiringAccounts(),
             calculateAnnualRevenue(),
-            getMonthlyNewRegistrationsWithDetails() // <-- GÜNCELLENDİ
+            getMonthlyNewRegistrationsWithDetails()
         ]);
 
         return res.status(200).json({
@@ -47,8 +50,8 @@ export async function fetchDashboardMetrics(req, res) {
                     days_remaining: admin.daysRemaining
                 })),
                 totalRevenue: annualRevenue,
-                monthlyRegistrations: monthlyNewRegistrationsWithDetails.count, // <-- GÜNCELLENDİ
-                newRegistrations: monthlyNewRegistrationsWithDetails.list      // <-- GÜNCELLENDİ
+                monthlyRegistrations: monthlyNewRegistrationsWithDetails.count,
+                newRegistrations: monthlyNewRegistrationsWithDetails.list
             }
         });
 
@@ -62,6 +65,7 @@ export async function fetchDashboardMetrics(req, res) {
     }
 }
 
+// Hesap süresini uzat
 export async function extendSubscription(req, res) {
     try {
         const { accountId } = req.params;
@@ -100,7 +104,7 @@ export async function extendSubscription(req, res) {
 
     } catch (error) {
         console.error('❌ Süre uzatma hatası:', error);
-        
+
         if (error.message === 'Hesap bulunamadı') {
             return res.status(404).json({
                 success: false,
@@ -118,6 +122,66 @@ export async function extendSubscription(req, res) {
         return res.status(500).json({
             success: false,
             message: 'Hesap süresi uzatılırken hata oluştu'
+        });
+    }
+}
+
+// Yıllık fiyatları getir
+export async function fetchAccountPrices(req, res) {
+    try {
+        const prices = await getAccountPrices();
+        const annualRevenue = await calculateAnnualRevenue();
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...prices,
+                annualRevenue,
+                info: "Fiyatlar yıllık ücretlendirme esasına göredir."
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Fiyatlar alınırken hata oluştu",
+            error: error.message
+        });
+    }
+}
+// Yıllık fiyat güncelle
+export async function updateAccountPriceController(req, res) {
+    try {
+        const { type, value } = req.body;
+        if (!type || typeof value === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                message: "Tip ve değer zorunludur"
+            });
+        }
+        if (!['INDIVIDUAL', 'COMPANY'].includes(type)) {
+            return res.status(400).json({
+                success: false,
+                message: "Tip sadece INDIVIDUAL veya COMPANY olabilir"
+            });
+        }
+        if (isNaN(Number(value)) || Number(value) < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Geçerli bir fiyat giriniz"
+            });
+        }
+        const updated = await updateAccountPrice(type, value);
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...updated,
+                info: "Fiyat yıllık olarak güncellenmiştir."
+            }
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Fiyat güncellenirken hata oluştu",
+            error: error.message
         });
     }
 }

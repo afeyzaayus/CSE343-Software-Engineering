@@ -1,7 +1,9 @@
 import express from 'express';
 import { 
     fetchDashboardMetrics, 
-    extendSubscription
+    extendSubscription,
+    fetchAccountPrices, 
+    updateAccountPriceController 
 } from './dashboard.controller.js';
 
 const router = express.Router();
@@ -20,5 +22,19 @@ router.get('/dashboard/stats', fetchDashboardMetrics);
  * @body    { months: number } (opsiyonel, default: 12)
  */
 router.post('/accounts/:accountId/extend-subscription', extendSubscription);
+
+/**
+ * @route   GET /api/master/prices
+ * @desc    Hesap fiyatlarını getir
+ * @access  Master Admin
+ */
+router.get('/prices', fetchAccountPrices);
+
+/**
+ * @route   POST /api/master/prices
+ * @desc    Hesap fiyatlarını güncelle
+ * @access  Master Admin
+ */
+router.post('/prices/update', updateAccountPriceController);
 
 export default router;

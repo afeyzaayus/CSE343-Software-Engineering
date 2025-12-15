@@ -94,11 +94,13 @@ async function getAdminComplaintDetailService(complaintId) {
 }
 
 /**
- * Admin şikayetlerini listeleme servisi (duruma göre master_note dahil)
+ * Admin şikayetlerini listeleme servisi (sadece ilgili adminin şikayetleri, duruma göre master_note dahil)
+ * @param {number} adminId
  * @returns {Promise<Array>}
  */
-async function getAdminComplaintsListService() {
+async function getAdminComplaintsListService(adminId) {
     const complaints = await prisma.adminComplaint.findMany({
+        where: { adminId },
         select: {
             id: true,
             adminId: true,

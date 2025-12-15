@@ -69,6 +69,21 @@ function updateStats(stats) {
 
     // Yeni kayıtlar
     displayNewRegistrations(stats.newRegistrations || []);
+
+    // Yıllık tahmini kazanç (totalRevenue veya annualRevenue)
+    const revenue = stats.totalRevenue || stats.annualRevenue || 0;
+
+    // Stat kartı
+    const statRevenueElem = document.querySelector('.stat-card .stat-info #totalRevenue');
+    if (statRevenueElem) {
+        statRevenueElem.textContent = `${formatCurrency(revenue)} ₺`;
+    }
+
+    // Modal içi
+    const modalRevenueElem = document.querySelector('.modal .revenue-amount #totalRevenue');
+    if (modalRevenueElem) {
+        modalRevenueElem.textContent = formatCurrency(revenue);
+    }
 }
 
 function displayExpiringAccounts(accounts) {
@@ -287,8 +302,139 @@ function initTabs() {
     });
 }
 
-// Sayfa yüklendiğinde çalışacaklar
+async function fillCurrentPrices() {
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/master/prices`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) throw new Error('Fiyatlar alınamadı');
+        const result = await response.json();
+        const prices = result.data || result;
+        document.getElementById('individual-price').value = prices.individual ?? 0;
+        document.getElementById('company-price').value = prices.company ?? 0;
+    } catch (error) {
+        document.getElementById('individual-price').value = 0;
+        document.getElementById('company-price').value = 0;
+    }
+}
+
+// Modal açılırken fiyatları doldur
+function openModal() {
+    const modal = document.getElementById('priceManagementModal');
+    if (modal) {
+        fillCurrentPrices();
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
+    }
+}
+function closeModal() {
+    const modal = document.getElementById('priceManagementModal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.classList.remove('modal-open');
+    }
+}
+
+// Fiyat güncelleme fonksiyonu
+async function updatePrice(accountType) {
+    const inputId = accountType === 'INDIVIDUAL' ? 'individual-price' : 'company-price';
+    const priceInput = document.getElementById(inputId);
+    const newPrice = priceInput.value;
+    
+    if (!newPrice || newPrice < 0) {
+        showPriceUpdateResult('Lütfen geçerli bir fiyat girin', 'error');
+        return;
+    }
+
+    const button = event.target.closest('.btn-update');
+    button.classList.add('loading');
+    button.disabled = true;
+
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/master/prices/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                type: accountType,
+                value: parseFloat(newPrice)
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Fiyat güncellenemedi');
+        }
+
+        const result = await response.json();
+        showPriceUpdateResult(
+            `${accountType === 'INDIVIDUAL' ? 'Bireysel' : 'Şirket'} hesap fiyatı başarıyla güncellendi!`,
+            'success'
+        );
+
+        // Dashboard'u yenile
+        setTimeout(() => {
+            loadDashboardData();
+        }, 1500);
+
+    } catch (error) {
+        console.error('Fiyat güncelleme hatası:', error);
+        showPriceUpdateResult('Fiyat güncellenirken bir hata oluştu', 'error');
+    } finally {
+        button.classList.remove('loading');
+        button.disabled = false;
+    }
+}
+
+// Fiyat güncelleme sonuç mesajını göster
+function showPriceUpdateResult(message, type) {
+    const resultDiv = document.getElementById('price-update-result');
+    if (resultDiv) {
+        resultDiv.textContent = message;
+        resultDiv.className = `price-update-result ${type} show`;
+        
+        setTimeout(() => {
+            resultDiv.classList.remove('show');
+        }, 5000);
+    }
+}
+
+// DOMContentLoaded içine eklenecek event listener'lar
 document.addEventListener('DOMContentLoaded', () => {
+    const priceBtn = document.getElementById('priceManagementBtn');
+    const priceModal = document.getElementById('priceManagementModal');
+    const closeModalBtn = document.getElementById('closeModal');
+
+    if (priceBtn) {
+        priceBtn.addEventListener('click', openModal);
+    }
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', closeModal);
+    }
+    if (priceModal) {
+        priceModal.addEventListener('click', (e) => {
+            if (e.target === priceModal) {
+                closeModal();
+            }
+        });
+    }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });  
+
+    // Diğer başlangıç fonksiyonları
     loadDashboardData();
     initTabs();
+
+    // Global fonksiyonları window'a ekle
+    window.updatePrice = updatePrice;
 });

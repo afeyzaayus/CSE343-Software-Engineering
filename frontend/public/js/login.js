@@ -252,3 +252,34 @@ document.getElementById('forgot-password-form').addEventListener('submit', async
         showAlert('forgot-alert', 'Bağlantı hatası! Lütfen tekrar deneyin.', 'alert-error');
     }
 });
+
+function formatCurrency(value) {
+    return Number(value).toLocaleString('tr-TR');
+}
+
+fetch('http://localhost:3000/api/master/prices')
+  .then(res => res.json())
+  .then(response => {
+    const data = response.data || {};
+    // Bireysel fiyat
+    const individualYear = Number(data.individual) || 0;
+    const individualMonth = Math.round(individualYear / 12);
+    document.getElementById('individual-package-price').textContent =
+      `Aylık yaklaşık: ${formatCurrency(individualMonth)}₺`;
+    document.getElementById('individual-package-yearly').textContent =
+      individualYear > 0 ? `Yıllık ödeme: ${formatCurrency(individualYear)}₺` : 'Yıllık ödeme: Ücretsiz';
+
+    // Şirket fiyat
+    const companyYear = Number(data.company) || 0;
+    const companyMonth = Math.round(companyYear / 12);
+    document.getElementById('company-package-price').textContent =
+      `Aylık yaklaşık: ${formatCurrency(companyMonth)}₺`;
+    document.getElementById('company-package-yearly').textContent =
+      companyYear > 0 ? `Yıllık ödeme: ${formatCurrency(companyYear)}₺` : 'Yıllık ödeme: Ücretsiz';
+  })
+  .catch(() => {
+    document.getElementById('individual-package-price').textContent = 'Aylık yaklaşık: 0₺';
+    document.getElementById('individual-package-yearly').textContent = 'Yıllık ödeme: Ücretsiz';
+    document.getElementById('company-package-price').textContent = 'Aylık yaklaşık: 0₺';
+    document.getElementById('company-package-yearly').textContent = 'Yıllık ödeme: Ücretsiz';
+  });

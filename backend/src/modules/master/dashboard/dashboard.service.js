@@ -1,13 +1,40 @@
-//  companies tablosundan tüm verilerin ACTIVE olanların sayısını döner
-//  sites tablosundan tüm verilerin ACTIVE olanların sayısını döner
-//  users tablosundan tüm verilerin ACTIVE olanların sayısını döner
-
-//  tüm admins tablosundan kayıt tarihlerinden 1 sene sonrasına geri sayım yapınca 30 günden az kalanların hesap bilgilerini döner
-
-// yıllık gelir hesaplama da admins tabslosundan INDIVIDUAL (200 tl - aylık) ve COMPANY (400 tl - aylık) türündeki kullanıcıların aylık ödemelerini toplayarak yıllık gelir hesaplanır ve döner
-
-
 import prisma from '../../../prisma/prismaClient.js';
+
+// Fiyatları getir (YILLIK fiyatlar)
+export async function getAccountPrices() {
+    const [individual, company] = await Promise.all([
+        prisma.settings.findUnique({ where: { key: 'INDIVIDUAL_PRICE' } }),
+        prisma.settings.findUnique({ where: { key: 'COMPANY_PRICE' } }),
+    ]);
+    return {
+        individual: individual ? Number(individual.value) : 0,
+        company: company ? Number(company.value) : 0,
+    };
+}
+
+// Fiyat güncelle (YILLIK fiyat)
+export async function updateAccountPrice(type, value) {
+    const key = type === 'COMPANY' ? 'COMPANY_PRICE' : 'INDIVIDUAL_PRICE';
+    const updated = await prisma.settings.upsert({
+        where: { key },
+        update: { value: String(value) },
+        create: { key, value: String(value) }
+    });
+    return {
+        key: updated.key,
+        value: Number(updated.value)
+    };
+}
+
+// Yıllık kazanç hesaplama (güncel fiyatlara göre)
+export async function calculateAnnualRevenue() {
+    const prices = await getAccountPrices();
+    const [individualCount, companyCount] = await Promise.all([
+        prisma.individuals.count({ where: { account_status: 'ACTIVE' } }),
+        prisma.companies.count({ where: { account_status: 'ACTIVE' } }),
+    ]);
+    return individualCount * prices.individual + companyCount * prices.company;
+}
 
 export async function getActiveCompanyCounts(){
     const activeCompanyCount = await prisma.companies.count({
@@ -22,8 +49,8 @@ export async function getActiveSiteCounts(){
     const activeSiteCount = await prisma.site.count({
         where: {
             site_status: 'ACTIVE'
-        }
-    });
+            }
+        });
     return activeSiteCount;
 }
 
@@ -135,32 +162,6 @@ export async function getAdminsWithExpiringAccounts() {
     });
 
     return expiringAdmins.sort((a, b) => a.daysRemaining - b.daysRemaining);
-}
-
-export async function calculateAnnualRevenue() {
-    const FEES = {
-        INDIVIDUAL: 200,
-        COMPANY: 400,
-    };
-
-    const [individualCount, companyCount] = await Promise.all([
-        prisma.individuals.count({
-            where: {
-                account_status: 'ACTIVE',
-            },
-        }),
-        prisma.companies.count({
-            where: {
-                account_status: 'ACTIVE',
-            },
-        }),
-    ]);
-
-    const monthlyRevenue =
-        individualCount * FEES.INDIVIDUAL +
-        companyCount * FEES.COMPANY;
-
-    return monthlyRevenue * 12;
 }
 
 // Bugünden itibaren SON 30 gün içinde yapılan yeni kayıtlar
@@ -453,8 +454,11 @@ export async function extendAccountSubscription(accountId, accountType, months =
             currentExpiryDate = admin.company.expiry_date || new Date(admin.created_at);
             currentExpiryDate.setFullYear(currentExpiryDate.getFullYear() + 1);
 
-            newExpiryDate = currentExpiryDate > today ? new Date(currentExpiryDate) : new Date(today);
-            newExpiryDate.setMonth(newExpiryDate.getMonth() + months);
+            let baseDate = admin.company.expiry_date && admin.company.expiry_date > today
+                ? new Date(admin.company.expiry_date)
+                : new Date(today);
+            baseDate.setMonth(baseDate.getMonth() + months);
+            newExpiryDate = baseDate;
 
             await prisma.companies.update({
                 where: { id: admin.company.id },

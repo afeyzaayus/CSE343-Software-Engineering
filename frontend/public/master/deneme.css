@@ -1837,7 +1837,7 @@ body {
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid #2e86c1;
 }
 
 .stat-card h3 {
@@ -2067,4 +2067,36 @@ body {
 
 .complaint-category[data-category="other"]::before {
     content: "📋";
+}
+
+/* Yıllık Tahmini Kazanç için özel stil */
+.revenue-display {
+    background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);
+    border-left: 6px solid #10b981;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin-top: 2rem;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+    color: #065f46;
+    animation: fadeIn 0.7s;
+}
+
+.revenue-display strong {
+    color: #047857;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+}
+
+.revenue-amount {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #047857;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.revenue-amount span:first-child {
+    font-size: 1.5rem;
 }

@@ -127,57 +127,98 @@ body {
 .package-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin: 20px 0;
+    gap: 24px;
+    margin: 32px 0 20px 0;
 }
 
 .package-card {
     border: 2px solid #e0e0e0;
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: 18px;
+    padding: 28px 20px 20px 20px;
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
+    background: #fafdff;
+    box-shadow: 0 4px 24px rgba(46,134,193,0.06);
+    position: relative;
+    min-height: 340px;
 }
 
-.package-card:hover {
-    /* Hover rengi #667eea yerine #2e86c1 yapıldı */
+.package-card:hover, .package-card.selected {
     border-color: #2e86c1;
-    /* Yeni mavi tona uygun box-shadow */
-    transform: translateY(-4px);
-    box-shadow: 0 8px 16px rgba(46, 134, 193, 0.2);
-}
-
-.package-card.selected {
-    /* Seçili kart border rengi #667eea yerine #2e86c1 yapıldı */
-    border-color: #2e86c1;
-    /* Seçili kart arkaplanı yeni mavi tona uygun gradient */
-    background: linear-gradient(135deg, rgba(46, 134, 193, 0.1) 0%, rgba(26, 82, 118, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(46,134,193,0.08) 0%, rgba(26,82,118,0.06) 100%);
+    box-shadow: 0 8px 32px rgba(46,134,193,0.13);
+    transform: translateY(-6px) scale(1.03);
 }
 
 .package-icon {
-    width: 48px;
-    height: 48px;
-    margin: 0 auto 12px;
-    /* Mor-Mavi gradient yerine MAVİ gradient */
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
     background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);
-    border-radius: 12px;
+    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 24px;
+    font-size: 30px;
+    box-shadow: 0 2px 8px rgba(46,134,193,0.12);
 }
 
 .package-name {
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 4px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 6px;
+    font-size: 20px;
+    letter-spacing: 0.5px;
+}
+
+.package-price {
+    font-weight: 700;
+    color: #2e86c1;
+    font-size: 20px;
+    margin: 12px 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.package-price-yearly {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+
+.package-features {
+    color: #444;
+    font-size: 15px;
+    margin-bottom: 14px;
+    padding-left: 0;
+    list-style: none;
+    text-align: left;
+    margin-top: 10px;
+}
+
+.package-features li {
+    position: relative;
+    padding-left: 22px;
+    margin-bottom: 7px;
+}
+
+.package-features li::before {
+    content: "✔";
+    color: #2e86c1;
+    font-size: 13px;
+    position: absolute;
+    left: 0;
+    top: 0;
 }
 
 .package-desc {
-    font-size: 12px;
+    font-size: 13px;
     color: #666;
+    margin-top: 10px;
+    opacity: 0.85;
 }
 
 .text-link {
@@ -359,5 +400,41 @@ body {
     /* Aktif sekme rengi #667eea yerine #2e86c1 yapıldı */
     color: #2e86c1;
     border-bottom-color: #2e86c1;
+}
+
+/* Yıllık ve aylık fiyat gösterimi için özel stiller */
+.package-price {
+    font-weight: 700;
+    color: #2e86c1;
+    font-size: 20px;
+    margin: 12px 0 2px 0;
+    letter-spacing: 0.2px;
+}
+
+.package-price-yearly {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 8px;
+    font-weight: 500;
+    letter-spacing: 0.1px;
+}
+
+/* Paket kartında fiyat ve yıllık fiyat arası boşluk */
+.package-card .package-price + .package-price-yearly {
+    margin-top: 0;
+}
+
+/* Responsive düzeltme */
+@media (max-width: 600px) {
+    .package-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+    .package-price {
+        font-size: 18px;
+    }
+    .package-price-yearly {
+        font-size: 13px;
+    }
 }
 

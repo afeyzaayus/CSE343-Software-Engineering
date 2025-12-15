@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Site Portal</title>
     <link rel="stylesheet" href="deneme.css">
+   
 </head>
 <body>
     <div id="dashboardPage" class="page active">
@@ -48,13 +49,69 @@
                 <a href="masterUsers.html" class="nav-item">
                     <span class="icon">👥</span>
                     Kullanıcılar                </a>
+    
             </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <div id="dashboardContent" class="content-section active">
-                <h2>Dashboard</h2>
+                <div class="section-header">
+                    <h2>Dashboard</h2>
+                    <button id="priceManagementBtn" class="btn btn-primary" style="margin-left:auto;">
+                        💸 Fiyat Yönetimi
+                    </button>
+                </div>
+                                <div id="priceManagementModal" class="modal">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h2>
+                        <span>💸</span>
+                        Fiyat Yönetimi
+                      </h2>
+                      <button class="close" id="closeModal" type="button" aria-label="Kapat">&times;</button>
+                    </div>
+                    <p style="margin:0 0 1rem 0; color:#b91010; font-weight:500; margin-left: 30px; margin-top: 10px;">
+                        Belirlediğiniz fiyatlar <b>yıllık</b> olarak uygulanır.
+                    </p>
+                    <div class="modal-body">
+                      <form id="price-update-form">
+                        <div class="form-group">
+                          <label for="individual-price">
+                            <span class="label-icon">👤</span>
+                            Bireysel Hesap Fiyatı
+                          </label>
+                          <div class="form-actions">
+                            <input type="number" id="individual-price" min="0" step="1" value="0" placeholder="Örn: 0" />
+                            <button type="button" class="btn btn-primary btn-sm btn-update" onclick="updatePrice('INDIVIDUAL')">
+                            <span>✏️</span> Güncelle
+                            </button>
+                          </div>
+                        </div>
+                        <div class="form-group">
+                          <label for="company-price">
+                            <span class="label-icon">🏢</span>
+                            Şirket Hesabı Fiyatı
+                          </label>
+                          <div class="form-actions">
+                            <input type="number" id="company-price" min="0" step="1" value="0" placeholder="Örn: 0" />
+                           <button type="button" class="btn btn-primary btn-sm btn-update" onclick="updatePrice('COMPANY')">
+                            <span>✏️</span> Güncelle
+                            </button>
+                          </div>
+                        </div>
+                      </form>
+                      <div id="price-update-result" class="price-update-result"></div>
+                      <div class="revenue-display" style="margin-top: 1.5rem;">
+                        <strong>Yıllık Tahmini Kazanç</strong>
+                        <div class="revenue-amount">
+                          <span>📊</span>
+                          <span id="totalRevenue">0</span> ₺
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <!-- İstatistik Kartları -->
                 <div class="stats-grid">
@@ -142,4 +199,6 @@
 
     <script type="module" src="js/dashboard.js"></script>
 </body>
+
+
 </html>

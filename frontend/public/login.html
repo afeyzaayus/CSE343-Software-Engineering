@@ -36,24 +36,40 @@
                     <a href="#" id="forgot-password-link">Şifremi Unuttum</a>
                 </div>
             </div>
-
-            <div id="package-page" class="page">
-                <button class="back-btn" id="back-to-login">← Geri Dön</button>
-                <h2 style="margin-bottom: 20px; color: #333;">Paket Seçimi</h2>
-                <div class="package-grid">
-                    <div class="package-card" data-package="individual">
-                        <div class="package-icon">👤</div>
-                        <div class="package-name">Bireysel</div>
-                        <div class="package-desc">Tek kullanıcı hesabı</div>
-                    </div>
-                    <div class="package-card" data-package="company">
-                        <div class="package-icon">🏢</div>
-                        <div class="package-name">Şirket</div>
-                        <div class="package-desc">Çoklu site yönetimi</div>
+                <div id="package-page" class="page">
+                    <button class="back-btn" id="back-to-login">← Geri Dön</button>
+                    <h2 style="margin-bottom: 10px; color: #333;">Paket Seçimi</h2>
+                    <p style="color:#2e86c1; margin-bottom:18px; font-size:15px; font-weight:500;">
+                        Tüm paketler <b>yıllık ücretlendirme</b> esasına göre sunulmaktadır.
+                    </p>
+                    <div class="package-grid">
+                        <div class="package-card" data-package="individual">
+                            <div class="package-icon">👤</div>
+                            <div class="package-name">Bireysel</div>
+                            <div class="package-desc">Tek kullanıcı hesabı</div>
+                            <div class="package-price" id="individual-package-price">Aylık yaklaşık: 0₺</div>
+                            <div class="package-price-yearly" id="individual-package-yearly">Yıllık ödeme: Ücretsiz</div>
+                            <ul class="package-features">
+                                <li>1 site yönetimi</li>
+                                <li>Sınırsız şikayet oluşturma</li>
+                                <li>Kolay kullanım</li>
+                            </ul>
+                        </div>
+                        <div class="package-card" data-package="company">
+                            <div class="package-icon">🏢</div>
+                            <div class="package-name">Şirket</div>
+                            <div class="package-desc">Çoklu site yönetimi</div>
+                            <div class="package-price" id="company-package-price">Aylık yaklaşık: 0₺</div>
+                            <div class="package-price-yearly" id="company-package-yearly">Yıllık ödeme: Ücretsiz</div>
+                            <ul class="package-features">
+                                <li>Sınırsız site yönetimi</li>
+                                <li>Çoklu kullanıcı ve çalışan yönetimi</li>
+                                <li>Gelişmiş raporlama</li>
+                                <li>Öncelikli destek</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-
             <div id="individual-register-page" class="page">
                 <button class="back-btn" id="back-to-package-from-individual">← Paket Seçimi</button>
                 <h2 style="margin-bottom: 20px; color: #333;">Bireysel Kayıt</h2>
