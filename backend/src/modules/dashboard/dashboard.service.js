@@ -24,17 +24,17 @@ export async function getDashboardStatisticsService(siteId) {
 
   // 2. DAİRE SAYISI (User tablosundan) - integer id ile
   const totalApartments = await prisma.user.count({
-    where: { siteId: site.id, deleted_at: null }
+    where: { siteId: site.id }
   });
 
   // 2.5. BLOK SAYISI VE TOPLAM KAPASİTE - blocks tablosundan
   const totalBlocks = await prisma.blocks.count({
-    where: { site_id: site.id, deleted_at: null }
+    where: { site_id: site.id }
   });
 
   // Blokların toplam daire kapasitesini hesapla
   const blocksWithCapacity = await prisma.blocks.findMany({
-    where: { site_id: site.id, deleted_at: null },
+    where: { site_id: site.id },
     select: { apartment_count: true }
   });
 

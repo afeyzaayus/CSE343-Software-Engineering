@@ -307,18 +307,14 @@ class ResidenceService {
     }
   }
 
-  // Delete a resident (soft delete)
+  // Delete a resident (hard delete)
   async deleteResident(id) {
     try {
-      const resident = await prisma.user.update({
-        where: { id: parseInt(id) },
-        data: {
-          deleted_at: new Date(),
-          account_status: 'DELETED',
-          updated_at: new Date()
-        }
+      const resident = await prisma.user.delete({
+        where: { id: parseInt(id) }
       });
 
+      console.log(`🗑️  [DELETE RESIDENT] User ID ${id} tamamen silindi (hard delete)`);
       return resident;
     } catch (error) {
       throw new Error(`Failed to delete resident: ${error.message}`);
@@ -384,13 +380,11 @@ class ResidenceService {
     try {
       const blocks = await prisma.blocks.findMany({
         where: {
-          site_id: parseInt(siteId),
-          deleted_at: null
+          site_id: parseInt(siteId)
         },
         include: {
           users: {
             where: {
-              deleted_at: null,
               account_status: 'ACTIVE'
             }
           }
@@ -408,15 +402,13 @@ class ResidenceService {
     }
   }
 
-  // Delete a block (soft delete - also soft deletes all users in that block)
+  // Delete a block (hard delete - also hard deletes all users in that block)
   async deleteBlock(blockId) {
     try {
       const block = await prisma.blocks.findUnique({
         where: { id: parseInt(blockId) },
         include: {
-          users: {
-            where: { deleted_at: null }
-          }
+          users: true
         }
       });
 
@@ -424,33 +416,23 @@ class ResidenceService {
         throw new Error('Blok bulunamadı');
       }
 
-      // Soft delete all users in this block
+      // Hard delete all users in this block
       if (block.users.length > 0) {
-        await prisma.user.updateMany({
+        await prisma.user.deleteMany({
           where: {
-            block_id: parseInt(blockId),
-            deleted_at: null
-          },
-          data: {
-            deleted_at: new Date(),
-            account_status: 'DELETED',
-            updated_at: new Date()
+            block_id: parseInt(blockId)
           }
         });
 
-        console.log(`🗑️  [DELETE BLOCK] ${block.users.length} daire silindi`);
+        console.log(`🗑️  [DELETE BLOCK] ${block.users.length} daire tamamen silindi (hard delete)`);
       }
 
-      // Soft delete the block
-      const deletedBlock = await prisma.blocks.update({
-        where: { id: parseInt(blockId) },
-        data: {
-          deleted_at: new Date(),
-          updated_at: new Date()
-        }
+      // Hard delete the block
+      const deletedBlock = await prisma.blocks.delete({
+        where: { id: parseInt(blockId) }
       });
 
-      console.log(`✅ [DELETE BLOCK] Block "${block.block_name}" silindi`);
+      console.log(`✅ [DELETE BLOCK] Block "${block.block_name}" tamamen silindi (hard delete)`);
 
       return deletedBlock;
     } catch (error) {

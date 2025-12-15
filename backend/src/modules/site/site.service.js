@@ -290,8 +290,7 @@ export async function getSitesService(adminId, filters) {
     // Her sitenin bloklarındaki toplam daire kapasitesini hesapla
     const blocksWithCapacity = await prisma.blocks.findMany({
       where: { 
-        site_id: site.id, 
-        deleted_at: null 
+        site_id: site.id
       },
       select: { apartment_count: true }
     });
