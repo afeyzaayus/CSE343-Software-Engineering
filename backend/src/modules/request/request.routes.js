@@ -24,31 +24,6 @@ const router = express.Router();
 router.get('/', complaintsController.getAllComplaints);
 
 /**
- * @route   GET /api/complaints/user/:userId
- * @desc    Belirli bir kullanıcının kendi şikayetlerini getir
- * @access  User (kendi şikayetleri)
- * @params  userId - Kullanıcı ID
- * @query   siteId (required) - Site ID
- */
-router.get('/user/:userId', complaintsController.getUserComplaints);
-
-/**
- * @route   GET /api/complaints/stats/:siteId
- * @desc    Site için şikayet istatistikleri
- * @access  Admin
- * @params  siteId - Site ID
- */
-router.get('/stats/:siteId', complaintsController.getComplaintStats);
-
-/**
- * @route   GET /api/complaints/:id
- * @desc    Şikayet detayını getir
- * @access  Admin / User (kendi şikayeti)
- * @params  id - Şikayet ID
- */
-router.get('/:id', complaintsController.getComplaintById);
-
-/**
  * @route   POST /api/complaints
  * @desc    Yeni şikayet oluştur
  * @access  User
@@ -80,5 +55,30 @@ router.patch('/:id/status', complaintsController.updateComplaintStatus);
  * @params  id - Şikayet ID
  */
 router.delete('/:id', complaintsController.deleteComplaint);
+
+/**
+ * @route   GET /api/complaints/stats/:siteId
+ * @desc    Site için şikayet istatistikleri
+ * @access  Admin
+ * @params  siteId - Site ID
+ */
+router.get('/stats/:siteId', complaintsController.getComplaintStats);
+
+/**
+ * @route   GET /api/complaints/user/:userId
+ * @desc    Belirli bir kullanıcının kendi şikayetlerini getir
+ * @access  User (kendi şikayetleri)
+ * @params  userId - Kullanıcı ID
+ * @query   siteId (required) - Site ID
+ */
+router.get('/user/:userId', complaintsController.getUserComplaints);
+
+/**
+ * @route   GET /api/complaints/:id
+ * @desc    Şikayet detayını getir
+ * @access  Admin / User (kendi şikayeti)
+ * @params  id - Şikayet ID
+ */
+router.get('/:id', complaintsController.getComplaintById);
 
 export default router;

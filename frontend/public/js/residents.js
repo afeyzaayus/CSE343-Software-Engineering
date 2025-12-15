@@ -2,6 +2,10 @@
 const API_BASE_URL = 'http://localhost:3000/api/residence';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id;
+const ITEMS_PER_PAGE = 5;
+
+// Keep track of expanded blocks and shown items
+const blockStates = {};
 
 // Fetch residents
 async function fetchResidents(siteId) {
@@ -141,7 +145,7 @@ async function updateResident(siteId, userId, data) {
     }
 }
 
-// Render residents table
+// Render residents by blocks
 async function renderResidents() {
     if (!SITE_ID) {
         alert('Site seçilmedi. Ana sayfaya yönlendiriliyorsunuz.');
@@ -149,59 +153,250 @@ async function renderResidents() {
         return;
     }
     
-    const tbody = document.getElementById('residents-table-body');
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Yükleniyor...</td></tr>';
+    const container = document.getElementById('blocks-container');
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-spinner fa-spin"></i> Veriler yükleniyor...</div>';
 
-    const residents = await fetchResidents(SITE_ID);
-    
-    tbody.innerHTML = '';
-    if (residents.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">Sakin bulunamadı</td></tr>';
-        return;
+    try {
+        const [residents, blocks] = await Promise.all([
+            fetchResidents(SITE_ID),
+            fetchBlocks(SITE_ID)
+        ]);
+
+        // Group residents by block
+        const residentsGroupedByBlock = {};
+        blocks.forEach(block => {
+            residentsGroupedByBlock[block.id] = [];
+        });
+
+        residents.forEach(resident => {
+            if (residentsGroupedByBlock[resident.block_id]) {
+                residentsGroupedByBlock[resident.block_id].push(resident);
+            }
+        });
+
+        container.innerHTML = '';
+
+        if (blocks.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">Henüz blok oluşturulmamış</div>';
+            return;
+        }
+
+        // Create block cards
+        blocks.forEach(block => {
+            const blockResidents = residentsGroupedByBlock[block.id] || [];
+            
+            // Initialize block state
+            if (!blockStates[block.id]) {
+                blockStates[block.id] = {
+                    expanded: false,
+                    itemsShown: ITEMS_PER_PAGE
+                };
+            }
+
+            const blockCard = createBlockCard(block, blockResidents);
+            container.appendChild(blockCard);
+        });
+    } catch (err) {
+        console.error('Render residents error:', err);
+        container.innerHTML = '<div style="text-align: center; padding: 40px; color: #d32f2f;">Hata: ' + err.message + '</div>';
     }
-
-    residents.forEach(resident => {
-        const tr = document.createElement('tr');
-        const statusText = resident.resident_type === 'OWNER' ? 'Ev Sahibi' : 
-                          resident.resident_type === 'HIRER' ? 'Kiracı' : '-';
-        
-        tr.innerHTML = `
-            <td>${resident.apartment_no || '-'}</td>
-            <td>${resident.block_name || '-'}</td>
-            <td>${resident.full_name || '-'}</td>
-            <td>${resident.phone_number || '-'}</td>
-            <td>${resident.plates || '-'}</td>
-            <td>${resident.resident_count || 1}</td>
-            <td>${statusText}</td>
-            <td>
-                <button class="btn btn-sm btn-primary edit-btn" data-id="${resident.id}" style="margin-right: 5px;">Düzenle</button>
-                <button class="btn btn-sm btn-danger delete-btn" data-id="${resident.id}">Sil</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-
-        tr.querySelector('.edit-btn').addEventListener('click', () => {
-            openEditModal(resident);
-        });
-        
-        tr.querySelector('.delete-btn').addEventListener('click', () => {
-            deleteResidentConfirm(resident);
-        });
-    });
 }
 
-// Populate block filter
-async function populateBlockFilter() {
-    const blockSelect = document.getElementById('blockFilter');
-    const blocks = await fetchBlocks(SITE_ID);
-    
-    blockSelect.innerHTML = '<option value="">Tüm Bloklar</option>';
-    blocks.forEach(block => {
-        const option = document.createElement('option');
-        option.value = block.id;
-        option.textContent = block.block_name;
-        blockSelect.appendChild(option);
+// Create a block card element
+function createBlockCard(block, residents) {
+    const card = document.createElement('div');
+    card.className = 'block-card';
+    card.id = `block-${block.id}`;
+
+    const state = blockStates[block.id];
+    const visibleResidents = residents.slice(0, state.itemsShown);
+    const hasMoreItems = residents.length > state.itemsShown;
+
+    const header = document.createElement('div');
+    header.className = 'block-header';
+    header.onclick = () => toggleBlockExpand(block.id);
+
+    header.innerHTML = `
+        <div class="block-header-title">
+            <i class="fas fa-building"></i>
+            <h3>${block.block_name}</h3>
+            <span class="block-count">${residents.length} sakin</span>
+        </div>
+        <i class="fas fa-chevron-down block-toggle-icon" id="toggle-icon-${block.id}"></i>
+    `;
+
+    const content = document.createElement('div');
+    content.className = `block-content ${state.expanded ? '' : 'collapsed'}`;
+    content.id = `content-${block.id}`;
+
+    if (residents.length === 0) {
+        content.innerHTML = '<div class="empty-block"><i class="fas fa-info-circle"></i> Bu blokta sakin bulunmamaktadır</div>';
+    } else {
+        const listDiv = document.createElement('div');
+        listDiv.className = 'residents-list';
+
+        visibleResidents.forEach(resident => {
+            const residentItem = createResidentItem(resident);
+            listDiv.appendChild(residentItem);
+        });
+
+        content.appendChild(listDiv);
+
+        // Add "Show More" button if needed
+        if (hasMoreItems || state.itemsShown > ITEMS_PER_PAGE) {
+            const showMoreDiv = document.createElement('div');
+            showMoreDiv.className = 'show-more-btn';
+
+            const button = document.createElement('button');
+            if (hasMoreItems) {
+                button.innerHTML = `<i class="fas fa-chevron-down"></i> Daha Fazla Göster (${residents.length - state.itemsShown} kalan)`;
+                button.onclick = (e) => {
+                    e.stopPropagation();
+                    expandBlockItems(block.id, residents);
+                };
+            } else {
+                button.innerHTML = `<i class="fas fa-chevron-up"></i> Daha Az Göster`;
+                button.onclick = (e) => {
+                    e.stopPropagation();
+                    collapseBlockItems(block.id);
+                };
+            }
+
+            showMoreDiv.appendChild(button);
+            content.appendChild(showMoreDiv);
+        }
+    }
+
+    card.appendChild(header);
+    card.appendChild(content);
+
+    return card;
+}
+
+// Create a resident item element
+function createResidentItem(resident) {
+    const item = document.createElement('div');
+    item.className = 'resident-item';
+
+    const statusText = resident.resident_type === 'OWNER' ? 'Ev Sahibi' : 
+                      resident.resident_type === 'HIRER' ? 'Kiracı' : '-';
+    const statusClass = resident.resident_type === 'OWNER' ? 'owner' : 'hirer';
+
+    const info = document.createElement('div');
+    info.className = 'resident-info';
+
+    info.innerHTML = `
+        <div class="resident-name">${resident.apartment_no} No - ${resident.full_name}</div>
+        <div class="resident-details">
+            <div class="resident-detail-item">
+                <i class="fas fa-phone" style="color: #2e86c1;"></i>
+                <span>${resident.phone_number || '-'}</span>
+            </div>
+            <div class="resident-detail-item">
+                <i class="fas fa-car" style="color: #2e86c1;"></i>
+                <span>${resident.plates || '-'}</span>
+            </div>
+            <div class="resident-detail-item">
+                <i class="fas fa-users" style="color: #2e86c1;"></i>
+                <span>${resident.resident_count || 1} kişi</span>
+            </div>
+            <span class="resident-type ${statusClass}">${statusText}</span>
+        </div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.className = 'resident-actions';
+
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-sm btn-primary';
+    editBtn.innerHTML = '<i class="fas fa-edit"></i> Düzenle';
+    editBtn.onclick = () => openEditModal(resident);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-sm btn-danger';
+    deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Sil';
+    deleteBtn.onclick = () => deleteResidentConfirm(resident);
+
+    actions.appendChild(editBtn);
+    actions.appendChild(deleteBtn);
+
+    item.appendChild(info);
+    item.appendChild(actions);
+
+    return item;
+}
+
+// Toggle block expand/collapse
+function toggleBlockExpand(blockId) {
+    const state = blockStates[blockId];
+    state.expanded = !state.expanded;
+
+    const content = document.getElementById(`content-${blockId}`);
+    const icon = document.getElementById(`toggle-icon-${blockId}`);
+
+    if (state.expanded) {
+        content.classList.remove('collapsed');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        content.classList.add('collapsed');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+
+// Expand to show more items
+async function expandBlockItems(blockId, residents) {
+    const state = blockStates[blockId];
+    state.itemsShown += ITEMS_PER_PAGE;
+
+    const content = document.getElementById(`content-${blockId}`);
+    const listDiv = content.querySelector('.residents-list');
+
+    // Get the new items to display
+    const visibleResidents = residents.slice(0, state.itemsShown);
+    const hasMoreItems = residents.length > state.itemsShown;
+
+    // Clear and rebuild the list
+    listDiv.innerHTML = '';
+    visibleResidents.forEach(resident => {
+        const residentItem = createResidentItem(resident);
+        listDiv.appendChild(residentItem);
     });
+
+    // Update the show more button
+    const showMoreDiv = content.querySelector('.show-more-btn');
+    if (showMoreDiv) {
+        showMoreDiv.remove();
+    }
+
+    if (hasMoreItems || state.itemsShown > ITEMS_PER_PAGE) {
+        const newShowMoreDiv = document.createElement('div');
+        newShowMoreDiv.className = 'show-more-btn';
+
+        const button = document.createElement('button');
+        if (hasMoreItems) {
+            button.innerHTML = `<i class="fas fa-chevron-down"></i> Daha Fazla Göster (${residents.length - state.itemsShown} kalan)`;
+            button.onclick = (e) => {
+                e.stopPropagation();
+                expandBlockItems(blockId, residents);
+            };
+        } else {
+            button.innerHTML = `<i class="fas fa-chevron-up"></i> Daha Az Göster`;
+            button.onclick = (e) => {
+                e.stopPropagation();
+                collapseBlockItems(blockId);
+            };
+        }
+
+        newShowMoreDiv.appendChild(button);
+        content.appendChild(newShowMoreDiv);
+    }
+}
+
+// Collapse to show fewer items
+function collapseBlockItems(blockId) {
+    const state = blockStates[blockId];
+    state.itemsShown = ITEMS_PER_PAGE;
+    renderResidents();
 }
 
 // Update block dropdowns in modals
@@ -407,7 +602,6 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
 document.getElementById('addResidentBtn').addEventListener('click', openAddModal);
 document.getElementById('closeAddModal').addEventListener('click', closeAddModal);
 document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
-document.getElementById('blockFilter').addEventListener('change', renderResidents);
 document.getElementById('createBlockBtn').addEventListener('click', () => {
     document.getElementById('createBlockModal').style.display = 'flex';
 });
@@ -454,7 +648,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         pageTitle.textContent = `Daire Sahipleri - ${selectedSite.site_name}`;
     }
 
-    await populateBlockFilter();
     await updateBlockDropdowns();
     renderResidents();
 });

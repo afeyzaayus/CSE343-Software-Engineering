@@ -248,10 +248,10 @@ class ComplaintsService {
    * @returns {Promise<Object>} Güncellenmiş şikayet
    */
   async updateComplaintStatus(complaintId, newStatus) {
-    const validStatuses = ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'CANCELLED'];
+    const validStatuses = ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
     
     if (!validStatuses.includes(newStatus)) {
-      throw new Error('Geçersiz durum');
+      throw new Error('Geçersiz durum: ' + newStatus + '. Geçerli durumlar: ' + validStatuses.join(', '));
     }
 
     // Mevcut complaint'i kontrol et
@@ -264,38 +264,41 @@ class ComplaintsService {
       throw new Error('Şikayet bulunamadı');
     }
 
-    // Durumu güncelle
-    const complaint = await prisma.complaints.update({
-      where: { id: parseInt(complaintId) },
-      data: { 
-        status: newStatus,
-        updated_at: new Date()
-      },
-      include: {
-        users: {
-          select: {
-            id: true,
-            full_name: true,
-            block_no: true,
-            apartment_no: true
-          }
+    try {
+      // Durumu güncelle
+      const complaint = await prisma.complaints.update({
+        where: { id: parseInt(complaintId) },
+        data: { 
+          status: newStatus,
+          updated_at: new Date()
         },
-        sites: {
-          select: {
-            id: true,
-            site_name: true
+        include: {
+          users: {
+            select: {
+              id: true,
+              full_name: true,
+              block_id: true,
+              apartment_no: true
+            }
+          },
+          sites: {
+            select: {
+              id: true,
+              site_name: true
+            }
           }
         }
+      });
+
+      return this.formatComplaint(complaint);
+    } catch (error) {
+      console.error('Update complaint status error:', error);
+      // Database enum hatasını yakala
+      if (error.message && error.message.includes('Status')) {
+        throw new Error('Durum değeri geçersiz. Lütfen: PENDING, IN_PROGRESS, RESOLVED, CANCELLED veya REJECTED kullanın.');
       }
-    });
-
-    // TODO: Kullanıcıya bildirim gönder
-    // await this.sendNotificationToUser(complaint.userId, {
-    //   title: 'Talep Durumu Güncellendi',
-    //   message: `"${complaint.title}" başlıklı talebiniz ${this.getStatusText(newStatus)} durumuna geçti.`
-    // });
-
-    return this.formatComplaint(complaint);
+      throw error;
+    }
   }
 
   /**

@@ -112,8 +112,37 @@ function renderComplaintsList(complaints, emptyMessage) {
         const color = statusColors[status] || '#95a5a6';
         const statusText = statusTexts[status] || 'Bilinmiyor';
 
+        // Durum kontrolü
+        let actionButtonsHTML = '';
+
+        // Bekleyen durumda: İşleme Al ve Çöz butonlarını göster
+        if (status === 'pending') {
+            actionButtonsHTML += `
+            <button class="btn-action btn-process" onclick="updateComplaintStatus(${complaint.id}, 'IN_PROGRESS')" title="İşleme al">
+                <i class="fas fa-spinner"></i> İşleme Al
+            </button>
+            <button class="btn-action btn-resolve" onclick="updateComplaintStatus(${complaint.id}, 'RESOLVED')" title="Çöz">
+                <i class="fas fa-check"></i> Çöz
+            </button>
+            <button class="btn-action btn-cancel" onclick="updateComplaintStatus(${complaint.id}, 'REJECTED')" title="İptal et">
+                <i class="fas fa-times"></i> İptal Et
+            </button>
+            `;
+        }
+        // İşlemde durumda: Sadece Çöz butonunu göster
+        else if (status === 'in_progress' || status === 'inprogress') {
+            actionButtonsHTML += `
+            <button class="btn-action btn-resolve" onclick="updateComplaintStatus(${complaint.id}, 'RESOLVED')" title="Çöz">
+                <i class="fas fa-check"></i> Çöz
+            </button>
+            <button class="btn-action btn-cancel" onclick="updateComplaintStatus(${complaint.id}, 'REJECTED')" title="İptal et">
+                <i class="fas fa-times"></i> İptal Et
+            </button>
+            `;
+        }
+
         return `
-        <div class="complaint-item" style="border-left:4px solid ${color};padding:15px;margin-bottom:15px;background:#f8f9fa;border-radius:4px;">
+        <div class="complaint-card" style="border-left:4px solid ${color};padding:15px;margin-bottom:15px;background:#f8f9fa;border-radius:4px;">
             <div style="display:flex;justify-content:space-between;align-items:start;">
                 <div style="flex:1;">
                     <h4 style="margin:0 0 10px 0;color:#2c3e50;">${complaint.title || 'Şikayet/Talep'}</h4>
@@ -122,6 +151,9 @@ function renderComplaintsList(complaints, emptyMessage) {
                         <span><strong>Tarih:</strong> ${new Date(complaint.created_at).toLocaleDateString('tr-TR')}</span>
                         ${complaint.users?.full_name ? ` | <strong>Gönderen:</strong> ${complaint.users.full_name}` : ''}
                         ${complaint.users?.apartment_no ? ` - Daire: ${complaint.users.apartment_no}` : ''}
+                    </div>
+                    <div style="margin-top:12px; display:flex;gap:8px;flex-wrap:wrap;">
+                        ${actionButtonsHTML}
                     </div>
                 </div>
                 <div>
@@ -176,4 +208,45 @@ function setupFilters() {
             }
         });
     });
+}
+
+// Şikayet durumunu güncelle
+async function updateComplaintStatus(complaintId, newStatus) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+
+    const statusMessages = {
+        'IN_PROGRESS': 'işleme almak',
+        'RESOLVED': 'çözmek',
+        'REJECTED': 'iptal etmek'
+    };
+
+    if (!confirm(`Bu talebi ${statusMessages[newStatus] || 'güncellemek'} istediğinize emin misiniz?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/complaints/${complaintId}/status`, {
+            method: 'PATCH',
+            headers: headers,
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('API Error Response:', data);
+            throw new Error(data.error || `HTTP ${response.status}: Güncelleme başarısız`);
+        }
+
+        alert('✅ Durum başarıyla güncellendi!');
+        loadComplaints();
+
+    } catch (error) {
+        console.error('Güncelleme hatası:', error);
+        alert('❌ İşlem başarısız oldu.\n\nHata: ' + error.message);
+    }
 }

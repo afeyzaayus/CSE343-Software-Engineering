@@ -65,6 +65,20 @@
     border-left-color: var(--success-color);
 }
 
+.complaint-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--warning-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.complaint-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
 .complaint-header {
     display: flex;
     justify-content: space-between;
@@ -123,10 +137,80 @@
     flex-wrap: wrap;
 }
 
+/* Action Buttons */
+.btn-action {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-action:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-detail {
+    background: #3498db;
+    color: white;
+}
+
+.btn-detail:hover:not(:disabled) {
+    background: #2980b9;
+}
+
+.btn-process {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-process:hover:not(:disabled) {
+    background: #e67e22;
+}
+
+.btn-resolve {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-resolve:hover:not(:disabled) {
+    background: #229954;
+}
+
+.btn-cancel {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #c0392b;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .complaint-meta {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .complaint-actions {
+        flex-direction: column;
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
     }
 }
