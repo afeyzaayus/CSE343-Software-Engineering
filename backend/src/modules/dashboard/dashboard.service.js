@@ -96,7 +96,27 @@ export async function getDashboardStatisticsService(siteId) {
     }
   });
 
-  // 6. İSTATİSTİKLERİ HESAPLA
+  // 6. AİDAT ÖDEME ORANI HESAPLA
+  // Bu ay ödeme yapan kişi sayısını bul
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  
+  const thisMonthPayments = await prisma.payments.findMany({
+    where: {
+      siteId: site.id,
+      payment_date: {
+        gte: new Date(currentYear, currentMonth, 1),
+        lt: new Date(currentYear, currentMonth + 1, 1)
+      }
+    },
+    select: { userId: true }
+  });
+
+  // Ödeme yapan unique kullanıcı sayısı
+  const paidUserIds = new Set(thisMonthPayments.map(p => p.userId));
+  const paidCount = paidUserIds.size;
+
+  // 7. İSTATİSTİKLERİ HESAPLA
   const averageApartmentsPerBlock = totalBlocks > 0 ? Math.round(totalCapacity / totalBlocks) : 0;
 
   const statistics = {
@@ -120,12 +140,12 @@ export async function getDashboardStatisticsService(siteId) {
       display: `${totalApartments}/${totalCapacity} daire`
     },
 
-    // Aidat Ödeme Oranı (Placeholder - gelecekte güncellenecek)
+    // Aidat Ödeme Oranı - Güncellendi
     dues: {
-      paid_count: 0,
+      paid_count: paidCount,
       total_count: totalApartments,
-      percentage: 0,
-      display: '0 ödendi'
+      percentage: totalApartments > 0 ? Math.round((paidCount / totalApartments) * 100) : 0,
+      display: `${paidCount}/${totalApartments} ödendi`
     },
 
     // Aktif Duyurular

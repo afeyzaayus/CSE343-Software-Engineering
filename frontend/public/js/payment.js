@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Dashboard başlığı
     const dashboardTitle = document.getElementById('dashboard-title');
     if (dashboardTitle) {
-        dashboardTitle.textContent = `Ödemeler - ${selectedSite.site_name}`;
+        dashboardTitle.textContent = `Aidat Takibi - ${selectedSite.site_name}`;
     }
 
     // Admin bilgisi (sağ üst)
@@ -98,23 +98,17 @@ async function renderPaidAndUnpaidLists(payments) {
         return;
     }
     
-    // Bu ayki ödemeleri filtrele
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    console.log('📊 Render başlıyor - Toplam ödemeler:', payments.length);
+    console.log('📊 Gelen ödeme verileri:', payments);
     
-    // Bu ay ödeme yapan kullanıcıların ID'lerini bul
-    const paidUserIds = new Set();
-    const thisMonthPayments = payments.filter(p => {
-        const paymentDate = new Date(p.payment_date);
-        return paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear;
-    });
+    // Tüm ödemeleri direkt göster (ay filtreleme kaldırıldı)
+    const allPayments = payments;
     
-    thisMonthPayments.forEach(p => paidUserIds.add(p.userId));
+    console.log('📊 Gösterilecek ödemeler:', allPayments.length);
     
     // Ödeyenler tablosunu doldur
-    if (thisMonthPayments.length === 0) {
-        paidTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Bu ay henüz ödeme yapılmamış.</td></tr>';
+    if (allPayments.length === 0) {
+        paidTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Henüz ödeme yapılmamış.</td></tr>';
     } else {
         // payment_method enum değerlerini Türkçeye çevir
         const methodLabels = {
@@ -122,19 +116,38 @@ async function renderPaidAndUnpaidLists(payments) {
             'CREDIT_CARD': 'Kredi Kartı',
             'BANK_TRANSFER': 'Havale/EFT',
             'CHECK': 'Çek',
-            'OTHER': 'Diğer'
+            'OTHER': 'Diğer',
+            'nakit': 'Nakit',
+            'kredi_karti': 'Kredi Kartı',
+            'havale': 'Havale/EFT',
+            'cek': 'Çek'
         };
         
-        paidTableBody.innerHTML = thisMonthPayments.map(payment => {
-            const paymentDate = new Date(payment.payment_date);
-            const dateStr = paymentDate.toLocaleDateString('tr-TR');
+        paidTableBody.innerHTML = allPayments.map(payment => {
+            let dateStr = '-';
+            try {
+                const paymentDate = new Date(payment.payment_date);
+                dateStr = paymentDate.toLocaleDateString('tr-TR');
+            } catch (e) {
+                console.error('Tarih parsing hatası:', payment.payment_date, e);
+            }
+            
+            const methodLabel = methodLabels[payment.payment_method] || payment.payment_method;
+            
+            console.log('📝 Satır oluşturuluyor:', {
+                user: payment.user,
+                full_name: payment.user?.full_name,
+                block_no: payment.user?.block_no,
+                apartment_no: payment.user?.apartment_no
+            });
+            
             return `
             <tr>
                 <td>${payment.user?.block_no || '-'}-${payment.user?.apartment_no || '-'}</td>
                 <td>${payment.user?.full_name || '-'}</td>
                 <td>${dateStr}</td>
                 <td>${payment.amount} TL</td>
-                <td>${methodLabels[payment.payment_method] || payment.payment_method}</td>
+                <td>${methodLabel}</td>
             </tr>
         `;
         }).join('');
@@ -143,8 +156,7 @@ async function renderPaidAndUnpaidLists(payments) {
     // Tablo başlığını güncelle
     const paidHeader = document.querySelector('#paid-section .table-subtitle');
     if (paidHeader) {
-        const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-        paidHeader.textContent = `${monthNames[currentMonth]} ${currentYear} - ${thisMonthPayments.length} Daire`;
+        paidHeader.textContent = `Toplam - ${allPayments.length} Daire`;
     }
     
     // Ödemeyenler için tüm sakinleri çek
@@ -158,30 +170,26 @@ async function renderPaidAndUnpaidLists(payments) {
             const residentsResult = await residentsResponse.json();
             const allResidents = residentsResult.data || residentsResult.residents || [];
             
+            console.log('👥 Tüm sakinler:', allResidents);
+            console.log('💰 Ödeme yapan kullanıcı ID\'leri:', Array.from(new Set(allPayments.map(p => p.userId))));
+            
             // Ödeme yapmayan sakinleri bul
+            const paidUserIds = new Set(allPayments.map(p => p.userId));
             const unpaidResidents = allResidents.filter(r => !paidUserIds.has(r.id));
             
+            console.log('👥 Ödeme yapmayanlar:', unpaidResidents);
+            
             if (unpaidResidents.length === 0) {
-                unpaidTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tüm sakinler bu ay aidatını ödedi! 🎉</td></tr>';
+                unpaidTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Tüm sakinler aidatını ödedi! 🎉</td></tr>';
             } else {
-                // Son ödeme tarihini hesapla (ayın son günü)
-                const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-                const today = new Date();
-                
                 unpaidTableBody.innerHTML = unpaidResidents.map(resident => {
-                    // Gecikme gün sayısı (eğer bugün son günü geçtiyse)
-                    let delayDays = 0;
-                    if (today > lastDayOfMonth) {
-                        delayDays = Math.floor((today - lastDayOfMonth) / (1000 * 60 * 60 * 24));
-                    }
-                    
                     return `
                         <tr>
                             <td>${resident.block_no || '-'}-${resident.apartment_no || '-'}</td>
                             <td>${resident.full_name || '-'}</td>
                             <td>${resident.phone_number || '-'}</td>
-                            <td>${lastDayOfMonth.toLocaleDateString('tr-TR')}</td>
-                            <td>${delayDays > 0 ? delayDays + ' gün' : '-'}</td>
+                            <td>-</td>
+                            <td>-</td>
                         </tr>
                     `;
                 }).join('');
@@ -190,8 +198,7 @@ async function renderPaidAndUnpaidLists(payments) {
             // Ödemeyenler başlığını güncelle
             const unpaidHeader = document.querySelector('#unpaid-section .table-subtitle');
             if (unpaidHeader) {
-                const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-                unpaidHeader.textContent = `${monthNames[currentMonth]} ${currentYear} - ${unpaidResidents.length} Daire`;
+                unpaidHeader.textContent = `Toplam - ${unpaidResidents.length} Daire`;
             }
         }
     } catch (error) {
@@ -208,6 +215,7 @@ async function loadResidents() {
     console.log('🏠 Sakinler yükleniyor - SITE_ID:', SITE_ID);
     
     try {
+        // Sakinleri çek
         const url = `${API_BASE_URL}/payments/site/${SITE_ID}/residents`;
         console.log('📡 Residents API URL:', url);
         
@@ -224,19 +232,37 @@ async function loadResidents() {
         const result = await response.json();
         console.log('✅ Sakinler API yanıtı:', result);
         
-        const residents = result.data || result.residents || [];
-        console.log('👥 Toplam sakin sayısı:', residents.length);
+        const allResidents = result.data || result.residents || [];
+        console.log('👥 Toplam sakin sayısı:', allResidents.length);
+        
+        // Ödemeleri çek ve ödeme yapanları bul
+        let paidUserIds = new Set();
+        try {
+            const paymentsResponse = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}`, { headers });
+            if (paymentsResponse.ok) {
+                const paymentsResult = await paymentsResponse.json();
+                const payments = paymentsResult.data || [];
+                paidUserIds = new Set(payments.map(p => p.userId));
+                console.log('💰 Ödeme yapanlar:', Array.from(paidUserIds));
+            }
+        } catch (error) {
+            console.error('⚠️ Ödemeler yüklenirken hata (form yine de açılacak):', error);
+        }
+        
+        // Sadece ödeme yapmayanları filtrele
+        const unpaidResidents = allResidents.filter(r => !paidUserIds.has(r.id));
+        console.log('👥 Ödeme yapmayanlar:', unpaidResidents.length);
         
         // Dropdown'ı doldur
         const select = document.getElementById('paymentApartment');
         if (select) {
-            if (residents.length === 0) {
-                select.innerHTML = '<option value="">Bu sitede kayıtlı sakin bulunamadı</option>';
-                console.warn('⚠️ Sitede sakin bulunamadı!');
+            if (unpaidResidents.length === 0) {
+                select.innerHTML = '<option value="">Tüm sakinler ödeme yaptı! 🎉</option>';
+                console.warn('⚠️ Ödeme yapacak sakin bulunamadı!');
             } else {
                 select.innerHTML = '<option value="">Daire seçin</option>' + 
-                    residents.map(resident => {
-                        console.log('👤 Sakin:', resident);
+                    unpaidResidents.map(resident => {
+                        console.log('👤 Sakin (Ödeme yapacak):', resident);
                         return `<option value="${resident.id}">${resident.block_no}-${resident.apartment_no} - ${resident.full_name}</option>`;
                     }).join('');
                 console.log('✅ Dropdown dolduruldu');
@@ -299,10 +325,10 @@ async function createPayment() {
     const userId = document.getElementById('paymentApartment').value;
     const amount = document.getElementById('paymentAmount').value;
     const payment_date = document.getElementById('paymentDate').value;
-    const payment_method = document.getElementById('paymentType').value;
+    const paymentTypeValue = document.getElementById('paymentType').value;
     
     // Validasyon
-    if (!userId || !amount || !payment_date || !payment_method) {
+    if (!userId || !amount || !payment_date || !paymentTypeValue) {
         alert('Lütfen tüm alanları doldurun.');
         return;
     }
@@ -313,13 +339,22 @@ async function createPayment() {
         return;
     }
     
+    // Frontend değerlerini Backend enum'lerine dönüştür
+    const methodMapping = {
+        'nakit': 'CASH',
+        'banka': 'BANK_TRANSFER',
+        'kredi': 'CREDIT_CARD'
+    };
+    
+    const payment_method = methodMapping[paymentTypeValue] || paymentTypeValue;
+    
     const paymentData = {
         userId: parseInt(userId),
         siteId: SITE_ID,
         amount: parseFloat(amount),
         payment_date,
         payment_method,
-        description: `Ödeme - ${payment_method}`
+        description: `Ödeme - ${paymentTypeValue}`
     };
     
     console.log('📤 Gönderilen ödeme verisi:', paymentData);

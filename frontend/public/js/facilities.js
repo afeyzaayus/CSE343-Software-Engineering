@@ -25,6 +25,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // Sayfa başlığını güncelle
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle && selectedSite?.site_name) {
+        pageTitle.textContent = `Sosyal Tesisler - ${selectedSite.site_name}`;
+    }
+
+    // Admin bilgisi güncelle
+    const userInfo = document.getElementById('dashboard-user-info');
+    if (userInfo && currentUser) {
+        userInfo.innerHTML = `
+            <div class="user-avatar">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
+            <div style="margin-left: 10px;">
+                <div style="font-weight: 600;">${currentUser.full_name}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+            </div>
+        `;
+    }
+
     // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {

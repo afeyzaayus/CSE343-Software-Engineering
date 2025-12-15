@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dashboard başlığı
     const dashboardTitle = document.getElementById('dashboard-title');
-    if (dashboardTitle) {
-        dashboardTitle.textContent = `Duyurular`;
+    if (dashboardTitle && selectedSite?.site_name) {
+        dashboardTitle.textContent = `Duyurular - ${selectedSite.site_name}`;
     }
 
     // Admin bilgisi (sağ üst)

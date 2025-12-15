@@ -448,6 +448,12 @@ document.getElementById('createBlockForm').addEventListener('submit', async (e) 
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    // Sayfa başlığını güncelle
+    const pageTitle = document.getElementById('page-title');
+    if (pageTitle && selectedSite?.site_name) {
+        pageTitle.textContent = `Daire Sahipleri - ${selectedSite.site_name}`;
+    }
+
     await populateBlockFilter();
     await updateBlockDropdowns();
     renderResidents();

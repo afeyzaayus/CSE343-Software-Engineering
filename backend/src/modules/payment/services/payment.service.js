@@ -207,17 +207,21 @@ export async function getPaymentsBySiteService(siteIdParam, filters = {}) {
   });
 
   // Response formatını düzenle
-  return payments.map(payment => ({
-    ...payment,
-    user: {
-      id: payment.users.id,
-      full_name: payment.users.full_name,
-      phone_number: payment.users.phone_number,
-      block_no: payment.users.blocks?.block_name || '-',
-      apartment_no: payment.users.apartment_no || '-'
-    },
-    users: undefined
-  }));
+  return payments.map(payment => {
+    // Eğer user null ise, boş bir user objesi return et
+    const user = payment.users || {};
+    return {
+      ...payment,
+      user: {
+        id: user.id || null,
+        full_name: user.full_name || '-',
+        phone_number: user.phone_number || '-',
+        block_no: user.blocks?.block_name || '-',
+        apartment_no: user.apartment_no || '-'
+      },
+      users: undefined
+    };
+  });
 }
 
 // ===== TEK BİR ÖDEME DETAYI =====
