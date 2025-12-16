@@ -247,43 +247,38 @@ class ResidenceService {
       
       // PARALLEL UPDATE: Apartment ve block bilgileri güncellemelerini paralel yap
       if (apartment || blockId) {
-        const updates = [];
-        
+        // Önce apartment resident_count'unu güncelle
         if (apartment) {
-          updates.push(
-            prisma.user.count({
-              where: {
-                apartment_id: apartment.id,
-                deleted_at: null
-              }
-            }).then(residentCount => 
-              prisma.apartments.update({
-                where: { id: apartment.id },
-                data: {
-                  resident_count: residentCount,
-                  is_occupied: residentCount > 0
-                }
-              })
-            )
-          );
+          const apartmentResidentCount = await prisma.user.count({
+            where: {
+              apartment_id: apartment.id,
+              deleted_at: null
+            }
+          });
+          
+          await prisma.apartments.update({
+            where: { id: apartment.id },
+            data: {
+              resident_count: apartmentResidentCount,
+              is_occupied: apartmentResidentCount > 0
+            }
+          });
         }
         
+        // Sonra block resident_count'unu güncelle (tüm apartment'ların güncel değerleriyle)
         if (blockId) {
-          updates.push(
-            prisma.apartments.findMany({
-              where: { block_id: parseInt(blockId) },
-              select: { resident_count: true }
-            }).then(blockApartments => {
-              const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-              return prisma.blocks.update({
-                where: { id: parseInt(blockId) },
-                data: { resident_count: totalBlockResidents }
-              });
-            })
-          );
+          const blockApartments = await prisma.apartments.findMany({
+            where: { block_id: parseInt(blockId) },
+            select: { resident_count: true }
+          });
+          
+          const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
+          
+          await prisma.blocks.update({
+            where: { id: parseInt(blockId) },
+            data: { resident_count: totalBlockResidents }
+          });
         }
-        
-        await Promise.all(updates);
       }
 
       // Create monthly dues for current month only for the new resident
@@ -458,80 +453,101 @@ class ResidenceService {
         }
       });
 
-      // If apartment changed, update counts in parallel
+      // If apartment changed, update counts
       if (newApartmentId && newApartmentId !== currentResident.apartment_id) {
-        const updates = [];
+        // Önce apartment'ların resident_count'larını güncelle
+        const apartmentUpdates = [];
 
         // Decrease old apartment count
         if (currentResident.apartment_id) {
-          updates.push(
-            prisma.user.count({
-              where: {
-                apartment_id: currentResident.apartment_id,
-                deleted_at: null
+          const oldApartmentCount = await prisma.user.count({
+            where: {
+              apartment_id: currentResident.apartment_id,
+              deleted_at: null
+            }
+          });
+          
+          apartmentUpdates.push(
+            prisma.apartments.update({
+              where: { id: currentResident.apartment_id },
+              data: {
+                resident_count: oldApartmentCount,
+                is_occupied: oldApartmentCount > 0
               }
-            }).then(oldApartmentCount =>
-              prisma.apartments.update({
-                where: { id: currentResident.apartment_id },
-                data: {
-                  resident_count: oldApartmentCount,
-                  is_occupied: oldApartmentCount > 0
-                }
-              })
-            )
+            })
           );
         }
 
         // Increase new apartment count
-        updates.push(
-          prisma.user.count({
-            where: {
-              apartment_id: newApartmentId,
-              deleted_at: null
+        const newApartmentCount = await prisma.user.count({
+          where: {
+            apartment_id: newApartmentId,
+            deleted_at: null
+          }
+        });
+        
+        apartmentUpdates.push(
+          prisma.apartments.update({
+            where: { id: newApartmentId },
+            data: {
+              resident_count: newApartmentCount,
+              is_occupied: newApartmentCount > 0
             }
-          }).then(newApartmentCount =>
-            prisma.apartments.update({
-              where: { id: newApartmentId },
-              data: {
-                resident_count: newApartmentCount,
-                is_occupied: newApartmentCount > 0
-              }
-            })
-          )
+          })
         );
 
-        // Update block resident counts in parallel
+        // Apartment güncellemelerini bekle
+        await Promise.all(apartmentUpdates);
+
+        // Sonra block resident counts'ları güncelle
         if (updateData.block_id && updateData.block_id !== currentResident.block_id) {
+          const blockUpdates = [];
+          
           if (currentResident.block_id) {
-            updates.push(
-              prisma.apartments.findMany({
-                where: { block_id: currentResident.block_id },
-                select: { resident_count: true }
-              }).then(oldBlockApartments => {
-                const oldBlockTotal = oldBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-                return prisma.blocks.update({
-                  where: { id: currentResident.block_id },
-                  data: { resident_count: oldBlockTotal }
-                });
+            const oldBlockApartments = await prisma.apartments.findMany({
+              where: { block_id: currentResident.block_id },
+              select: { resident_count: true }
+            });
+            
+            const oldBlockTotal = oldBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
+            
+            blockUpdates.push(
+              prisma.blocks.update({
+                where: { id: currentResident.block_id },
+                data: { resident_count: oldBlockTotal }
               })
             );
           }
 
-          updates.push(
-            prisma.apartments.findMany({
-              where: { block_id: updateData.block_id },
-              select: { resident_count: true }
-            }).then(newBlockApartments => {
-              const newBlockTotal = newBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-              return prisma.blocks.update({
-                where: { id: updateData.block_id },
-                data: { resident_count: newBlockTotal }
-              });
+          const newBlockApartments = await prisma.apartments.findMany({
+            where: { block_id: updateData.block_id },
+            select: { resident_count: true }
+          });
+          
+          const newBlockTotal = newBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
+          
+          blockUpdates.push(
+            prisma.blocks.update({
+              where: { id: updateData.block_id },
+              data: { resident_count: newBlockTotal }
             })
           );
-        }
 
-        await Promise.all(updates);
+          await Promise.all(blockUpdates);
+        } else if (updateData.block_id) {
+          // Aynı blok içinde apartman değiştiyse, sadece o bloğu güncelle
+          const blockApartments = await prisma.apartments.findMany({
+            where: { block_id: updateData.block_id },
+            select: { resident_count: true }
+          });
+          
+          const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
+          
+          await prisma.blocks.update({
+            where: { id: updateData.block_id },
+            data: { resident_count: totalBlockResidents }
+          });
+        }
       }
 
       return {
@@ -568,6 +584,7 @@ class ResidenceService {
       });
 
       // PARALLEL UPDATE: Apartment ve block güncelleme paralel yap
+      // ÖNEMLİ: User silindikten sonra count yaparken silinmiş user'lar hariç tutulmalı
       const updates = [];
 
       if (resident.apartment_id) {
@@ -590,17 +607,49 @@ class ResidenceService {
       }
 
       if (resident.block_id) {
+        // Block resident count'u güncellerken önce tüm apartment'ları güncelle
         updates.push(
-          prisma.apartments.findMany({
-            where: { block_id: resident.block_id },
-            select: { resident_count: true }
-          }).then(blockApartments => {
+          (async () => {
+            // Önce bu bloka ait tüm apartmanların resident_count'larını güncelle
+            const apartments = await prisma.apartments.findMany({
+              where: { block_id: resident.block_id },
+              select: { id: true }
+            });
+
+            // Her bir apartman için resident count'u güncelle
+            await Promise.all(
+              apartments.map(apt =>
+                prisma.user.count({
+                  where: {
+                    apartment_id: apt.id,
+                    deleted_at: null
+                  }
+                }).then(count =>
+                  prisma.apartments.update({
+                    where: { id: apt.id },
+                    data: {
+                      resident_count: count,
+                      is_occupied: count > 0
+                    }
+                  })
+                )
+              )
+            );
+
+            // Şimdi güncellenmiş apartment'ların resident_count'larını topla
+            const blockApartments = await prisma.apartments.findMany({
+              where: { block_id: resident.block_id },
+              select: { resident_count: true }
+            });
+
             const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
+
+            // Block'un resident_count'unu güncelle
             return prisma.blocks.update({
               where: { id: resident.block_id },
               data: { resident_count: totalBlockResidents }
             });
-          })
+          })()
         );
       }
 
@@ -641,11 +690,12 @@ class ResidenceService {
         throw new Error('Bu isimde bir blok zaten mevcut');
       }
 
-      // Create block with apartment_count
+      // Create block with apartment_count and resident_count starting at 0
       const block = await prisma.blocks.create({
         data: {
           block_name: block_name.trim(),
           apartment_count: parseInt(apartment_count),
+          resident_count: 0,
           site_id: parseInt(siteId),
           created_at: new Date(),
           updated_at: new Date()
@@ -654,12 +704,34 @@ class ResidenceService {
           id: true,
           block_name: true,
           apartment_count: true,
+          resident_count: true,
           site_id: true,
           created_at: true
         }
       });
 
-      
+      // Blok oluşturulduğunda apartments tablosuna boş daireler ekle
+      const apartmentsToCreate = [];
+      for (let i = 1; i <= parseInt(apartment_count); i++) {
+        apartmentsToCreate.push({
+          apartment_no: i.toString(),
+          block_id: block.id,
+          resident_count: 0,
+          is_occupied: false,
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+      // Toplu olarak boş daireleri oluştur
+      if (apartmentsToCreate.length > 0) {
+        await prisma.apartments.createMany({
+          data: apartmentsToCreate,
+          skipDuplicates: true
+        });
+        console.log(`✅ ${block.block_name} için ${apartmentsToCreate.length} adet boş daire oluşturuldu`);
+      }
+
       return block;
     } catch (error) {
       throw new Error(`Blok oluÅŸturulamadÄ±: ${error.message}`);
@@ -754,6 +826,41 @@ class ResidenceService {
         data: updateData
       });
 
+      // Eğer apartment_count artırıldıysa, yeni boş daireler ekle
+      if (apartment_count !== undefined && apartment_count > block.apartment_count) {
+        const apartmentsToCreate = [];
+        
+        // Mevcut daireleri kontrol et
+        const existingApartments = await prisma.apartments.findMany({
+          where: { block_id: parseInt(blockId) },
+          select: { apartment_no: true }
+        });
+        
+        const existingApartmentNumbers = new Set(existingApartments.map(apt => apt.apartment_no));
+        
+        // Eksik daireleri oluştur
+        for (let i = 1; i <= parseInt(apartment_count); i++) {
+          const apartmentNo = i.toString();
+          if (!existingApartmentNumbers.has(apartmentNo)) {
+            apartmentsToCreate.push({
+              apartment_no: apartmentNo,
+              block_id: parseInt(blockId),
+              resident_count: 0,
+              is_occupied: false,
+              created_at: new Date(),
+              updated_at: new Date()
+            });
+          }
+        }
+        
+        if (apartmentsToCreate.length > 0) {
+          await prisma.apartments.createMany({
+            data: apartmentsToCreate,
+            skipDuplicates: true
+          });
+          console.log(`✅ ${updatedBlock.block_name} için ${apartmentsToCreate.length} adet yeni boş daire eklendi`);
+        }
+      }
 
       return updatedBlock;
     } catch (error) {
