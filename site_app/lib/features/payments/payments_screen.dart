@@ -2,20 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/auth/auth_controller.dart';
-import '../../core/network/dio_provider.dart';
 import '../../core/models/payment.dart';
-import '../../core/repos/payments_repo.dart';
-
-// --- PROVIDER TANIMLARI ---
-final paymentsRepoProvider = Provider<PaymentsRepo>(
-  (ref) => PaymentsRepo(ref.read(dioProvider)),
-);
-
-final myPaymentsFutureProvider = FutureProvider.autoDispose<List<Payment>>((ref) async {
-  final user = ref.read(authStateProvider).user;
-  if (user == null) return [];
-  return ref.read(paymentsRepoProvider).listMine(user.id.toString());
-});
 
 // --- EKRAN ---
 class PaymentsScreen extends ConsumerStatefulWidget {
@@ -26,42 +13,46 @@ class PaymentsScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  // Varsayılan olarak bugünün yıl ve ayını seçili getir
   int _selectedYear = DateTime.now().year;
   int _selectedMonth = DateTime.now().month;
 
   @override
   Widget build(BuildContext context) {
-    final asyncPayments = ref.watch(myPaymentsFutureProvider);
+    // 1. Kullanıcı verisini AuthState içinden çekiyoruz (YÖNTEM 1)
+    final user = ref.watch(authStateProvider).user;
+
+    // Kullanıcı henüz yüklenmediyse loading göster
+    if (user == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // 2. Kullanıcının ödeme listesini seçili tarihe göre filtrele
+    // Not: Payment modelinde 'year' ve 'month' alanları backend'den geliyor.
+    // Eğer modelinde bu alanlar yoksa p.paymentDate.year şeklinde kullanabilirsin.
+    final filteredPayments = user.payments.where((p) {
+      return p.year == _selectedYear && p.month == _selectedMonth;
+    }).toList();
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Payment History'), // İNGİLİZCE
+        title: const Text('Payment History'),
+        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // 1. FİLTRE ALANI
+          // FİLTRE ALANI
           _buildFilterBar(),
 
-          // 2. LİSTE ALANI
+          // LİSTE ALANI
           Expanded(
-            child: asyncPayments.when(
-              data: (allPayments) {
-                // Filtreleme
-                final filteredPayments = allPayments.where((p) {
-                  return p.paymentDate.year == _selectedYear &&
-                         p.paymentDate.month == _selectedMonth;
-                }).toList();
-
-                if (filteredPayments.isEmpty) {
-                  return _buildEmptyState();
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async => ref.invalidate(myPaymentsFutureProvider),
-                  child: ListView.separated(
+            child: filteredPayments.isEmpty
+                ? _buildEmptyState()
+                : ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: filteredPayments.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
@@ -69,22 +60,6 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
                       return _PaymentCard(payment: filteredPayments[i]);
                     },
                   ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Failed to load data.'), // İNGİLİZCE
-                    TextButton(
-                      onPressed: () => ref.invalidate(myPaymentsFutureProvider),
-                      child: const Text('Retry'), // İNGİLİZCE
-                    ),
-                  ],
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -118,8 +93,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
                   items: [2024, 2025, 2026].map((year) {
                     return DropdownMenuItem(
                       value: year,
-                      // DÜZELTME: "Yılı" kelimesi kaldırıldı, sadece sayı.
-                      child: Text("$year", style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text("$year",
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -129,7 +104,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
 
           // AY DROPDOWN
@@ -147,8 +122,9 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
                   icon: const Icon(Icons.arrow_drop_down),
                   items: List.generate(12, (index) {
                     final monthIndex = index + 1;
-                    // DÜZELTME: İngilizce ay isimleri (January, February...)
-                    final monthName = DateFormat.MMMM('en_US').format(DateTime(2024, monthIndex));
+                    // Ay isimleri İngilizce (January, February...)
+                    final monthName = DateFormat.MMMM('en_US')
+                        .format(DateTime(2024, monthIndex));
                     return DropdownMenuItem(
                       value: monthIndex,
                       child: Text(monthName),
@@ -171,9 +147,8 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.filter_list_off, size: 64, color: Colors.grey[300]),
+          Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
-          // İNGİLİZCE
           Text(
             'No records found for this date.',
             style: TextStyle(color: Colors.grey[600]),
@@ -191,13 +166,33 @@ class _PaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Para birimi ve Tarih formatı (İngilizce)
     final currencyFormat = NumberFormat.currency(locale: 'en_US', symbol: '₺');
-    final dateFormat = DateFormat('dd MMMM yyyy', 'en_US');
+    final dateFormat = DateFormat('dd MMM yyyy', 'en_US');
 
-    // Şimdilik sadece geçmiş ödemeleri listelediğimiz için varsayılan olarak "Paid" kabul ediyoruz.
-    // İlerde backend'den 'status' alanı gelirse buraya mantık ekleyebiliriz:
-    // bool isPaid = payment.status == 'PAID';
-    bool isPaid = true; 
+    // Status Kontrolü (Backend'den gelen payment_status'e göre)
+    // Eğer payment_status "PAID" ise ödendi kabul et
+    final status = payment.status?.toUpperCase() ?? 'UNPAID';
+    final isPaid = status == 'PAID';
+    final isOverdue = status == 'OVERDUE';
+
+    Color statusColor;
+    IconData statusIcon;
+    String statusText;
+
+    if (isPaid) {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+      statusText = 'PAID';
+    } else if (isOverdue) {
+      statusColor = Colors.red;
+      statusIcon = Icons.warning_amber_rounded;
+      statusText = 'OVERDUE';
+    } else {
+      statusColor = Colors.orange;
+      statusIcon = Icons.hourglass_empty;
+      statusText = 'UNPAID';
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -215,29 +210,32 @@ class _PaymentCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // 1. SOL: İKON KUTUSU (Duruma göre renk değiştirir)
+          // 1. SOL: DURUM İKONU
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isPaid ? Colors.green.withOpacity(0.1) : Colors.orange.withOpacity(0.1),
+              color: statusColor.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
-              isPaid ? Icons.check_circle : Icons.hourglass_empty,
-              color: isPaid ? Colors.green : Colors.orange,
+              statusIcon,
+              color: statusColor,
               size: 24,
             ),
           ),
-          
+
           const SizedBox(width: 16),
 
-          // 2. ORTA: DETAYLAR
+          // 2. ORTA: AÇIKLAMA VE TARİH
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  payment.description.isNotEmpty ? payment.description : 'Dues Payment',
+                  // Eğer description boşsa varsayılan metin
+                  payment.description.isNotEmpty 
+                      ? payment.description 
+                      : 'Monthly Dues',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -259,7 +257,7 @@ class _PaymentCard extends StatelessWidget {
             ),
           ),
 
-          // 3. SAĞ: TUTAR VE STATÜ METNİ
+          // 3. SAĞ: TUTAR VE ETİKET
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -275,13 +273,13 @@ class _PaymentCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isPaid ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
+                  color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isPaid ? 'PAID' : 'UNPAID',
+                  statusText,
                   style: TextStyle(
-                    color: isPaid ? Colors.green[700] : Colors.red[700],
+                    color: statusColor,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),

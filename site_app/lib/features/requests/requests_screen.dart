@@ -35,6 +35,8 @@ class RequestsScreen extends ConsumerWidget {
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text('My Requests & Complaints'),
+        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        foregroundColor: Colors.white, // Yazı ve İkon rengi
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -44,7 +46,7 @@ class RequestsScreen extends ConsumerWidget {
         },
         icon: const Icon(Icons.add),
         label: const Text('New Request'),
-        backgroundColor: Colors.blue[700],
+        backgroundColor: Color(0xFF1A4F70),
         foregroundColor: Colors.white,
       ),
       body: asyncTickets.when(

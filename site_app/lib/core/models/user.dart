@@ -1,24 +1,32 @@
+import 'payment.dart';
+
 class User {
   final String id;
   final String name;
+  final List<Payment> payments;
   final String email;
   final String phoneNumber;
-  final String siteId;     // Veritabanı ID'si (Örn: "5")
-  final String siteCode;   // Site Kodu (Örn: "E993EU") - Backend'den geliyorsa
-  final String siteName;   // Site Adı (Örn: "Gül4")
-  final String? blockNo;   // Backend 'block_id' gönderiyor
+  final String siteId; // Veritabanı ID'si (Örn: "5")
+  final String siteCode; // Site Kodu (Örn: "E993EU") - Backend'den geliyorsa
+  final String siteName; // Site Adı (Örn: "Gül4")
+  final String? blockNo; // Backend 'block_id' gönderiyor
   final String? apartmentNo;
+  final String siteAddress;
+  final String? plates;
 
   User({
     required this.id,
     required this.name,
+    this.payments = const [],
     required this.email,
     required this.phoneNumber,
     required this.siteId,
     required this.siteCode,
     required this.siteName,
+    required this.siteAddress,
     this.blockNo,
     this.apartmentNo,
+    this.plates,
   });
 
   factory User.fromJson(Map<String, dynamic> j) {
@@ -49,6 +57,9 @@ class User {
       // Eklemediysen boş gelir, uygulama çökmez.
       siteCode: j['site']?['site_id'] ?? '',
 
+      siteAddress: j['site']?['site_address'] ?? '',
+
+      plates: j['plates']?.toString(),
       // ------------------------------------
 
       // 6. Blok: Backend loglarında 'block_id' görünüyor
@@ -56,6 +67,12 @@ class User {
 
       // 7. Daire: Backend 'apartment_no' gönderiyor
       apartmentNo: j['apartment_no']?.toString(),
+
+      payments:
+          (j['monthlyDues'] as List?)
+              ?.map((e) => Payment.fromJson(e))
+              .toList() ??
+          [],
     );
   }
 }

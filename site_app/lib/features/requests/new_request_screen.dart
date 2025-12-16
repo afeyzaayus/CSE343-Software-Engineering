@@ -71,7 +71,13 @@ await repo.create(
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('New Request / Complaint')),
+      appBar: AppBar(
+        title: const Text('New Request'),
+        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 0,
+      ),
       body: SingleChildScrollView( // Klavye açılınca taşmasın diye
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -142,7 +148,7 @@ await repo.create(
                       : const Icon(Icons.send),
                   label: Text(_sending ? 'Sending...' : 'Create Request'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Colors.blue[700],
+                    backgroundColor: Color(0xFF1A4F70),
                   ),
                 ),
               ),

@@ -8,7 +8,7 @@ class SocialRepo {
   Future<List<SocialAmenity>> listBySite(dynamic siteId) async {
     try {
       // Loglarda '5' gördüm, bu yüzden siteId'yi olduğu gibi gönderiyoruz.
-      final res = await _dio.get('/api/sites/$siteId/social-amenities');
+      final res = await _dio.get('/api/social-facilities/site/$siteId/social-amenities');
       
       final data = res.data['data'];
 

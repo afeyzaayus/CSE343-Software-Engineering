@@ -138,11 +138,9 @@ class AuthRepository {
     }
   }
 
-  /// Kullanıcı çıkışı
+/// Kullanıcı çıkışı
   Future<void> logout() async {
-    try {
-      await _dio.post('/api/auth/logout');
-    } catch (_) {}
+    // Backend'e istek atmaya gerek yok, sadece telefondaki anahtarı (token) siliyoruz.
     await SecureStore.clear();
   }
 }

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config.dart';
 import '../storage/secure_storage.dart';
+import '../auth/auth_controller.dart'; // AuthController'a erişim gerekebilir veya sadece storage temizlenir
 
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(BaseOptions(
@@ -16,30 +17,16 @@ final dioProvider = Provider<Dio>((ref) {
       return handler.next(options);
     },
     onError: (e, handler) async {
-      // 401 ise refresh dene
+      // Eğer 401 hatası alırsak (Yetkisiz / Kullanıcı Bulunamadı)
       if (e.response?.statusCode == 401) {
-        final refresh = await SecureStore.readRefreshToken();
-        if (refresh != null) {
-          try {
-            final r = await dio.post('/api/auth/refresh-token', data: {'refreshToken': refresh});
-            final newAccess = r.data['accessToken'] as String?;
-            final newRefresh = r.data['refreshToken'] as String? ?? refresh;
-            if (newAccess != null) {
-              await SecureStore.saveTokens(newAccess, newRefresh);
-              // orijinal isteği tekrar dene
-              final req = e.requestOptions;
-              req.headers['Authorization'] = 'Bearer $newAccess';
-              final clone = await dio.fetch(req);
-              return handler.resolve(clone);
-            }
-          } catch (_) { /* fallthrough */ }
-        }
+        print("Oturum geçersiz. Token siliniyor...");
+        // Token'ı telefondan sil ki uygulama bir sonraki açılışta Login istesin
+        await SecureStore.clear(); 
       }
       return handler.next(e);
     },
   ));
 
-// --- Log interceptor ---
   dio.interceptors.add(LogInterceptor(
     request: true,
     requestBody: true,

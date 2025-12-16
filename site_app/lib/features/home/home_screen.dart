@@ -17,6 +17,7 @@ final announcementsFutureProvider =
   final user = ref.read(authStateProvider).user;
   if (user == null) return [];
   final repo = ref.read(announcementsRepoProvider);
+  // siteCode'u kullanıyoruz (E993EU gibi)
   return repo.listBySite(user.siteCode.toString());
 });
 
@@ -27,25 +28,68 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).user;
     final asyncAnnouncements = ref.watch(announcementsFutureProvider);
+    
+    // --- TEMA RENKLERİ ---
+    const primaryColor = Color(0xFF1A4F70); // Koyu Mavi
+    const backgroundColor = Color(0xFFF5F7FA); // Açık Gri
 
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    // Baş harfleri hesapla
+    String initials = '';
+    if (user.name.isNotEmpty) {
+      final names = user.name.trim().split(' ');
+      initials = names.length >= 2
+          ? '${names.first[0]}${names.last[0]}'.toUpperCase()
+          : names.first[0].toUpperCase();
+    }
+
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
+        backgroundColor: primaryColor,
+        elevation: 0,
+        // --- LEADING: AVATAR ---
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => context.push('/profile'), // Profile git
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                initials,
+                style: const TextStyle(
+                  color: primaryColor, 
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(user.siteName, style: const TextStyle(fontWeight: FontWeight.w600)),
-            // Text(user.siteName, ...), // User modelinizde varsa ekleyin
+            const Text(
+              'Ana Sayfa', 
+              style: TextStyle(fontSize: 14, color: Colors.white70)
+            ),
+            Text(
+              user.siteName, 
+              style: const TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 18, 
+                color: Colors.white
+              )
+            ),
           ],
         ),
+        // Çıkış butonu buradan kaldırıldı, Profile taşındı.
         actions: [
-          IconButton(
-            onPressed: () => ref.read(authStateProvider.notifier).logout(),
-            icon: const Icon(Icons.logout),
-          ),
+          // İstersen buraya bildirim ikonu koyabilirsin
+          // IconButton(onPressed: (){}, icon: Icon(Icons.notifications, color: Colors.white))
         ],
       ),
       body: asyncAnnouncements.when(
@@ -57,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
               const Icon(Icons.error_outline, color: Colors.red, size: 48),
               const SizedBox(height: 16),
               const Text('Duyurular yüklenemedi.'),
-              FilledButton(
+              TextButton(
                 onPressed: () => ref.invalidate(announcementsFutureProvider),
                 child: const Text('Tekrar Dene'),
               ),
@@ -72,7 +116,18 @@ class HomeScreen extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-                  const Center(child: Text('Henüz duyuru yok.')),
+                  Center(
+                    child: Column(
+                      children: [
+                        Icon(Icons.campaign_outlined, size: 64, color: Colors.grey[300]),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Henüz duyuru yok.',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             );
@@ -80,58 +135,32 @@ class HomeScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             onRefresh: () async => ref.invalidate(announcementsFutureProvider),
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
+            child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final a = items[i];
-                
-                // Tarih formatlama
-                final hh = a.createdAt.hour.toString().padLeft(2, '0');
-                final mm = a.createdAt.minute.toString().padLeft(2, '0');
-                final dd = a.createdAt.day.toString().padLeft(2, '0');
-                final mon = a.createdAt.month.toString().padLeft(2, '0');
-                final dateStr = '$dd.$mon $hh:$mm';
-
-                return Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    // DEĞİŞİKLİK: Artık BottomSheet açıyor
-                    onTap: () => _showDetailBottomSheet(context, a, dateStr),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.all(16),
-                      title: Text(
-                        a.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
+                // Başlık "Son Duyurular" gibi bir label atmak istersen i==0 kontrolü yapabilirsin.
+                if (i == 0) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 12.0, left: 4),
                         child: Text(
-                          a.body,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          "Son Duyurular",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: primaryColor,
+                          ),
                         ),
                       ),
-                      trailing: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.expand_more, size: 20, color: Colors.grey),
-                          const SizedBox(height: 4),
-                          Text(
-                            '$dd.$mon', 
-                            style: const TextStyle(fontSize: 12, color: Colors.grey)
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+                      _buildAnnouncementCard(context, a),
+                    ],
+                  );
+                }
+                return _buildAnnouncementCard(context, a);
               },
             ),
           );
@@ -140,17 +169,112 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  // --- ALTTAN ÇIKAN PANEL (BOTTOM SHEET) ---
+  Widget _buildAnnouncementCard(BuildContext context, Announcement a) {
+    // Tarih formatlama
+    final hh = a.createdAt.hour.toString().padLeft(2, '0');
+    final mm = a.createdAt.minute.toString().padLeft(2, '0');
+    final dd = a.createdAt.day.toString().padLeft(2, '0');
+    final mon = a.createdAt.month.toString().padLeft(2, '0');
+    final dateStr = '$dd.$mon $hh:$mm';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _showDetailBottomSheet(context, a, dateStr),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                // SOL ŞERİT (Web arayüzündeki gibi)
+                Container(
+                  width: 6,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF1A4F70),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      bottomLeft: Radius.circular(8),
+                    ),
+                  ),
+                ),
+                // İÇERİK
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                a.title,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF1A4F70),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Text(
+                              dateStr,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                                fontWeight: FontWeight.w500
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          a.body,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- ALTTAN ÇIKAN PANEL (Aynı kalabilir, sadece ufak stil iyileştirmesi) ---
   void _showDetailBottomSheet(BuildContext context, Announcement a, String dateStr) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true, // Panelin tam boyuta kadar uzamasını sağlar
-      backgroundColor: Colors.transparent, // Köşelerin yuvarlak olması için
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return DraggableScrollableSheet(
-          initialChildSize: 0.5, // Ekranın yarısı kadar açılsın
-          minChildSize: 0.3,     // En az bu kadar küçülsün
-          maxChildSize: 0.9,     // En fazla %90'a kadar büyüsün
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
           builder: (_, scrollController) {
             return Container(
               decoration: const BoxDecoration(
@@ -158,11 +282,10 @@ class HomeScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: ListView( // SingleChildScrollView yerine ListView kullandık (controller için)
+              child: ListView(
                 controller: scrollController,
                 children: [
                   const SizedBox(height: 12),
-                  // Tutma Çubuğu (Gri Çizgi)
                   Center(
                     child: Container(
                       width: 50,
@@ -174,44 +297,37 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-
+                  
                   // Başlık
                   Text(
                     a.title,
                     style: const TextStyle(
                       fontSize: 22, 
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: Color(0xFF1A4F70), // Başlık da ana renk
                     ),
                   ),
+                  const SizedBox(height: 12),
                   
-                  const SizedBox(height: 8),
-                  
-                  // Tarih Bilgisi
+                  // Tarih
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 16, color: Colors.grey),
+                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
                       const SizedBox(width: 6),
-                      Text(
-                        dateStr,
-                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
-                      ),
+                      Text(dateStr, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
                     ],
                   ),
 
                   const Divider(height: 32, thickness: 1),
 
-                  // İçerik Metni
                   Text(
                     a.body,
                     style: const TextStyle(
                       fontSize: 16, 
-                      height: 1.6, // Satır aralığı okunabilirlik için
+                      height: 1.6, 
                       color: Colors.black87
                     ),
                   ),
-                  
-                  // Alt boşluk (Güvenli alan)
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
                 ],
               ),
