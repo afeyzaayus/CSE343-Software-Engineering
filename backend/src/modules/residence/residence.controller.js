@@ -62,14 +62,11 @@ class ResidenceController {
           });
         }
         siteIdInt = site.id;
-        console.log('🏠 [GET RESIDENTS] Site code converted:', siteId, '->', siteIdInt);
       } else {
         siteIdInt = parseInt(siteId);
       }
 
       const residents = await residenceService.getResidentsBySiteId(siteIdInt);
-      
-      console.log('✅ [GET RESIDENTS] Found', residents.length, 'residents for site', siteIdInt);
       
       res.status(200).json({
         success: true,
@@ -77,7 +74,6 @@ class ResidenceController {
         data: residents
       });
     } catch (error) {
-      console.error('❌ [GET RESIDENTS] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message
@@ -116,10 +112,6 @@ class ResidenceController {
     try {
       const { siteId } = req.params;
       
-      console.log('🏠 [CREATE RESIDENT] Request received:');
-      console.log('  - SiteId:', siteId);
-      console.log('  - Request Body:', JSON.stringify(req.body, null, 2));
-      
       // Convert site_id (string) to site id (integer)
       let siteIdInt;
       if (isNaN(parseInt(siteId))) {
@@ -132,7 +124,6 @@ class ResidenceController {
           });
         }
         siteIdInt = site.id;
-        console.log('  - Site code converted:', siteId, '->', siteIdInt);
       } else {
         siteIdInt = parseInt(siteId);
       }
@@ -146,15 +137,7 @@ class ResidenceController {
         siteId: siteIdInt
       };
       
-      if (id) {
-        console.log('  - WARNING: id field removed from request:', id);
-      }
-      
-      console.log('  - Resident Data:', JSON.stringify(residentData, null, 2));
-      
       const resident = await residenceService.createResident(residentData);
-      
-      console.log('✅ [CREATE RESIDENT] Success:', resident.id);
       
       res.status(201).json({
         success: true,
@@ -162,8 +145,6 @@ class ResidenceController {
         data: resident
       });
     } catch (error) {
-      console.error('❌ [CREATE RESIDENT] Error:', error.message);
-      console.error('   Stack:', error.stack);
       res.status(500).json({
         success: false,
         message: error.message
@@ -242,7 +223,6 @@ class ResidenceController {
         message: 'Resident deleted successfully'
       });
     } catch (error) {
-      console.error('❌ [DELETE RESIDENT] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message
@@ -255,10 +235,6 @@ class ResidenceController {
     try {
       const { siteId } = req.params;
       
-      console.log('🏗️  [CREATE BLOCK] Request received:');
-      console.log('  - SiteId:', siteId);
-      console.log('  - Request Body:', JSON.stringify(req.body, null, 2));
-      
       // Convert site_id (string) to site id (integer)
       let siteIdInt;
       if (isNaN(parseInt(siteId))) {
@@ -270,14 +246,11 @@ class ResidenceController {
           });
         }
         siteIdInt = site.id;
-        console.log('  - Site code converted:', siteId, '->', siteIdInt);
       } else {
         siteIdInt = parseInt(siteId);
       }
       
       const block = await residenceService.createBlock(siteIdInt, req.body);
-      
-      console.log('✅ [CREATE BLOCK] Block created successfully:', block.id);
       
       res.status(201).json({
         success: true,
@@ -285,7 +258,6 @@ class ResidenceController {
         data: block
       });
     } catch (error) {
-      console.error('❌ [CREATE BLOCK] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message
@@ -331,8 +303,6 @@ class ResidenceController {
     try {
       const { blockId } = req.params;
       
-      console.log('🗑️  [DELETE BLOCK] Request received:', blockId);
-      
       if (!blockId) {
         return res.status(400).json({
           success: false,
@@ -342,14 +312,11 @@ class ResidenceController {
       
       await residenceService.deleteBlock(blockId);
       
-      console.log('✅ [DELETE BLOCK] Block deleted successfully');
-      
       res.status(200).json({
         success: true,
         message: 'Blok ve bağlı daireler başarıyla silindi'
       });
     } catch (error) {
-      console.error('❌ [DELETE BLOCK] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message
@@ -362,10 +329,6 @@ class ResidenceController {
     try {
       const { blockId } = req.params;
       
-      console.log('🏗️  [UPDATE BLOCK] Request received:');
-      console.log('  - BlockId:', blockId);
-      console.log('  - Request Body:', JSON.stringify(req.body, null, 2));
-      
       if (!blockId) {
         return res.status(400).json({
           success: false,
@@ -375,15 +338,12 @@ class ResidenceController {
       
       const block = await residenceService.updateBlock(blockId, req.body);
       
-      console.log('✅ [UPDATE BLOCK] Block updated successfully:', block.id);
-      
       res.status(200).json({
         success: true,
         message: 'Blok başarıyla güncellendi',
         data: block
       });
     } catch (error) {
-      console.error('❌ [UPDATE BLOCK] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message
@@ -396,10 +356,6 @@ class ResidenceController {
     try {
       const { blockId, apartmentNo } = req.params;
       
-      console.log('🗑️  [DELETE APARTMENT] Request received:');
-      console.log('  - BlockId:', blockId);
-      console.log('  - ApartmentNo:', apartmentNo);
-      
       if (!blockId || !apartmentNo) {
         return res.status(400).json({
           success: false,
@@ -409,14 +365,11 @@ class ResidenceController {
       
       await residenceService.deleteApartment(blockId, apartmentNo);
       
-      console.log('✅ [DELETE APARTMENT] Apartment deleted successfully');
-      
       res.status(200).json({
         success: true,
         message: 'Daire ve içindeki sakinler başarıyla silindi'
       });
     } catch (error) {
-      console.error('❌ [DELETE APARTMENT] Error:', error.message);
       res.status(500).json({
         success: false,
         message: error.message

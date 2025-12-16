@@ -3,28 +3,23 @@ const prisma = new PrismaClient();
 
 // Helper: siteId string (site_id) veya integer (id) olabilir
 async function resolveSiteId(siteIdParam) {
-  console.log('🔍 [RESOLVE SITE] siteIdParam:', siteIdParam, 'type:', typeof siteIdParam);
   
   // Eğer sayıya dönüştürülebiliyorsa direkt kullan
   const parsed = parseInt(siteIdParam);
   if (!isNaN(parsed)) {
-    console.log('🔍 [RESOLVE SITE] Integer olarak kullanılıyor:', parsed);
     return parsed;
   }
   
   // String site_id ise, veritabanından gerçek id'yi bul
-  console.log('🔍 [RESOLVE SITE] String site_id ile aranıyor:', siteIdParam);
   const site = await prisma.site.findUnique({
     where: { site_id: siteIdParam },
     select: { id: true }
   });
   
   if (!site) {
-    console.error('❌ [RESOLVE SITE] Site bulunamadı:', siteIdParam);
     throw new Error('Site bulunamadı: ' + siteIdParam);
   }
   
-  console.log('✅ [RESOLVE SITE] Site bulundu, id:', site.id);
   return site.id;
 }
 

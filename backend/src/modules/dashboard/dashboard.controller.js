@@ -28,7 +28,6 @@ export async function getDashboardStatistics(req, res) {
       data: dashboardData
     });
   } catch (error) {
-    console.error('Get dashboard statistics error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({
@@ -79,7 +78,6 @@ export async function getRecentAnnouncements(req, res) {
       count: announcements.length
     });
   } catch (error) {
-    console.error('Get recent announcements error:', error);
 
     return res.status(500).json({
       success: false,

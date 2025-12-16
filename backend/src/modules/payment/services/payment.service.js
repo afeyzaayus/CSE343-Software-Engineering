@@ -130,7 +130,6 @@ export async function createPaymentService(paymentData) {
 // ===== TÜM ÖDEMELERİ GETIRME (Site bazında) =====
 export async function getPaymentsBySiteService(siteIdParam, filters = {}) {
   // siteId validasyonu ve debug
-  console.log('getPaymentsBySiteService - siteIdParam:', siteIdParam, 'type:', typeof siteIdParam);
   
   if (!siteIdParam) {
     throw new Error('VALIDATION_ERROR: siteId gereklidir');
@@ -142,7 +141,6 @@ export async function getPaymentsBySiteService(siteIdParam, filters = {}) {
   
   if (typeof siteIdParam === 'string' && isNaN(parseInt(siteIdParam))) {
     // String ve sayı olmayan değer (site_id: "ABCDEF" gibi)
-    console.log('getPaymentsBySiteService - site_id (String) ile aranıyor:', siteIdParam);
     const site = await prisma.Site.findUnique({
       where: { site_id: siteIdParam },
       select: { id: true }
@@ -155,15 +153,12 @@ export async function getPaymentsBySiteService(siteIdParam, filters = {}) {
   } else {
     // Integer tipinde veya sayıya dönüştürülebilir
     const parsedSiteId = parseInt(siteIdParam);
-    console.log('getPaymentsBySiteService - parsedSiteId:', parsedSiteId, 'isNaN:', isNaN(parsedSiteId));
     
     if (isNaN(parsedSiteId)) {
       throw new Error('VALIDATION_ERROR: siteId sayı olmalıdır. Gelen değer: ' + siteIdParam);
     }
     siteId = parsedSiteId;
   }
-
-  console.log('getPaymentsBySiteService - Final siteId (Int):', siteId);
 
   const { startDate, endDate, userId, payment_method } = filters;
 
@@ -320,14 +315,12 @@ export async function getPaymentStatsService(siteId, filters = {}) {
 
 // ===== SİTE SAKİNLERİNİ GETIRME =====
 export async function getResidentsBySiteService(siteIdParam) {
-  console.log('getResidentsBySiteService - siteIdParam:', siteIdParam, 'type:', typeof siteIdParam);
   
   // siteId validasyonu ve dönüştürme
   let siteId;
   
   if (typeof siteIdParam === 'string' && isNaN(parseInt(siteIdParam))) {
     // String ve sayı olmayan değer (site_id: "ABCDEF" gibi)
-    console.log('getResidentsBySiteService - site_id (String) ile aranıyor:', siteIdParam);
     const site = await prisma.Site.findUnique({
       where: { site_id: siteIdParam },
       select: { id: true }
@@ -344,8 +337,6 @@ export async function getResidentsBySiteService(siteIdParam) {
       throw new Error('siteId geçersiz: ' + siteIdParam);
     }
   }
-  
-  console.log('getResidentsBySiteService - Final siteId (Int):', siteId);
   
   const residents = await prisma.User.findMany({
     where: { siteId: siteId },
@@ -364,8 +355,6 @@ export async function getResidentsBySiteService(siteIdParam) {
       { apartment_no: 'asc' }
     ]
   });
-
-  console.log('getResidentsBySiteService - Bulunan sakin sayısı:', residents.length);
 
   // block_name'i düz alana dönüştür
   return residents.map(r => ({
@@ -520,7 +509,6 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
       });
       created.push(due);
     } catch (e) {
-      console.error(`Sakin ${resident.id} için aidatı oluşturanamadı:`, e.message);
     }
   }
 
@@ -565,7 +553,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
   const normalized_payment_method = normalizePaymentMethod(payment_method);
   const paid_date = new Date();
 
-  console.log(`📋 Ödeme işlemi başladı - monthlyDueId: ${monthlyDueId}, apartmentId: ${apartment_id}, userId: ${monthlyDue.userId}`);
 
   // Önceki ayları OVERDUE olarak işaretle
   const previousMonth = monthlyDue.month - 1;
@@ -594,7 +581,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
   
   if (apartment_id) {
     // Kural 1: apartmentId'ye göre aynı dairede yaşayan kullanıcıları bul
-    console.log(`🔍 Kural 1: apartmentId (${apartment_id}) ile kullanıcı aranıyor...`);
     
     usersToUpdate = await prisma.User.findMany({
       where: {
@@ -608,7 +594,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
   
   // Eğer kullanıcı bulunamazsa, block_id + apartment_no kombinasyonuyla ara
   if (usersToUpdate.length === 0 && monthlyDue.users.block_id && monthlyDue.users.apartment_no) {
-    console.log(`🔍 Kural 2: block_id (${monthlyDue.users.block_id}) + apartment_no (${monthlyDue.users.apartment_no}) + siteId (${monthlyDue.siteId}) ile kullanıcı aranıyor...`);
     
     // Önce siteId olmadan ara
     const usersWithoutSite = await prisma.User.findMany({
@@ -619,15 +604,12 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
       },
       select: { id: true, siteId: true }
     });
-    console.log(`   siteId olmadan bulunan: ${usersWithoutSite.length} kullanıcı - siteIds: ${usersWithoutSite.map(u => u.siteId).join(',')}`);
     
     // siteId ile filtrele
     usersToUpdate = usersWithoutSite.filter(u => u.siteId === monthlyDue.siteId).map(u => ({ id: u.id }));
-    console.log(`   siteId (${monthlyDue.siteId}) ile filtrelenen: ${usersToUpdate.length} kullanıcı`);
   }
 
   const userIds = usersToUpdate.map(u => u.id);
-  console.log(`📍 Aynı dairede bulunmuş kişi ID'leri: ${userIds.length > 0 ? userIds.join(', ') : 'HIÇBIRI BULUNAMADI'}`);
 
   // Tüm kişilerin bu ayın aidatını PAID işaretle
   if (userIds.length > 0) {
@@ -646,10 +628,8 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
         paid_by_user_id: paid_by_user_id || monthlyDue.userId
       }
     });
-    console.log(`✅ ${userIds.length} kişi bulundu ve güncellendi`);
   } else if (monthlyDue.users.block_id && monthlyDue.users.apartment_no) {
     // Eğer siteId ile hiç kimse bulunamadıysa, aynı dairede yaşayan TÜÜN KISILERI güncelle (siteId kontrolü YOK)
-    console.log(`⚠️ Kural 2 siteId kontrolü başarısız. Fallback: siteId kontrolü olmadan block_id+apartment_no ile arama...`);
     
     const allUsersInApartment = await prisma.User.findMany({
       where: {
@@ -661,7 +641,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
     });
     
     const fallbackUserIds = allUsersInApartment.map(u => u.id);
-    console.log(`📍 siteId kontrolü olmadan bulunan: ${fallbackUserIds.length} kullanıcı (IDs: ${fallbackUserIds.join(', ')})`);
     
     if (fallbackUserIds.length > 0) {
       updatedDues = await prisma.monthlyDues.updateMany({
@@ -679,10 +658,8 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
           paid_by_user_id: paid_by_user_id || monthlyDue.userId
         }
       });
-      console.log(`✅ Fallback ile ${fallbackUserIds.length} kişi güncellendi`);
     } else {
       // En son fallback: sadece ödemeyi yapan kişi
-      console.log(`⚠️ Aynı dairede başka kişi bulunamadı, sadece bu kişi PAID işaretleniyor...`);
       updatedDues = await prisma.monthlyDues.updateMany({
         where: {
           userId: monthlyDue.userId,
@@ -701,7 +678,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
     }
   } else {
     // Fallback: sadece ödemeyi yapan kişiyi PAID işaretle
-    console.log(`⚠️ block_id ve apartment_no yok, sadece bu kişi PAID işaretleniyor...`);
     updatedDues = await prisma.monthlyDues.updateMany({
       where: {
         userId: monthlyDue.userId,
@@ -719,7 +695,6 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
     });
   }
 
-  console.log(`✅ Daire bazında ödeme: ${updatedDues.count} kişi için PAID işaretlendi`);
 
   // Güncellenmiş kaydı geri döndür
   const updated = await prisma.monthlyDues.findUnique({

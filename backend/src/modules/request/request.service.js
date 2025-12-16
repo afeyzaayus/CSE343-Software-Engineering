@@ -292,7 +292,6 @@ class ComplaintsService {
 
       return this.formatComplaint(complaint);
     } catch (error) {
-      console.error('Update complaint status error:', error);
       // Database enum hatasını yakala
       if (error.message && error.message.includes('Status')) {
         throw new Error('Durum değeri geçersiz. Lütfen: PENDING, IN_PROGRESS, RESOLVED, CANCELLED veya REJECTED kullanın.');

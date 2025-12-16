@@ -39,7 +39,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Get all complaints error:', error);
       res.status(500).json({
         success: false,
         error: 'Şikayetler getirilemedi',
@@ -73,7 +72,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Get user complaints error:', error);
       res.status(500).json({
         success: false,
         error: 'Kullanıcı şikayetleri getirilemedi',
@@ -98,7 +96,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Get complaint by ID error:', error);
       
       if (error.message === 'Şikayet bulunamadı') {
         return res.status(404).json({
@@ -148,7 +145,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Create complaint error:', error);
       
       if (error.message === 'Bu site için şikayet oluşturamazsınız') {
         return res.status(403).json({
@@ -199,7 +195,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Update complaint status error:', error);
 
       if (error.message === 'Şikayet bulunamadı') {
         return res.status(404).json({
@@ -240,7 +235,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Delete complaint error:', error);
 
       if (error.message === 'Şikayet bulunamadı') {
         return res.status(404).json({
@@ -273,7 +267,6 @@ class ComplaintsController {
       });
 
     } catch (error) {
-      console.error('Get complaint stats error:', error);
       res.status(500).json({
         success: false,
         error: 'İstatistikler getirilemedi',

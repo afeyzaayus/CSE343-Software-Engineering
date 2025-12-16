@@ -16,19 +16,8 @@ export async function createPayment(req, res) {
   try {
     const { userId, siteId, amount, payment_date, payment_method, description } = req.body;
 
-    // Debug: Gelen veriyi logla
-    console.log('📥 createPayment - Gelen body:', req.body);
-    console.log('📥 userId:', userId, 'siteId:', siteId, 'amount:', amount, 'payment_date:', payment_date, 'payment_method:', payment_method);
-
     // Validasyon
     if (!userId || !siteId || !amount || !payment_date || !payment_method) {
-      console.error('❌ Validasyon hatası - Eksik alanlar:', {
-        userId: !!userId,
-        siteId: !!siteId,
-        amount: !!amount,
-        payment_date: !!payment_date,
-        payment_method: !!payment_method
-      });
       return res.status(400).json({
         success: false,
         message: 'Kullanıcı ID, Site ID, tutar, ödeme tarihi ve ödeme yöntemi zorunludur.'
@@ -58,7 +47,6 @@ export async function createPayment(req, res) {
       data: payment
     });
   } catch (error) {
-    console.error('Ödeme oluşturma hatası:', error);
 
     if (error.message.startsWith('AUTH_ERROR')) {
       return res.status(403).json({
@@ -80,7 +68,6 @@ export async function getPaymentsBySite(req, res) {
     const { siteId } = req.params;
     
     // Debug: siteId'nin değerini ve tipini kontrol et
-    console.log('getPaymentsBySite - siteId:', siteId, 'type:', typeof siteId);
     
     // siteId validasyonu
     if (!siteId) {
@@ -104,7 +91,6 @@ export async function getPaymentsBySite(req, res) {
       data: payments
     });
   } catch (error) {
-    console.error('Ödemeleri getirme hatası:', error);
 
     if (error.message.startsWith('VALIDATION_ERROR')) {
       return res.status(400).json({
@@ -132,7 +118,6 @@ export async function getPaymentById(req, res) {
       data: payment
     });
   } catch (error) {
-    console.error('Ödeme detayı hatası:', error);
 
     if (error.message.startsWith('NOT_FOUND')) {
       return res.status(404).json({
@@ -160,7 +145,6 @@ export async function getUserPayments(req, res) {
       data: payments
     });
   } catch (error) {
-    console.error('Kullanıcı ödemeleri hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Kullanıcı ödemeleri getirilirken bir hata oluştu.'
@@ -184,7 +168,6 @@ export async function getPaymentStats(req, res) {
       data: stats
     });
   } catch (error) {
-    console.error('Ödeme istatistikleri hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'İstatistikler getirilirken bir hata oluştu.'
@@ -197,18 +180,15 @@ export async function getResidentsBySite(req, res) {
   try {
     const { siteId } = req.params;
     
-    console.log('🏠 getResidentsBySite - siteId:', siteId, 'type:', typeof siteId);
 
     const residents = await getResidentsBySiteService(siteId);
     
-    console.log('✅ Sakinler bulundu - Toplam:', residents.length);
 
     return res.status(200).json({
       success: true,
       data: residents
     });
   } catch (error) {
-    console.error('❌ Site sakinleri hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Site sakinleri getirilirken bir hata oluştu: ' + error.message
@@ -236,7 +216,6 @@ export async function getMonthlyDuesBySite(req, res) {
       data: monthlyDues
     });
   } catch (error) {
-    console.error('❌ Aylık aidatları getirme hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Aylık aidatları getirirken bir hata oluştu: ' + error.message
@@ -264,7 +243,6 @@ export async function createMonthlyDuesForAllResidents(req, res) {
       data: result
     });
   } catch (error) {
-    console.error('❌ Aylık aidatları oluşturma hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Aylık aidatları oluştururken bir hata oluştu: ' + error.message
@@ -292,7 +270,6 @@ export async function recordMonthlyPayment(req, res) {
       data: updated
     });
   } catch (error) {
-    console.error('❌ Ödeme kaydetme hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Ödeme kaydedilirken bir hata oluştu: ' + error.message
@@ -312,7 +289,6 @@ export async function getOverdueStats(req, res) {
       data: stats
     });
   } catch (error) {
-    console.error('❌ Overdue istatistikleri hatası:', error);
     return res.status(500).json({
       success: false,
       message: 'Overdue istatistikleri getirilirken bir hata oluştu: ' + error.message
