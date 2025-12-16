@@ -25,7 +25,7 @@ router.use(verifyAdminToken);
 router.get('/:siteId/announcements', getAnnouncementsBySite);
 
 /**
- * @route   POST /api/sites/:siteId/announcements
+ * @route   POST /api/:siteId/announcements
  * @desc    Yeni duyuru oluştur
  * @access  Private (SITE_MANAGER)
  * @body    { title: string, content: string, start_date: date, end_date: date, priority: string }

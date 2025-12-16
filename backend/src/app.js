@@ -44,11 +44,22 @@ const PORT = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+/*
 // frontend klasörünün public yolu
 const frontendPublicPath = path.join(__dirname, '..', '..', 'frontend', 'public');
 
 // Tüm frontend dosyalarını servis et
 app.use(express.static(frontendPublicPath));
+
+// Eklenen: Çoklu HTML sayfalarını doğrudan serve etme
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(frontendPublicPath, 'admin-dashboard.html'));
+});
+
+app.get('/master/dashboard', (req, res) => {
+  res.sendFile(path.join(frontendPublicPath, 'master', 'dashboard.html'));
+});
 
 // Dashboard route
 app.get('/dashboard', (req, res) => {
@@ -59,6 +70,13 @@ app.get('/dashboard', (req, res) => {
 app.get('/login', (req, res) => {
     res.sendFile(path.join(frontendPublicPath, 'login.html'));
 });
+
+// Genel fallback (ör. index / login)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(frontendPublicPath, 'login.html'));
+});
+*/
+
 // JSON body parser
 app.use(express.json());
 
@@ -158,14 +176,13 @@ app.use((err, req, res, next) => {
 // SUNUCUYU BAŞLAT
 // ==========================================================
 
-app.listen(PORT, () => {
-  console.log('='.repeat(50));
-  console.log(`✅ Server is running on port ${PORT}`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 Base URL: http://localhost:${PORT}`);
-  console.log(`💾 Database: ${prisma ? 'Connected' : 'Disconnected'}`);
-  console.log('='.repeat(50));
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log('='.repeat(50));
+    console.log(`✅ Server is running on port ${PORT}`);
+    console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
+  });
+}
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
