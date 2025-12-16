@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInfo = document.getElementById('dashboard-user-info');
     if (userInfo && currentUser) {
         userInfo.innerHTML = `
-            <div class="user-avatar">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
+            <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
                 <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>

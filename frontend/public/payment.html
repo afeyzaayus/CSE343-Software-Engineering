@@ -10,6 +10,331 @@
     <link rel="stylesheet" href="css/table.css">      
     <link rel="stylesheet" href="css/complaint.css">  
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Aylık Kutular */
+        .monthly-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .monthly-box {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .monthly-box:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .monthly-box.active {
+            border-color: #4CAF50;
+            background: #f0f8f0;
+        }
+
+        .monthly-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .monthly-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .monthly-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value.paid {
+            color: #4CAF50;
+        }
+
+        .stat-value.unpaid {
+            color: #ff9800;
+        }
+
+        .stat-value.overdue {
+            color: #f44336;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 10px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: #1976D2;
+        }
+
+        /* Payment Table Stilleri */
+        .payment-tables-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .table-section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2196F3;
+            color: #333;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-badge.paid {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        .status-badge.unpaid {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+
+        .status-badge.overdue {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        .dues-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .summary-card.paid {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .summary-card.unpaid {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .summary-card.overdue {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .summary-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .summary-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .month-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .month-selector select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .create-monthly-btn {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .create-monthly-btn:hover {
+            background: #45a049;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Modal Stilleri */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1976D2;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -24,7 +349,6 @@
                 <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
                 <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
                 <li><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
-                <li><a href="settings.html"><i class="fas fa-cog"></i> Ayarlar</a></li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
@@ -32,67 +356,123 @@
         <div class="main-content">
             <div class="header">
                 <h2 id="dashboard-title">Aidat Takibi</h2>
-                <div class="user-info">
-                    <img src="https://randomuser.me/api/portraits/men/75.jpg" alt="Kullanıcı">
-                    <span>Ahmet Yılmaz</span>
-                </div>
+                <div class="user-info" id="dashboard-user-info"></div>
             </div>
             
             <div class="dues-content">
-                <div class="table-container" id="paid-section">
-                    <div class="table-header">
-                        <div class="table-title">Aidatını Ödeyenler</div>
-                        <div class="table-subtitle">Ekim 2023 - 36 Daire</div>
-                    </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Daire No</th>
-                                <th>Daire Sahibi</th>
-                                <th>Ödeme Tarihi</th>
-                                <th>Tutar</th>
-                                <th>Ödeme Tipi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="5" style="text-align: center;">Yükleniyor...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Ay Seçimi -->
+                <div class="month-selector">
+                    <label for="monthSelect">Ay Seçin:</label>
+                    <select id="monthSelect">
+                        <option value="1">Ocak</option>
+                        <option value="2">Şubat</option>
+                        <option value="3">Mart</option>
+                        <option value="4">Nisan</option>
+                        <option value="5">Mayıs</option>
+                        <option value="6">Haziran</option>
+                        <option value="7">Temmuz</option>
+                        <option value="8">Ağustos</option>
+                        <option value="9">Eylül</option>
+                        <option value="10">Ekim</option>
+                        <option value="11">Kasım</option>
+                        <option value="12">Aralık</option>
+                    </select>
+
+                    <label for="yearSelect">Yıl Seçin:</label>
+                    <select id="yearSelect"></select>
+
+                    <button class="create-monthly-btn" id="createMonthlyBtn">
+                        <i class="fas fa-plus"></i> Aidatları Oluştur
+                    </button>
                 </div>
 
-                <div class="table-container" id="unpaid-section">
-                    <div class="table-header">
-                        <div class="table-title">Aidatını Ödemeyenler</div>
-                        <div class="table-subtitle">Ekim 2023 - 12 Daire</div>
-                        <div>
-                            <button class="btn btn-primary" id="addPaymentBtn">
-                                <i class="fas fa-plus"></i> Ödeme Ekle
-                            </button>
+                <!-- Özet Kartları -->
+                <div class="dues-summary" id="dueSummary"></div>
+
+                <!-- Aylık Kutular -->
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Aylık Durum</h3>
+                <div class="monthly-container" id="monthlyContainer"></div>
+
+                <!-- Ödeme Tabloları -->
+                <h3 style="margin-top: 30px; margin-bottom: 15px;">Detaylı Görünüm</h3>
+                <div class="payment-tables-container">
+                    <!-- Ödenmiş Aidatlar -->
+                    <div id="paid-section" style="margin-bottom: 30px;">
+                        <div class="table-section-title">
+                            <i class="fas fa-check-circle"></i> Ödenmiş Aidatlar
                         </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Daire No</th>
+                                    <th>Daire Sahibi</th>
+                                    <th>Ödeme Tarihi</th>
+                                    <th>Tutar</th>
+                                    <th>Ödeme Yöntemi</th>
+                                    <th>Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Daire No</th>
-                                <th>Daire Sahibi</th>
-                                <th>Telefon</th>
-                                <th>Son Ödeme Tarihi</th>
-                                <th>Gecikme (Gün)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td colspan="5" style="text-align: center;">Yükleniyor...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                    <!-- Ödenmemiş Aidatlar -->
+                    <div id="unpaid-section">
+                        <div class="table-section-title">
+                            <i class="fas fa-clock"></i> Ödenmemiş Aidatlar
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Daire No</th>
+                                    <th>Daire Sahibi</th>
+                                    <th>Telefon</th>
+                                    <th>Son Ödeme Tarihi</th>
+                                    <th>Durum</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Vadesi Geçmiş Aidatlar -->
+                    <div id="overdue-section" style="margin-top: 30px;">
+                        <div class="table-section-title">
+                            <i class="fas fa-exclamation-triangle"></i> Vadesi Geçmiş Aidatlar (Overdue)
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Daire No</th>
+                                    <th>Daire Sahibi</th>
+                                    <th>Telefon</th>
+                                    <th>Son Ödeme Tarihi</th>
+                                    <th>Gecikme (Gün)</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" style="text-align: center;">Yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Ödeme Ekle Modal -->
     <div class="modal" id="addPaymentModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -104,26 +484,77 @@
                     <label for="paymentApartment">Daire</label>
                     <select id="paymentApartment" required>
                         <option value="">Daire seçin</option>
-                        <option value="B-205">B-205 - Ayşe Kaya</option>
-                        <option value="A-205">A-205 - Fatma Öztürk</option>
-                        <option value="E-102">E-102 - Ahmet Yılmaz</option>
-                        <option value="C-208">C-208 - Zeynep Korkmaz</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="paymentAmount">Tutar (TL)</label>
-                    <input type="number" id="paymentAmount" value="250" required>
+                    <input type="number" id="paymentAmount" step="0.01" required>
                 </div>
                 <div class="form-group">
-                    <label for="paymentDate">Ödeme Tarihi</label>
-                    <input type="date" id="paymentDate" required>
+                    <label for="paymentMethod">Ödeme Yöntemi</label>
+                    <select id="paymentMethod" required>
+                        <option value="">Ödeme yöntemi seçin</option>
+                        <option value="CASH">Nakit</option>
+                        <option value="CREDIT_CARD">Kredi Kartı</option>
+                        <option value="BANK_TRANSFER">Banka Havalesi</option>
+                        <option value="CHECK">Çek</option>
+                        <option value="OTHER">Diğer</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Ödemeyi Kaydet</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Aidatları Oluştur Modal -->
+    <div class="modal" id="createMonthlyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Aidatları Oluştur</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="createMonthlyForm">
+                <div class="form-group">
+                    <label for="createMonth">Ay</label>
+                    <input type="number" id="createMonth" min="1" max="12" required>
                 </div>
                 <div class="form-group">
-                    <label for="paymentType">Ödeme Tipi</label>
-                    <select id="paymentType" required>
-                        <option value="nakit">Nakit</option>
-                        <option value="banka">Banka Havalesi</option>
-                        <option value="kredi">Kredi Kartı</option>
+                    <label for="createYear">Yıl</label>
+                    <input type="number" id="createYear" min="2020" required>
+                </div>
+                <div class="form-group">
+                    <label for="createAmount">Aidatı Tutarı (TL)</label>
+                    <input type="number" id="createAmount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="createDueDate">Ödeme Son Tarihi</label>
+                    <input type="date" id="createDueDate" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Aidatları Oluştur</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ödemeyi Kaydet Modal -->
+    <div class="modal" id="recordPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Ödemeyi Kaydet</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <form id="recordPaymentForm">
+                <div class="form-group">
+                    <label id="residentLabel">Daire:</label>
+                </div>
+                <div class="form-group">
+                    <label for="recordPaymentMethod">Ödeme Yöntemi</label>
+                    <select id="recordPaymentMethod" required>
+                        <option value="">Ödeme yöntemi seçin</option>
+                        <option value="CASH">Nakit</option>
+                        <option value="CREDIT_CARD">Kredi Kartı</option>
+                        <option value="BANK_TRANSFER">Banka Havalesi</option>
+                        <option value="CHECK">Çek</option>
+                        <option value="OTHER">Diğer</option>
                     </select>
                 </div>
                 <button type="submit" class="btn btn-primary">Ödemeyi Kaydet</button>

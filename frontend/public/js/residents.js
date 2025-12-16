@@ -2,6 +2,7 @@
 const API_BASE_URL = 'http://localhost:3000/api/residence';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id;
+const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const ITEMS_PER_PAGE = 5;
 
 // Keep track of expanded blocks and shown items
@@ -823,6 +824,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const pageTitle = document.getElementById('page-title');
     if (pageTitle && selectedSite?.site_name) {
         pageTitle.textContent = `Daire Sahipleri - ${selectedSite.site_name}`;
+    }
+
+    // Sağ üst köşe admin bilgisi
+    const userInfo = document.querySelector('.user-info');
+    if (userInfo && currentUser) {
+        userInfo.innerHTML = `
+            <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
+            <div style="margin-left: 10px;">
+                <div style="font-weight: 600;">${currentUser.full_name}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+            </div>
+        `;
     }
 
     // Search event listeners

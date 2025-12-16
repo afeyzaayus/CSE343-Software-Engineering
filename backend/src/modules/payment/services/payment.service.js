@@ -376,3 +376,230 @@ export async function getResidentsBySiteService(siteIdParam) {
     apartment_no: r.apartment_no || '-'
   }));
 }
+
+// ===== AYLIK AIDATLARI GETIRME (Ay ve yıla göre) =====
+export async function getMonthlyDuesBySiteService(siteIdParam, month, year) {
+  // siteId validasyonu ve dönüştürme
+  let siteId;
+  
+  if (typeof siteIdParam === 'string' && isNaN(parseInt(siteIdParam))) {
+    const site = await prisma.Site.findUnique({
+      where: { site_id: siteIdParam },
+      select: { id: true }
+    });
+    if (!site) throw new Error('Site bulunamadı: ' + siteIdParam);
+    siteId = site.id;
+  } else {
+    siteId = parseInt(siteIdParam);
+    if (isNaN(siteId)) throw new Error('siteId geçersiz: ' + siteIdParam);
+  }
+
+  const monthlyDues = await prisma.monthlyDues.findMany({
+    where: {
+      siteId: siteId,
+      month: parseInt(month),
+      year: parseInt(year),
+      deleted_at: null
+    },
+    include: {
+      users: {
+        select: {
+          id: true,
+          full_name: true,
+          phone_number: true,
+          apartment_no: true,
+          blocks: {
+            select: {
+              block_name: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: [
+      { users: { apartment_no: 'asc' } }
+    ]
+  });
+
+  return monthlyDues.map(due => ({
+    id: due.id,
+    userId: due.userId,
+    siteId: due.siteId,
+    month: due.month,
+    year: due.year,
+    amount: due.amount,
+    due_date: due.due_date,
+    payment_status: due.payment_status,
+    paid_date: due.paid_date,
+    payment_method: due.payment_method,
+    user: {
+      id: due.users.id,
+      full_name: due.users.full_name,
+      phone_number: due.users.phone_number,
+      block_no: due.users.blocks?.block_name || '-',
+      apartment_no: due.users.apartment_no || '-'
+    }
+  }));
+}
+
+// ===== AYLIK AIDATLARI OLUŞTURMA (Tüm sakinler için) =====
+export async function createMonthlyDuesForAllResidentsService(siteIdParam, month, year, amount, due_date) {
+  // siteId validasyonu
+  let siteId;
+  
+  if (typeof siteIdParam === 'string' && isNaN(parseInt(siteIdParam))) {
+    const site = await prisma.Site.findUnique({
+      where: { site_id: siteIdParam },
+      select: { id: true }
+    });
+    if (!site) throw new Error('Site bulunamadı: ' + siteIdParam);
+    siteId = site.id;
+  } else {
+    siteId = parseInt(siteIdParam);
+    if (isNaN(siteId)) throw new Error('siteId geçersiz: ' + siteIdParam);
+  }
+
+  // Tüm sakinleri getir
+  const residents = await prisma.User.findMany({
+    where: {
+      siteId: siteId,
+      deleted_at: null,
+      account_status: 'ACTIVE'
+    },
+    select: { id: true }
+  });
+
+  if (residents.length === 0) {
+    throw new Error('Bu siteye ait aktif sakin bulunamadı.');
+  }
+
+  // Her sakin için aidatı oluştur
+  const created = [];
+  const dueDateObj = new Date(due_date);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Saat bilgisini sıfırla (günü karşılaştır)
+  dueDateObj.setHours(0, 0, 0, 0);
+  
+  // Due date bugünden önce mi?
+  const isOverdue = dueDateObj < today;
+  const initialStatus = isOverdue ? 'OVERDUE' : 'UNPAID';
+  
+  for (const resident of residents) {
+    try {
+      const due = await prisma.monthlyDues.upsert({
+        where: {
+          userId_siteId_month_year: {
+            userId: resident.id,
+            siteId: siteId,
+            month: parseInt(month),
+            year: parseInt(year)
+          }
+        },
+        create: {
+          userId: resident.id,
+          siteId: siteId,
+          month: parseInt(month),
+          year: parseInt(year),
+          amount: parseFloat(amount),
+          due_date: new Date(due_date),
+          payment_status: initialStatus
+        },
+        update: {
+          amount: parseFloat(amount),
+          due_date: new Date(due_date),
+          payment_status: initialStatus
+        }
+      });
+      created.push(due);
+    } catch (e) {
+      console.error(`Sakin ${resident.id} için aidatı oluşturanamadı:`, e.message);
+    }
+  }
+
+  return {
+    total: residents.length,
+    created: created.length,
+    message: `${created.length}/${residents.length} sakin için ${month}/${year} aidatı oluşturuldu.`
+  };
+}
+
+// ===== AYLIK ÖDEME KAYDETME (UNPAID -> PAID) =====
+export async function recordMonthlyPaymentService(monthlyDueId, payment_method) {
+  const monthlyDue = await prisma.monthlyDues.findUnique({
+    where: { id: parseInt(monthlyDueId) }
+  });
+
+  if (!monthlyDue) {
+    throw new Error('Aidatı kaydı bulunamadı.');
+  }
+
+  // Önceki ayları OVERDUE olarak işaretle
+  const previousMonth = monthlyDue.month - 1;
+  const previousYear = previousMonth === 0 ? monthlyDue.year - 1 : monthlyDue.year;
+  const previousMonthValue = previousMonth === 0 ? 12 : previousMonth;
+
+  await prisma.monthlyDues.updateMany({
+    where: {
+      userId: monthlyDue.userId,
+      siteId: monthlyDue.siteId,
+      month: previousMonthValue,
+      year: previousYear,
+      payment_status: 'UNPAID'
+    },
+    data: {
+      payment_status: 'OVERDUE'
+    }
+  });
+
+  // Mevcut ödemeyi PAID olarak işaretle
+  const updated = await prisma.monthlyDues.update({
+    where: { id: parseInt(monthlyDueId) },
+    data: {
+      payment_status: 'PAID',
+      paid_date: new Date(),
+      payment_method: normalizePaymentMethod(payment_method)
+    },
+    include: {
+      users: {
+        select: {
+          full_name: true,
+          apartment_no: true
+        }
+      }
+    }
+  });
+
+  return updated;
+}
+
+// ===== OVERDUE İSTATİSTİKLERİ =====
+export async function getOverdueStatsService(siteIdParam) {
+  let siteId;
+  
+  if (typeof siteIdParam === 'string' && isNaN(parseInt(siteIdParam))) {
+    const site = await prisma.Site.findUnique({
+      where: { site_id: siteIdParam },
+      select: { id: true }
+    });
+    if (!site) throw new Error('Site bulunamadı: ' + siteIdParam);
+    siteId = site.id;
+  } else {
+    siteId = parseInt(siteIdParam);
+    if (isNaN(siteId)) throw new Error('siteId geçersiz: ' + siteIdParam);
+  }
+
+  const stats = await prisma.monthlyDues.groupBy({
+    by: ['payment_status'],
+    where: { siteId: siteId, deleted_at: null },
+    _count: { id: true },
+    _sum: { amount: true }
+  });
+
+  return stats.reduce((acc, stat) => {
+    acc[stat.payment_status] = {
+      count: stat._count.id,
+      total: stat._sum.amount || 0
+    };
+    return acc;
+  }, {});
+}

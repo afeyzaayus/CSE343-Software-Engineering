@@ -33,6 +33,7 @@ model User {
   reset_code_expiry       DateTime?
   complaints              complaints[]
   payments                payments[]
+  monthlyDues             monthlyDues[] @relation("monthlyDues")
   blocks                  blocks?       @relation(fields: [block_id], references: [id])
   site                    Site          @relation(fields: [siteId], references: [id])
 
@@ -93,6 +94,7 @@ model Site {
   companies            companies?             @relation(fields: [company_id], references: [id])
   socialAmenities      SocialAmenity[]
   users                User[]
+  monthlyDues          monthlyDues[]          @relation("monthlyDues")
 
   @@map("sites")
   @@schema("public")
@@ -222,16 +224,41 @@ model invitations {
   @@schema("public")
 }
 
+model monthlyDues {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  siteId         Int
+  month          Int            // 1-12
+  year           Int
+  amount         Float          // Aidatı tutarı
+  due_date       DateTime
+  payment_status PaymentStatus  @default(UNPAID)  // UNPAID, PAID, OVERDUE
+  paid_date      DateTime?
+  payment_method PaymentMethod?
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+  deleted_at     DateTime?
+  
+  users          User           @relation("monthlyDues", fields: [userId], references: [id], onDelete: Cascade)
+  sites          Site           @relation("monthlyDues", fields: [siteId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, siteId, month, year])
+  @@schema("public")
+}
+
 model payments {
-  id             Int           @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   amount         Float
   payment_date   DateTime
   payment_method PaymentMethod
   description    String?
-  created_at     DateTime      @default(now())
+  created_at     DateTime       @default(now())
   userId         Int
   siteId         Int
-  users          User          @relation(fields: [userId], references: [id])
+  payment_status PaymentStatus? @default(UNPAID)
+  payment_type   PaymentType?   @default(MONTHLY_DUES)
+  due_date       DateTime?      @db.Timestamp(6)
+  users          User           @relation(fields: [userId], references: [id])
 
   @@schema("public")
 }
@@ -375,6 +402,23 @@ enum AdminComplaintCategory {
   REQUEST
   FEATURE_REQUEST
   GENERAL
+  OTHER
+
+  @@schema("public")
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID
+  OVERDUE
+
+  @@schema("public")
+}
+
+enum PaymentType {
+  MONTHLY_DUES
+  EXTRA_FEE
+  PENALTY
   OTHER
 
   @@schema("public")
