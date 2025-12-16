@@ -10,6 +10,7 @@ router.get('/sites/:siteId/blocks', residenceController.getBlocks);
 router.post('/sites/:siteId/blocks', residenceController.createBlock);
 router.put('/sites/:siteId/blocks/:blockId', residenceController.updateBlock);
 router.delete('/sites/:siteId/blocks/:blockId', residenceController.deleteBlock);
+router.delete('/sites/:siteId/apartments/:blockId/:apartmentNo', residenceController.deleteApartment);
 router.get('/sites/:siteId/block-stats', residenceController.getBlockStats);
 
 // Residents

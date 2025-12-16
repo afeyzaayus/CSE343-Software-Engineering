@@ -155,7 +155,7 @@ export async function getSites(req, res) {
     console.log('📋 Site listesi isteniyor:', {
       adminId,
       accountType: req.admin.account_type,
-      companyId: req.admin.companyId,
+      company_id: req.admin.company_id,
       filters: { status, search }
     });
 

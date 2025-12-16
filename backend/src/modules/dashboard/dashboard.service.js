@@ -22,102 +22,94 @@ export async function getDashboardStatisticsService(siteId) {
     throw new Error('SITE_ERROR: Site bulunamadı.');
   }
 
-  // 2. DAİRE SAYISI (User tablosundan) - integer id ile
-  const totalApartments = await prisma.user.count({
-    where: { siteId: site.id }
-  });
-
-  // 2.5. BLOK SAYISI VE TOPLAM KAPASİTE - blocks tablosundan
-  const totalBlocks = await prisma.blocks.count({
-    where: { site_id: site.id }
-  });
-
-  // Blokların toplam daire kapasitesini hesapla
-  const blocksWithCapacity = await prisma.blocks.findMany({
-    where: { site_id: site.id },
-    select: { apartment_count: true }
-  });
-
-  const totalCapacity = blocksWithCapacity.reduce((sum, block) => sum + (block.apartment_count || 0), 0);
-
-  // 3. AKTİF DUYURULAR - integer id ile
   const now = new Date();
-  const activeAnnouncementsCount = await prisma.announcements.count({
-    where: {
-      siteId: site.id,
-      start_date: { lte: now },
-      end_date: { gte: now }
-    }
-  });
-
-  // 4. SON 3 DUYURU - integer id ile
-  const recentAnnouncements = await prisma.announcements.findMany({
-    where: { siteId: site.id },
-    orderBy: { created_at: 'desc' },
-    take: 3,
-    select: {
-      id: true,
-      title: true,
-      content: true,
-      start_date: true,
-      end_date: true,
-      created_at: true
-    }
-  });
-
-  // 5. TOPLAM DUYURU SAYISI - integer id ile
-  const totalAnnouncements = await prisma.announcements.count({
-    where: { siteId: site.id }
-  });
-
-  // 5.5. ŞİKAYET/TALEP SAYILARI - integer id ile
-  const totalComplaints = await prisma.complaints.count({
-    where: { siteId: site.id }
-  });
-
-  const pendingComplaints = await prisma.complaints.count({
-    where: { 
-      siteId: site.id,
-      status: 'PENDING'
-    }
-  });
-
-  const inProgressComplaints = await prisma.complaints.count({
-    where: { 
-      siteId: site.id,
-      status: 'IN_PROGRESS'
-    }
-  });
-
-  const resolvedComplaints = await prisma.complaints.count({
-    where: { 
-      siteId: site.id,
-      status: 'RESOLVED'
-    }
-  });
-
-  // 6. AİDAT ÖDEME ORANI HESAPLA
-  // Bu ay ödeme yapan kişi sayısını bul
-  const currentMonth = now.getMonth();
+  const currentMonth = now.getMonth() + 1; // JS getMonth() 0-11 döndürür, bizde 1-12 kullanılıyor
   const currentYear = now.getFullYear();
-  
-  const thisMonthPayments = await prisma.payments.findMany({
-    where: {
-      siteId: site.id,
-      payment_date: {
-        gte: new Date(currentYear, currentMonth, 1),
-        lt: new Date(currentYear, currentMonth + 1, 1)
-      }
-    },
-    select: { userId: true }
-  });
 
-  // Ödeme yapan unique kullanıcı sayısı
-  const paidUserIds = new Set(thisMonthPayments.map(p => p.userId));
-  const paidCount = paidUserIds.size;
+  // PARALEL SORGULAR - Performans optimizasyonu
+  const [siteBlocks, activeAnnouncementsCount, recentAnnouncements, totalAnnouncements, complaintStats, siteUsers, thisMonthDues] = await Promise.all([
+    // Blokları getir
+    prisma.blocks.findMany({
+      where: { site_id: site.id },
+      select: { id: true, apartment_count: true, block_name: true }
+    }),
+    // Aktif duyuruları say
+    prisma.announcements.count({
+      where: {
+        siteId: site.id,
+        start_date: { lte: now },
+        end_date: { gte: now }
+      }
+    }),
+    // Son 3 duyuruyu getir
+    prisma.announcements.findMany({
+      where: { siteId: site.id },
+      orderBy: { created_at: 'desc' },
+      take: 3,
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        start_date: true,
+        end_date: true,
+        created_at: true
+      }
+    }),
+    // Toplam duyuru sayısı
+    prisma.announcements.count({
+      where: { siteId: site.id }
+    }),
+    // Şikayet/talep sayıları (groupBy ile)
+    prisma.complaints.groupBy({
+      by: ['status'],
+      where: { siteId: site.id },
+      _count: { id: true }
+    }),
+    // Site sakinleri (dolu daireleri hesaplamak için)
+    prisma.user.findMany({
+      where: {
+        siteId: site.id,
+        deleted_at: null,
+        apartment_no: { not: null }
+      },
+      select: { apartment_no: true, block_id: true }
+    }),
+    // Bu ay ödenen aidatlar
+    prisma.monthlyDues.findMany({
+      where: {
+        siteId: site.id,
+        month: currentMonth,
+        year: currentYear,
+        deleted_at: null
+      },
+      select: { payment_status: true, apartmentId: true }
+    })
+  ]);
+
+  // Sonuçları işle
+  const totalBlocks = siteBlocks.length;
+  const totalApartments = siteBlocks.reduce((sum, block) => sum + (block.apartment_count || 0), 0);
+
+  // Dolu daireleri hesapla (unique apartment_no sayısı)
+  const occupiedApartments = new Set(siteUsers.map(u => `${u.block_id}-${u.apartment_no}`)).size;
+
+  // Şikayet istatistikleri
+  const totalComplaints = complaintStats.reduce((sum, stat) => sum + stat._count.id, 0);
+  const pendingComplaints = complaintStats.find(s => s.status === 'PENDING')?._count.id || 0;
+  const inProgressComplaints = complaintStats.find(s => s.status === 'IN_PROGRESS')?._count.id || 0;
+  const resolvedComplaints = complaintStats.find(s => s.status === 'RESOLVED')?._count.id || 0;
+
+  // Ödenen aidatlar (DAIRE BAZINDA - kişi bazında değil)
+  // Ödenen daireleri unique apartmentId'ler ile say
+  const paidApartments = new Set(
+    thisMonthDues
+      .filter(d => d.payment_status === 'PAID' && d.apartmentId)
+      .map(d => d.apartmentId)
+  );
+  const paidCount = paidApartments.size;
 
   // 7. İSTATİSTİKLERİ HESAPLA
-  const averageApartmentsPerBlock = totalBlocks > 0 ? Math.round(totalCapacity / totalBlocks) : 0;
+  const averageApartmentsPerBlock = totalBlocks > 0 ? Math.round(totalApartments / totalBlocks) : 0;
 
   const statistics = {
     // Blok Sayısı
@@ -134,18 +126,18 @@ export async function getDashboardStatisticsService(siteId) {
 
     // Daire Doluluk Oranı
     occupancy: {
-      total: totalCapacity, // Toplam kapasite
-      occupied: totalApartments, // Dolu daire sayısı
-      percentage: totalCapacity > 0 ? Math.round((totalApartments / totalCapacity) * 100) : 0,
-      display: `${totalApartments}/${totalCapacity} daire`
+      total: totalApartments, // Tüm bloklardaki toplam daire sayısı
+      occupied: occupiedApartments, // Dolu daire sayısı
+      percentage: totalApartments > 0 ? Math.round((occupiedApartments / totalApartments) * 100) : 0,
+      display: `${occupiedApartments}/${totalApartments} daire`
     },
 
     // Aidat Ödeme Oranı - Güncellendi
     dues: {
       paid_count: paidCount,
-      total_count: totalApartments,
-      percentage: totalApartments > 0 ? Math.round((paidCount / totalApartments) * 100) : 0,
-      display: `${paidCount}/${totalApartments} ödendi`
+      total_count: occupiedApartments,
+      percentage: occupiedApartments > 0 ? Math.round((paidCount / occupiedApartments) * 100) : 0,
+      display: `${paidCount}/${occupiedApartments} ödendi`
     },
 
     // Aktif Duyurular

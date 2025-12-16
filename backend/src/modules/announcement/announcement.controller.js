@@ -52,7 +52,6 @@ export async function createAnnouncement(req, res) {
       data: announcement
     });
   } catch (error) {
-    console.error('Create announcement error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({
@@ -70,7 +69,6 @@ export async function createAnnouncement(req, res) {
 
     // Prisma unique constraint hatası
     if (error.code === 'P2002') {
-      console.error('Unique constraint error details:', error.meta);
       return res.status(400).json({
         success: false,
         message: `Benzersiz kısıt hatası: ${error.meta?.target?.join(', ') || 'bilinmeyen alan'}. Lütfen ID sequence'ini kontrol edin.`
@@ -109,7 +107,6 @@ export async function getAnnouncementsBySite(req, res) {
       data: announcements
     });
   } catch (error) {
-    console.error('Get announcements by site error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({
@@ -150,7 +147,6 @@ export async function getAnnouncementById(req, res) {
       data: announcement
     });
   } catch (error) {
-    console.error('Get announcement by id error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({
@@ -229,7 +225,6 @@ export async function updateAnnouncement(req, res) {
       data: announcement
     });
   } catch (error) {
-    console.error('Update announcement error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({
@@ -284,7 +279,6 @@ export async function deleteAnnouncement(req, res) {
       message: result.message
     });
   } catch (error) {
-    console.error('Delete announcement error:', error);
 
     if (error.message.startsWith('SITE_ERROR:')) {
       return res.status(404).json({

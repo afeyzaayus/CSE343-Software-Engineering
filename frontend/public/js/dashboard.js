@@ -57,10 +57,18 @@ async function loadDashboardData() {
     
     try {
         // Dashboard istatistiklerini tek endpoint'ten çek
-        const response = await fetch(`${BASE_URL}/api/dashboard/statistics/${selectedSite.site_id}`, { 
+        const url = `${BASE_URL}/api/dashboard/statistics/${selectedSite.site_id}`;
+        console.log('📊 Dashboard URL:', url);
+        console.log('📊 Token:', token ? 'Mevcin' : 'Yok');
+        console.log('📊 Site ID:', selectedSite.site_id);
+        
+        const response = await fetch(url, { 
             headers,
             credentials: 'include'
         });
+
+        console.log('📊 Response status:', response.status);
+        console.log('📊 Response ok:', response.ok);
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -106,7 +114,12 @@ async function loadDashboardData() {
 
     } catch (err) {
         console.error('Dashboard verisi yüklenemedi:', err);
-        showError('Dashboard verileri yüklenirken bir hata oluştu.');
+        console.error('Error details:', {
+            message: err.message,
+            status: err.status,
+            response: err.response
+        });
+        showError(`Dashboard verileri yüklenirken hata oluştu: ${err.message}`);
     }
 }
 

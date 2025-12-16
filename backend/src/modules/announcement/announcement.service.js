@@ -50,14 +50,12 @@ export async function createAnnouncementService(announcementData) {
   } catch (error) {
     // Sequence hatası ise reset et
     if (error.code === 'P2002' && error.meta?.target?.includes('id')) {
-      console.warn('⚠️ ID sequence hatası detected. Resetting sequence...');
       try {
         await prisma.$executeRawUnsafe(
           `ALTER SEQUENCE public."announcements_id_seq" RESTART WITH ${(Date.now() % 1000000) + 1000}`
         );
-        console.log('✅ Sequence reset edildi');
       } catch (seqError) {
-        console.error('Sequence reset hatası:', seqError);
+        // Sequence reset hatası sessizce geçilir
       }
     }
     throw error;

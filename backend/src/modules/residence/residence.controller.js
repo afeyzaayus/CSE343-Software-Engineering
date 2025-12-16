@@ -390,6 +390,39 @@ class ResidenceController {
       });
     }
   }
+
+  // Delete an apartment
+  async deleteApartment(req, res) {
+    try {
+      const { blockId, apartmentNo } = req.params;
+      
+      console.log('🗑️  [DELETE APARTMENT] Request received:');
+      console.log('  - BlockId:', blockId);
+      console.log('  - ApartmentNo:', apartmentNo);
+      
+      if (!blockId || !apartmentNo) {
+        return res.status(400).json({
+          success: false,
+          message: 'Block ID and Apartment No are required'
+        });
+      }
+      
+      await residenceService.deleteApartment(blockId, apartmentNo);
+      
+      console.log('✅ [DELETE APARTMENT] Apartment deleted successfully');
+      
+      res.status(200).json({
+        success: true,
+        message: 'Daire ve içindeki sakinler başarıyla silindi'
+      });
+    } catch (error) {
+      console.error('❌ [DELETE APARTMENT] Error:', error.message);
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  }
 }
 
 export default new ResidenceController();

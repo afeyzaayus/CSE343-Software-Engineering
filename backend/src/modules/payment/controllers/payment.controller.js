@@ -272,10 +272,10 @@ export async function createMonthlyDuesForAllResidents(req, res) {
   }
 }
 
-// ===== AYLIK ÖDEME KAYDETME (Manuel ödeme) =====
+// ===== AYLIK ÖDEME KAYDETME (Manuel ödeme - DAIRE BAZINDA) =====
 export async function recordMonthlyPayment(req, res) {
   try {
-    const { monthlyDueId, payment_method } = req.body;
+    const { monthlyDueId, payment_method, paid_by_user_id } = req.body;
 
     if (!monthlyDueId || !payment_method) {
       return res.status(400).json({
@@ -284,11 +284,11 @@ export async function recordMonthlyPayment(req, res) {
       });
     }
 
-    const updated = await recordMonthlyPaymentService(monthlyDueId, payment_method);
+    const updated = await recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id);
 
     return res.status(200).json({
       success: true,
-      message: 'Ödeme başarıyla kaydedildi.',
+      message: 'Ödeme başarıyla kaydedildi (daire bazında tüm sakınlar işaretlendi).',
       data: updated
     });
   } catch (error) {

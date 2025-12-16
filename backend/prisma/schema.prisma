@@ -16,6 +16,7 @@ model User {
   phone_number            String        @unique
   password                String?
   apartment_no            String?
+  apartment_id            Int?
   created_at              DateTime      @default(now())
   updated_at              DateTime      @updatedAt
   siteId                  Int
@@ -25,7 +26,6 @@ model User {
   deleted_at              DateTime?
   last_login              DateTime?
   plates                  String?
-  resident_count          Int?
   resident_type           ResidentType?
   block_id                Int?
   is_password_set         Boolean       @default(false)
@@ -34,7 +34,9 @@ model User {
   complaints              complaints[]
   payments                payments[]
   monthlyDues             monthlyDues[] @relation("monthlyDues")
+  monthlyDues_paid_by     monthlyDues[] @relation("monthlyDues_paid_by")
   blocks                  blocks?       @relation(fields: [block_id], references: [id])
+  apartments              apartments?   @relation(fields: [apartment_id], references: [id])
   site                    Site          @relation(fields: [siteId], references: [id])
 
   @@map("users")
@@ -140,10 +142,29 @@ model blocks {
   deleted_at      DateTime?
   updated_at      DateTime  @default(now()) @updatedAt
   apartment_count Int?
+  resident_count  Int       @default(0)
   sites           Site      @relation(fields: [site_id], references: [id], onDelete: Cascade)
   users           User[]
+  apartments      apartments[]
 
   @@unique([site_id, block_name])
+  @@schema("public")
+}
+
+model apartments {
+  id              Int       @id @default(autoincrement())
+  apartment_no    String
+  block_id        Int
+  resident_count  Int       @default(0)
+  is_occupied     Boolean   @default(false)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @default(now()) @updatedAt
+  deleted_at      DateTime?
+  blocks          blocks    @relation(fields: [block_id], references: [id], onDelete: Cascade)
+  users           User[]
+  monthlyDues     monthlyDues[]
+
+  @@unique([block_id, apartment_no])
   @@schema("public")
 }
 
@@ -227,6 +248,7 @@ model invitations {
 model monthlyDues {
   id             Int            @id @default(autoincrement())
   userId         Int
+  apartmentId    Int?           // Daire bazında ödeme
   siteId         Int
   month          Int            // 1-12
   year           Int
@@ -234,12 +256,15 @@ model monthlyDues {
   due_date       DateTime
   payment_status PaymentStatus  @default(UNPAID)  // UNPAID, PAID, OVERDUE
   paid_date      DateTime?
+  paid_by_user_id Int?          // Ödemeyi yapan kişinin ID'si (bir dairede birden fazla kişi varsa)
   payment_method PaymentMethod?
   created_at     DateTime       @default(now())
   updated_at     DateTime       @updatedAt
   deleted_at     DateTime?
   
   users          User           @relation("monthlyDues", fields: [userId], references: [id], onDelete: Cascade)
+  apartment      apartments?    @relation(fields: [apartmentId], references: [id], onDelete: SetNull)
+  paid_by_user   User?          @relation("monthlyDues_paid_by", fields: [paid_by_user_id], references: [id], onDelete: SetNull)
   sites          Site           @relation("monthlyDues", fields: [siteId], references: [id], onDelete: Cascade)
   
   @@unique([userId, siteId, month, year])

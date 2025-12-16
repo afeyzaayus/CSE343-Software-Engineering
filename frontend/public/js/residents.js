@@ -178,6 +178,29 @@ async function updateResident(siteId, userId, data) {
     }
 }
 
+// Delete apartment (and its residents)
+async function deleteApartment(siteId, blockId, apartmentNo) {
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/sites/${siteId}/apartments/${blockId}/${apartmentNo}`, {
+            method: 'DELETE',
+            headers
+        });
+        
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.message || 'Daire silinemedi');
+        }
+        
+        return await res.json();
+    } catch (err) {
+        console.error('Delete apartment error:', err);
+        throw err;
+    }
+}
+
 // Render residents by blocks
 async function renderResidents() {
     if (!SITE_ID) {
@@ -264,11 +287,22 @@ function createBlockCard(block, residents) {
     header.className = 'block-header';
     header.onclick = () => toggleBlockExpand(block.id);
 
+    // Calculate occupied/empty apartments - count unique apartments with residents
+    const occupiedApartments = new Set(residents.map(r => r.apartment_no)).size;
+    const totalApartments = block.apartment_count || 0;
+    
+    // Calculate total resident count
+    const totalResidents = block.resident_count || 0;
+
     header.innerHTML = `
         <div class="block-header-title">
             <i class="fas fa-building"></i>
             <h3>${block.block_name}</h3>
-            <span class="block-count">${residents.length} sakin</span>
+            <span class="block-count" style="background: rgba(33, 150, 243, 0.3); margin-left: 10px;">Yaşayan kişi: ${totalResidents}</span>
+            <span class="block-count" style="background: rgba(76, 175, 80, 0.3);">${occupiedApartments}/${totalApartments} daire dolu</span>
+            <button onclick="openAddModalForBlock(${block.id})" class="btn btn-sm btn-success" style="margin-left: 15px;">
+                <i class="fas fa-plus"></i> Daire Ekle
+            </button>
         </div>
         <i class="fas fa-chevron-down block-toggle-icon" id="toggle-icon-${block.id}"></i>
     `;
@@ -277,39 +311,35 @@ function createBlockCard(block, residents) {
     content.className = `block-content ${state.expanded ? '' : 'collapsed'}`;
     content.id = `content-${block.id}`;
 
-    if (residents.length === 0) {
-        content.innerHTML = '<div class="empty-block"><i class="fas fa-info-circle"></i> Bu blokta sakin bulunmamaktadır</div>';
-    } else {
-        // Group residents by apartment
-        const residentsGroupedByApartment = {};
-        residents.forEach(resident => {
-            const apartmentNo = resident.apartment_no;
-            if (!residentsGroupedByApartment[apartmentNo]) {
-                residentsGroupedByApartment[apartmentNo] = [];
-            }
-            residentsGroupedByApartment[apartmentNo].push(resident);
-        });
-
-        const apartmentsContainer = document.createElement('div');
-        apartmentsContainer.className = 'apartments-container';
-
-        // Show all apartments from 1 to apartment_count
-        const apartmentCount = block.apartment_count || Object.keys(residentsGroupedByApartment).length;
-        for (let i = 1; i <= apartmentCount; i++) {
-            const apartmentNo = i.toString();
-            const apartmentResidents = residentsGroupedByApartment[apartmentNo] || [];
-            
-            // If searching, only show apartments with residents
-            if (currentSearchQuery && apartmentResidents.length === 0) {
-                continue;
-            }
-            
-            const apartmentCard = createApartmentCard(block, apartmentNo, apartmentResidents);
-            apartmentsContainer.appendChild(apartmentCard);
+    // Group residents by apartment
+    const residentsGroupedByApartment = {};
+    residents.forEach(resident => {
+        const apartmentNo = resident.apartment_no;
+        if (!residentsGroupedByApartment[apartmentNo]) {
+            residentsGroupedByApartment[apartmentNo] = [];
         }
+        residentsGroupedByApartment[apartmentNo].push(resident);
+    });
 
-        content.appendChild(apartmentsContainer);
+    const apartmentsContainer = document.createElement('div');
+    apartmentsContainer.className = 'apartments-container';
+
+    // Show all apartments from 1 to apartment_count
+    const apartmentCount = block.apartment_count || Object.keys(residentsGroupedByApartment).length;
+    for (let i = 1; i <= apartmentCount; i++) {
+        const apartmentNo = i.toString();
+        const apartmentResidents = residentsGroupedByApartment[apartmentNo] || [];
+        
+        // If searching, only show apartments with residents
+        if (currentSearchQuery && apartmentResidents.length === 0) {
+            continue;
+        }
+        
+        const apartmentCard = createApartmentCard(block, apartmentNo, apartmentResidents);
+        apartmentsContainer.appendChild(apartmentCard);
     }
+
+    content.appendChild(apartmentsContainer);
 
     card.appendChild(header);
     card.appendChild(content);
@@ -325,12 +355,16 @@ function createApartmentCard(block, apartmentNo, residents) {
     const header = document.createElement('div');
     header.className = 'apartment-header';
 
+    // Check if this is the last apartment in the block
+    const isLastApartment = parseInt(apartmentNo) === (block.apartment_count || 0);
+
     header.innerHTML = `
         <div class="apartment-header-title">
             <i class="fas fa-door-open"></i>
             <h4>Daire ${apartmentNo}</h4>
             <span class="apartment-resident-count">${residents.length} kişi</span>
         </div>
+        ${isLastApartment ? `<button class="btn btn-sm btn-danger" onclick="deleteApartmentConfirm(${block.id}, ${apartmentNo})" title="Daire Sil"><i class="fas fa-trash"></i></button>` : ''}
     `;
 
     const content = document.createElement('div');
@@ -394,10 +428,6 @@ function createResidentInApartmentItem(resident) {
             <div class="resident-in-apartment-detail">
                 <i class="fas fa-car" style="color: #2e86c1;"></i>
                 <span>${highlightedPlates}</span>
-            </div>
-            <div class="resident-in-apartment-detail">
-                <i class="fas fa-users" style="color: #2e86c1;"></i>
-                <span>${resident.resident_count || 1} kişi</span>
             </div>
             <span class="resident-in-apartment-type ${statusClass}">${statusText}</span>
         </div>
@@ -483,14 +513,20 @@ async function openAddModal() {
     document.getElementById('addApartmentModal').style.display = 'flex';
 }
 
+// Open add modal for specific block
+async function openAddModalForBlock(blockId) {
+    // Store block ID and reset form
+    document.getElementById('blockIdForApartment').value = blockId;
+    document.getElementById('apartmentCount').value = 1;
+    
+    document.getElementById('addApartmentModal').style.display = 'flex';
+    document.getElementById('apartmentCount').focus();
+}
+
 // Close add modal
 function closeAddModal() {
     document.getElementById('addApartmentModal').style.display = 'none';
     document.getElementById('addApartmentForm').reset();
-    // Remove readonly if it was set for apartment context
-    const doorNoInput = document.getElementById('addApartmentForm').querySelector('input[name="doorNo"]');
-    doorNoInput.readOnly = false;
-    delete doorNoInput.dataset.apartmentContext;
 }
 
 // Open edit modal
@@ -539,6 +575,30 @@ async function deleteResidentConfirm(resident) {
         renderResidents();
     } catch (err) {
         console.error('Delete resident error:', err);
+        alert(err.message);
+    }
+}
+
+// Delete apartment confirmation
+async function deleteApartmentConfirm(blockId, apartmentNo) {
+    if (!confirm(`Daire ${apartmentNo}'u ve içindeki tüm sakınları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
+        return;
+    }
+    
+    try {
+        await deleteApartment(SITE_ID, blockId, apartmentNo);
+        
+        // Decrease block apartment count
+        const block = allBlocks.find(b => b.id === blockId);
+        if (block && block.apartment_count > 0) {
+            const newCapacity = block.apartment_count - 1;
+            await updateBlock(SITE_ID, blockId, { apartment_count: newCapacity });
+        }
+        
+        alert('Daire ve içindeki sakinler başarıyla silindi!');
+        renderResidents();
+    } catch (err) {
+        console.error('Delete apartment failed:', err);
         alert(err.message);
     }
 }
@@ -619,48 +679,76 @@ function closeEditBlockModal() {
 // Open modal to add resident to apartment
 function openAddResidentToApartmentModal(blockId, apartmentNo) {
     console.log('📝 Opening add resident modal for block:', blockId, 'apartment:', apartmentNo);
-    // Set apartment info for the add form
-    const form = document.getElementById('addApartmentForm');
-    const blockSelect = form.querySelector('select[name="block"]');
-    const doorNoInput = form.querySelector('input[name="doorNo"]');
     
-    console.log('   Block select options:', Array.from(blockSelect.options).map(o => `${o.value}: ${o.textContent}`));
+    // Set apartment info
+    document.getElementById('addResidentBlockId').value = blockId;
+    document.getElementById('addResidentApartmentNo').value = apartmentNo;
+    document.getElementById('addResidentName').value = '';
+    document.getElementById('addResidentPhone').value = '';
+    document.getElementById('addResidentPlate').value = '';
+    document.getElementById('addResidentStatus').value = 'OWNER';
     
-    // Find the block to select it
-    blockSelect.value = blockId;
-    doorNoInput.value = apartmentNo;
-    doorNoInput.readOnly = true;
-    
-    console.log('   After setting values - blockSelect.value:', blockSelect.value, 'doorNoInput.value:', doorNoInput.value);
-    
-    // Store the apartment context
-    doorNoInput.dataset.apartmentContext = 'true';
-    
-    document.getElementById('addApartmentModal').style.display = 'flex';
-    doorNoInput.focus();
+    document.getElementById('addResidentModal').style.display = 'flex';
+    document.getElementById('addResidentName').focus();
 }
 
-// Handle add form submit
+// Close add resident modal
+function closeAddResidentModal() {
+    document.getElementById('addResidentModal').style.display = 'none';
+    document.getElementById('addResidentForm').reset();
+}
+
+// Auto-increase block capacity if needed
+async function autoIncreaseBlockCapacity(blockId, apartmentNo) {
+    try {
+        const block = allBlocks.find(b => b.id === blockId);
+        if (!block) return;
+        
+        const apartmentNum = parseInt(apartmentNo);
+        const currentCapacity = block.apartment_count || 0;
+        
+        // If the apartment number is greater than current capacity, increase capacity
+        if (apartmentNum > currentCapacity) {
+            console.log(`🔄 Auto-increasing block capacity from ${currentCapacity} to ${apartmentNum}`);
+            
+            const updateData = {
+                apartment_count: apartmentNum
+            };
+            
+            await updateBlock(SITE_ID, blockId, updateData);
+            console.log(`✅ Block capacity auto-increased to ${apartmentNum}`);
+        }
+    } catch (err) {
+        console.error('Auto-increase capacity error:', err);
+    }
+}
+
+// Handle add form submit - Add multiple empty apartments
 document.getElementById('addApartmentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const formData = new FormData(e.target);
-    const blockId = parseInt(formData.get('block'));
-    const data = {
-        block_id: blockId,
-        apartment_no: formData.get('doorNo'),
-        full_name: formData.get('name'),
-        phone_number: formData.get('phone'),
-        plates: formData.get('plate') || null,
-        resident_count: parseInt(formData.get('peopleCount')),
-        resident_type: formData.get('status')
-    };
-
-    console.log('📤 Form submitted with data:', data);
-
+    const blockId = parseInt(document.getElementById('blockIdForApartment').value);
+    const apartmentCountToAdd = parseInt(document.getElementById('apartmentCount').value);
+    
+    if (!blockId || apartmentCountToAdd < 1) {
+        alert('Geçersiz blok veya daire sayısı');
+        return;
+    }
+    
     try {
-        await createResident(SITE_ID, data);
-        alert('Sakin başarıyla eklendi!');
+        const block = allBlocks.find(b => b.id === blockId);
+        if (!block) {
+            alert('Blok bulunamadı');
+            return;
+        }
+        
+        const currentCapacity = block.apartment_count || 0;
+        const newCapacity = currentCapacity + apartmentCountToAdd;
+        
+        // Update block capacity
+        await updateBlock(SITE_ID, blockId, { apartment_count: newCapacity });
+        
+        alert(`${apartmentCountToAdd} daire başarıyla bloka eklendi!`);
         closeAddModal();
         
         // Ensure the block is expanded when we re-render
@@ -668,7 +756,55 @@ document.getElementById('addApartmentForm').addEventListener('submit', async (e)
             blockStates[blockId].expanded = true;
         }
         
-        console.log('🔄 Re-rendering after adding resident...');
+        console.log('🔄 Re-rendering after adding apartments...');
+        renderResidents();
+    } catch (err) {
+        console.error('Add apartments failed:', err);
+        alert('Daire eklenirken hata oluştu: ' + err.message);
+    }
+});
+
+// Handle add resident form submit
+document.getElementById('addResidentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const blockId = parseInt(document.getElementById('addResidentBlockId').value);
+    const apartmentNo = document.getElementById('addResidentApartmentNo').value;
+    const fullName = document.getElementById('addResidentName').value.trim();
+    const phoneNumber = document.getElementById('addResidentPhone').value.trim();
+    const plates = document.getElementById('addResidentPlate').value.trim();
+    const residentType = document.getElementById('addResidentStatus').value;
+    
+    if (!blockId || !apartmentNo || !fullName || !phoneNumber) {
+        alert('Zorunlu alanları lütfen doldurunuz');
+        return;
+    }
+    
+    try {
+        const residentData = {
+            block_id: blockId,
+            apartment_no: apartmentNo,
+            full_name: fullName,
+            phone_number: phoneNumber,
+            plates: plates || null,
+            resident_type: residentType,
+            password: 'defaultPassword123'
+        };
+        
+        console.log('📝 Creating resident with data:', residentData);
+        
+        const resident = await createResident(SITE_ID, residentData);
+        
+        console.log('✅ Resident created successfully:', resident);
+        
+        alert(`${fullName} başarıyla eklendi!`);
+        closeAddResidentModal();
+        
+        // Ensure the block is expanded when we re-render
+        if (blockStates[blockId]) {
+            blockStates[blockId].expanded = true;
+        }
+        
         renderResidents();
     } catch (err) {
         console.error('Add resident failed:', err);
@@ -708,8 +844,9 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
 });
 
 // Event listeners
-document.getElementById('addResidentBtn').addEventListener('click', openAddModal);
+// addResidentBtn removed - now each block has its own "Daire Ekle" button
 document.getElementById('closeAddModal').addEventListener('click', closeAddModal);
+document.getElementById('closeAddResidentModal').addEventListener('click', closeAddResidentModal);
 document.getElementById('closeEditModal').addEventListener('click', closeEditModal);
 document.getElementById('createBlockBtn').addEventListener('click', () => {
     document.getElementById('createBlockModal').style.display = 'flex';

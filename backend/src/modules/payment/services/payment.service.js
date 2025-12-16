@@ -414,6 +414,12 @@ export async function getMonthlyDuesBySiteService(siteIdParam, month, year) {
             }
           }
         }
+      },
+      paid_by_user: {
+        select: {
+          id: true,
+          full_name: true
+        }
       }
     },
     orderBy: [
@@ -432,6 +438,7 @@ export async function getMonthlyDuesBySiteService(siteIdParam, month, year) {
     payment_status: due.payment_status,
     paid_date: due.paid_date,
     payment_method: due.payment_method,
+    paid_by_user: due.paid_by_user,  // Ödemeyi yapan kişi
     user: {
       id: due.users.id,
       full_name: due.users.full_name,
@@ -459,14 +466,14 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
     if (isNaN(siteId)) throw new Error('siteId geçersiz: ' + siteIdParam);
   }
 
-  // Tüm sakinleri getir
+  // Tüm sakinleri apartment_id ile birlikte getir
   const residents = await prisma.User.findMany({
     where: {
       siteId: siteId,
       deleted_at: null,
       account_status: 'ACTIVE'
     },
-    select: { id: true }
+    select: { id: true, apartment_id: true }
   });
 
   if (residents.length === 0) {
@@ -477,10 +484,9 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
   const created = [];
   const dueDateObj = new Date(due_date);
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Saat bilgisini sıfırla (günü karşılaştır)
+  today.setHours(0, 0, 0, 0);
   dueDateObj.setHours(0, 0, 0, 0);
   
-  // Due date bugünden önce mi?
   const isOverdue = dueDateObj < today;
   const initialStatus = isOverdue ? 'OVERDUE' : 'UNPAID';
   
@@ -497,6 +503,7 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
         },
         create: {
           userId: resident.id,
+          apartmentId: resident.apartment_id,  // Daire bazında ödeme
           siteId: siteId,
           month: parseInt(month),
           year: parseInt(year),
@@ -507,7 +514,8 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
         update: {
           amount: parseFloat(amount),
           due_date: new Date(due_date),
-          payment_status: initialStatus
+          payment_status: initialStatus,
+          apartmentId: resident.apartment_id  // Varsa güncelle
         }
       });
       created.push(due);
@@ -523,15 +531,41 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
   };
 }
 
-// ===== AYLIK ÖDEME KAYDETME (UNPAID -> PAID) =====
-export async function recordMonthlyPaymentService(monthlyDueId, payment_method) {
+// ===== AYLIK ÖDEME KAYDETME (UNPAID -> PAID) - DAIRE BAZINDA =====
+export async function recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id = null) {
   const monthlyDue = await prisma.monthlyDues.findUnique({
-    where: { id: parseInt(monthlyDueId) }
+    where: { id: parseInt(monthlyDueId) },
+    include: {
+      users: {
+        select: {
+          id: true,
+          apartment_id: true,
+          full_name: true,
+          apartment_no: true,
+          blocks: {
+            select: {
+              block_name: true
+            }
+          }
+        }
+      }
+    }
   });
 
   if (!monthlyDue) {
     throw new Error('Aidatı kaydı bulunamadı.');
   }
+
+  // apartmentId'yi al - null ise user'dan apartment_id'yi kullan
+  let apartment_id = monthlyDue.apartmentId;
+  if (!apartment_id && monthlyDue.users.apartment_id) {
+    apartment_id = monthlyDue.users.apartment_id;
+  }
+
+  const normalized_payment_method = normalizePaymentMethod(payment_method);
+  const paid_date = new Date();
+
+  console.log(`📋 Ödeme işlemi başladı - monthlyDueId: ${monthlyDueId}, apartmentId: ${apartment_id}, userId: ${monthlyDue.userId}`);
 
   // Önceki ayları OVERDUE olarak işaretle
   const previousMonth = monthlyDue.month - 1;
@@ -551,19 +585,158 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method) 
     }
   });
 
-  // Mevcut ödemeyi PAID olarak işaretle
-  const updated = await prisma.monthlyDues.update({
+  // DAIRE BAZINDA ÖDEME: Aynı dairede yaşayan tüm kişilerin aidatını PAID işaretle
+  // KURAL 1: apartmentId'ye göre ara
+  // KURAL 2: Bulunmazsa user'ın apartment_id'siyle ara
+  // KURAL 3: Hala bulunmazsa block_no + apartment_no kombinasyonuyla ara
+  let updatedDues;
+  let usersToUpdate = [];
+  
+  if (apartment_id) {
+    // Kural 1: apartmentId'ye göre aynı dairede yaşayan kullanıcıları bul
+    console.log(`🔍 Kural 1: apartmentId (${apartment_id}) ile kullanıcı aranıyor...`);
+    
+    usersToUpdate = await prisma.User.findMany({
+      where: {
+        apartment_id: apartment_id,
+        deleted_at: null,
+        siteId: monthlyDue.siteId
+      },
+      select: { id: true }
+    });
+  }
+  
+  // Eğer kullanıcı bulunamazsa, block_id + apartment_no kombinasyonuyla ara
+  if (usersToUpdate.length === 0 && monthlyDue.users.block_id && monthlyDue.users.apartment_no) {
+    console.log(`🔍 Kural 2: block_id (${monthlyDue.users.block_id}) + apartment_no (${monthlyDue.users.apartment_no}) + siteId (${monthlyDue.siteId}) ile kullanıcı aranıyor...`);
+    
+    // Önce siteId olmadan ara
+    const usersWithoutSite = await prisma.User.findMany({
+      where: {
+        block_id: monthlyDue.users.block_id,
+        apartment_no: monthlyDue.users.apartment_no,
+        deleted_at: null
+      },
+      select: { id: true, siteId: true }
+    });
+    console.log(`   siteId olmadan bulunan: ${usersWithoutSite.length} kullanıcı - siteIds: ${usersWithoutSite.map(u => u.siteId).join(',')}`);
+    
+    // siteId ile filtrele
+    usersToUpdate = usersWithoutSite.filter(u => u.siteId === monthlyDue.siteId).map(u => ({ id: u.id }));
+    console.log(`   siteId (${monthlyDue.siteId}) ile filtrelenen: ${usersToUpdate.length} kullanıcı`);
+  }
+
+  const userIds = usersToUpdate.map(u => u.id);
+  console.log(`📍 Aynı dairede bulunmuş kişi ID'leri: ${userIds.length > 0 ? userIds.join(', ') : 'HIÇBIRI BULUNAMADI'}`);
+
+  // Tüm kişilerin bu ayın aidatını PAID işaretle
+  if (userIds.length > 0) {
+    updatedDues = await prisma.monthlyDues.updateMany({
+      where: {
+        userId: { in: userIds },
+        siteId: monthlyDue.siteId,
+        month: monthlyDue.month,
+        year: monthlyDue.year,
+        deleted_at: null
+      },
+      data: {
+        payment_status: 'PAID',
+        paid_date: paid_date,
+        payment_method: normalized_payment_method,
+        paid_by_user_id: paid_by_user_id || monthlyDue.userId
+      }
+    });
+    console.log(`✅ ${userIds.length} kişi bulundu ve güncellendi`);
+  } else if (monthlyDue.users.block_id && monthlyDue.users.apartment_no) {
+    // Eğer siteId ile hiç kimse bulunamadıysa, aynı dairede yaşayan TÜÜN KISILERI güncelle (siteId kontrolü YOK)
+    console.log(`⚠️ Kural 2 siteId kontrolü başarısız. Fallback: siteId kontrolü olmadan block_id+apartment_no ile arama...`);
+    
+    const allUsersInApartment = await prisma.User.findMany({
+      where: {
+        block_id: monthlyDue.users.block_id,
+        apartment_no: monthlyDue.users.apartment_no,
+        deleted_at: null
+      },
+      select: { id: true }
+    });
+    
+    const fallbackUserIds = allUsersInApartment.map(u => u.id);
+    console.log(`📍 siteId kontrolü olmadan bulunan: ${fallbackUserIds.length} kullanıcı (IDs: ${fallbackUserIds.join(', ')})`);
+    
+    if (fallbackUserIds.length > 0) {
+      updatedDues = await prisma.monthlyDues.updateMany({
+        where: {
+          userId: { in: fallbackUserIds },
+          siteId: monthlyDue.siteId,
+          month: monthlyDue.month,
+          year: monthlyDue.year,
+          deleted_at: null
+        },
+        data: {
+          payment_status: 'PAID',
+          paid_date: paid_date,
+          payment_method: normalized_payment_method,
+          paid_by_user_id: paid_by_user_id || monthlyDue.userId
+        }
+      });
+      console.log(`✅ Fallback ile ${fallbackUserIds.length} kişi güncellendi`);
+    } else {
+      // En son fallback: sadece ödemeyi yapan kişi
+      console.log(`⚠️ Aynı dairede başka kişi bulunamadı, sadece bu kişi PAID işaretleniyor...`);
+      updatedDues = await prisma.monthlyDues.updateMany({
+        where: {
+          userId: monthlyDue.userId,
+          siteId: monthlyDue.siteId,
+          month: monthlyDue.month,
+          year: monthlyDue.year,
+          deleted_at: null
+        },
+        data: {
+          payment_status: 'PAID',
+          paid_date: paid_date,
+          payment_method: normalized_payment_method,
+          paid_by_user_id: paid_by_user_id || monthlyDue.userId
+        }
+      });
+    }
+  } else {
+    // Fallback: sadece ödemeyi yapan kişiyi PAID işaretle
+    console.log(`⚠️ block_id ve apartment_no yok, sadece bu kişi PAID işaretleniyor...`);
+    updatedDues = await prisma.monthlyDues.updateMany({
+      where: {
+        userId: monthlyDue.userId,
+        siteId: monthlyDue.siteId,
+        month: monthlyDue.month,
+        year: monthlyDue.year,
+        deleted_at: null
+      },
+      data: {
+        payment_status: 'PAID',
+        paid_date: paid_date,
+        payment_method: normalized_payment_method,
+        paid_by_user_id: paid_by_user_id || monthlyDue.userId
+      }
+    });
+  }
+
+  console.log(`✅ Daire bazında ödeme: ${updatedDues.count} kişi için PAID işaretlendi`);
+
+  // Güncellenmiş kaydı geri döndür
+  const updated = await prisma.monthlyDues.findUnique({
     where: { id: parseInt(monthlyDueId) },
-    data: {
-      payment_status: 'PAID',
-      paid_date: new Date(),
-      payment_method: normalizePaymentMethod(payment_method)
-    },
     include: {
       users: {
         select: {
+          id: true,
           full_name: true,
-          apartment_no: true
+          apartment_no: true,
+          apartment_id: true
+        }
+      },
+      paid_by_user: {
+        select: {
+          id: true,
+          full_name: true
         }
       }
     }

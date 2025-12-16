@@ -13,9 +13,11 @@ const monthNames = {
 
 let currentMonth = new Date().getMonth() + 1;
 let currentYear = new Date().getFullYear();
-let allResidents = [];
+let allResidents = [];  // Tüm sakinler
+let allApartments = [];  // Tüm daireler (daire bazında ödeme için)
 let currentMonthlyDues = [];
 let pendingPaymentData = null;
+let selectedApartmentForPayment = null;  // Modal'da seçilen daire
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
@@ -155,32 +157,95 @@ async function loadResidents() {
         const result = await response.json();
         allResidents = result.data || [];
 
-        // Modal'da sakinleri doldur
-        fillResidentSelect();
+        // Daireler listesini oluştur (unique daireler)
+        buildApartmentsList();
+
+        // Modal'da daireleri doldur
+        fillApartmentSelect();
 
     } catch (error) {
         console.error('Hata:', error);
     }
 }
 
-// Sakin seçim listesini doldur
-function fillResidentSelect() {
+// Daireleri unique olarak listele
+function buildApartmentsList() {
+    const apartmentsMap = new Map();
+    
+    allResidents.forEach(resident => {
+        const key = `${resident.block_no}-${resident.apartment_no}`;
+        if (!apartmentsMap.has(key)) {
+            apartmentsMap.set(key, {
+                block_no: resident.block_no,
+                apartment_no: resident.apartment_no,
+                residents: []
+            });
+        }
+        apartmentsMap.get(key).residents.push(resident);
+    });
+    
+    allApartments = Array.from(apartmentsMap.values());
+}
+
+// Daire seçim listesini doldur (modal'da)
+function fillApartmentSelect() {
     const select = document.getElementById('paymentApartment');
     select.innerHTML = '<option value="">Daire seçin</option>';
 
-    allResidents.forEach(resident => {
+    allApartments.forEach((apt, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        const residentsNames = apt.residents.map(r => r.full_name).join(', ');
+        option.textContent = `${apt.block_no}-${apt.apartment_no} (${residentsNames})`;
+        select.appendChild(option);
+    });
+    
+    // Daire seçim değişikliğini dinle
+    select.addEventListener('change', onApartmentSelected);
+}
+
+// Daire seçildiğinde - o dairede yaşayan kişileri göster
+function onApartmentSelected() {
+    const select = document.getElementById('paymentApartment');
+    const apartmentIndex = select.value;
+    
+    if (apartmentIndex === '') {
+        document.getElementById('paymentPerson').innerHTML = '<option value="">Kişi seçin</option>';
+        selectedApartmentForPayment = null;
+        return;
+    }
+    
+    selectedApartmentForPayment = allApartments[apartmentIndex];
+    
+    // O dairede yaşayan kişileri göster
+    const personSelect = document.getElementById('paymentPerson');
+    personSelect.innerHTML = '<option value="">Ödemeyi yapan kişiyi seçin</option>';
+    
+    selectedApartmentForPayment.residents.forEach(resident => {
         const option = document.createElement('option');
         option.value = resident.id;
-        option.textContent = `${resident.block_no}-${resident.apartment_no} - ${resident.full_name}`;
-        select.appendChild(option);
+        option.textContent = resident.full_name;
+        personSelect.appendChild(option);
     });
 }
 
-// Özet güncelle
+// Özet güncelle (DAIRE BAZINDA - kişi bazında değil)
 function updateSummary() {
-    const paidCount = currentMonthlyDues.filter(d => d.payment_status === 'PAID').length;
-    const unpaidCount = currentMonthlyDues.filter(d => d.payment_status === 'UNPAID').length;
-    const overdueCount = currentMonthlyDues.filter(d => d.payment_status === 'OVERDUE').length;
+    // Daire bazında unique sayıları hesapla
+    const countUniqueApartments = (status) => {
+        const uniqueApts = new Set();
+        currentMonthlyDues
+            .filter(d => d.payment_status === status)
+            .forEach(d => {
+                const key = `${d.user.block_no}-${d.user.apartment_no}`;
+                uniqueApts.add(key);
+            });
+        return uniqueApts.size;
+    };
+
+    const paidCount = countUniqueApartments('PAID');
+    const unpaidCount = countUniqueApartments('UNPAID');
+    const overdueCount = countUniqueApartments('OVERDUE');
 
     const paidTotal = currentMonthlyDues
         .filter(d => d.payment_status === 'PAID')
@@ -194,17 +259,17 @@ function updateSummary() {
 
     const summaryHTML = `
         <div class="summary-card paid">
-            <div class="summary-label">Ödenmiş</div>
+            <div class="summary-label">Ödenmiş Daire</div>
             <div class="summary-value">${paidCount}</div>
             <div style="font-size: 12px;">${paidTotal.toFixed(2)} TL</div>
         </div>
         <div class="summary-card unpaid">
-            <div class="summary-label">Ödenmemiş</div>
+            <div class="summary-label">Ödenmemiş Daire</div>
             <div class="summary-value">${unpaidCount}</div>
             <div style="font-size: 12px;">${unpaidTotal.toFixed(2)} TL</div>
         </div>
         <div class="summary-card overdue">
-            <div class="summary-label">Vadesi Geçmiş</div>
+            <div class="summary-label">Vadesi Geçmiş Daire</div>
             <div class="summary-value">${overdueCount}</div>
             <div style="font-size: 12px;">${overdueTotal.toFixed(2)} TL</div>
         </div>
@@ -215,35 +280,46 @@ function updateSummary() {
 
 // Tabloları render et
 function renderTables() {
-    const paid = currentMonthlyDues.filter(d => d.payment_status === 'PAID');
-    const unpaid = currentMonthlyDues.filter(d => d.payment_status === 'UNPAID');
-    const overdue = currentMonthlyDues.filter(d => d.payment_status === 'OVERDUE');
+    // Daire bazında grupla
+    const paidDues = currentMonthlyDues.filter(d => d.payment_status === 'PAID');
+    const unpaidDues = currentMonthlyDues.filter(d => d.payment_status === 'UNPAID');
+    const overdueDues = currentMonthlyDues.filter(d => d.payment_status === 'OVERDUE');
 
-    // Ödenmiş tablo
-    renderPaidTable(paid);
+    // Ödenmiş tablo (daire bazında unique)
+    renderPaidTable(paidDues);
 
     // Ödenmemiş tablo (overdue bilgisini de göster)
-    renderUnpaidTable(unpaid, overdue);
+    renderUnpaidTable(unpaidDues, overdueDues);
 
     // Overdue tablo
-    renderOverdueTable(overdue);
+    renderOverdueTable(overdueDues);
 }
 
-// Ödenmiş tablosu
+// Ödenmiş tablosu (DAIRE BAZINDA - unique daireler)
 function renderPaidTable(paid) {
     const tbody = document.querySelector('#paid-section tbody');
     
     if (paid.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Bu ayda henüz ödeme yapılmamış.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Bu ayda henüz ödeme yapılmamış.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = paid.map(due => {
+    // Daire bazında unique kayıtları göster
+    const uniqueApartments = new Map();
+    paid.forEach(due => {
+        const key = `${due.user.block_no}-${due.user.apartment_no}`;
+        if (!uniqueApartments.has(key)) {
+            uniqueApartments.set(key, due);
+        }
+    });
+
+    tbody.innerHTML = Array.from(uniqueApartments.values()).map(due => {
         const paidDate = new Date(due.paid_date).toLocaleDateString('tr-TR');
+        const paidByName = due.paid_by_user?.full_name || due.user.full_name;
         return `
             <tr>
-                <td>${due.user.block_no}-${due.user.apartment_no}</td>
-                <td>${due.user.full_name}</td>
+                <td><strong>${due.user.block_no}-${due.user.apartment_no}</strong></td>
+                <td>${paidByName}</td>
                 <td>${paidDate}</td>
                 <td>${due.amount} TL</td>
                 <td>${due.payment_method || '-'}</td>
@@ -253,29 +329,43 @@ function renderPaidTable(paid) {
     }).join('');
 }
 
-// Ödenmemiş tablosu
+// Ödenmemiş tablosu (DAIRE BAZINDA)
 function renderUnpaidTable(unpaid, overdue) {
     const tbody = document.querySelector('#unpaid-section tbody');
     
     if (unpaid.length === 0) {
         if (overdue.length > 0) {
-            // UNPAID yok ama OVERDUE var
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #ff9800;">Bu ayda yeni ödenmemiş aidatı yok (tüm aidatlar vadesi geçmiştir)</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ff9800;">Bu ayda yeni ödenmemiş aidatı yok (tüm aidatlar vadesi geçmiştir)</td></tr>';
         } else {
-            // Ne UNPAID ne OVERDUE - o ay için hiç kayıt yok
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Bu ay için kayıt bulunamadı.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Bu ay için kayıt bulunamadı.</td></tr>';
         }
         return;
     }
 
-    tbody.innerHTML = unpaid.map(due => {
+    // Daire bazında unique kayıtları göster
+    const uniqueApartments = new Map();
+    unpaid.forEach(due => {
+        const key = `${due.user.block_no}-${due.user.apartment_no}`;
+        if (!uniqueApartments.has(key)) {
+            uniqueApartments.set(key, due);
+        }
+    });
+
+    tbody.innerHTML = Array.from(uniqueApartments.values()).map(due => {
         const dueDate = new Date(due.due_date).toLocaleDateString('tr-TR');
+        // O dairede yaşayan insanları listele
+        const residentsInApartment = unpaid.filter(d => 
+            d.user.block_no === due.user.block_no && 
+            d.user.apartment_no === due.user.apartment_no
+        );
+        const residentsNames = residentsInApartment.map(r => r.user.full_name).join(', ');
+        
         return `
             <tr>
-                <td>${due.user.block_no}-${due.user.apartment_no}</td>
-                <td>${due.user.full_name}</td>
-                <td>${due.user.phone_number}</td>
+                <td><strong>${due.user.block_no}-${due.user.apartment_no}</strong></td>
+                <td>${residentsNames}</td>
                 <td>${dueDate}</td>
+                <td>${due.amount} TL</td>
                 <td><span class="status-badge unpaid">Bekleniyor</span></td>
                 <td>
                     <button class="btn btn-sm" onclick="recordPayment(${due.id}, ${due.userId})" style="padding: 5px 10px; font-size: 12px;">
@@ -287,27 +377,43 @@ function renderUnpaidTable(unpaid, overdue) {
     }).join('');
 }
 
-// Overdue tablosu
+// Overdue tablosu (DAIRE BAZINDA)
 function renderOverdueTable(overdue) {
     const tbody = document.querySelector('#overdue-section tbody');
     
     if (overdue.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Vadesi geçmiş aidatı yok.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Vadesi geçmiş aidatı yok.</td></tr>';
         return;
     }
 
-    tbody.innerHTML = overdue.map(due => {
+    // Daire bazında unique kayıtları göster
+    const uniqueApartments = new Map();
+    overdue.forEach(due => {
+        const key = `${due.user.block_no}-${due.user.apartment_no}`;
+        if (!uniqueApartments.has(key)) {
+            uniqueApartments.set(key, due);
+        }
+    });
+
+    tbody.innerHTML = Array.from(uniqueApartments.values()).map(due => {
         const dueDate = new Date(due.due_date);
         const today = new Date();
         const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+        
+        // O dairede yaşayan insanları listele
+        const residentsInApartment = overdue.filter(d => 
+            d.user.block_no === due.user.block_no && 
+            d.user.apartment_no === due.user.apartment_no
+        );
+        const residentsNames = residentsInApartment.map(r => r.user.full_name).join(', ');
 
         return `
             <tr>
-                <td>${due.user.block_no}-${due.user.apartment_no}</td>
-                <td>${due.user.full_name}</td>
-                <td>${due.user.phone_number}</td>
+                <td><strong>${due.user.block_no}-${due.user.apartment_no}</strong></td>
+                <td>${residentsNames}</td>
                 <td>${dueDate.toLocaleDateString('tr-TR')}</td>
                 <td><strong style="color: #f44336;">${daysOverdue} gün</strong></td>
+                <td>${due.amount} TL</td>
                 <td>
                     <button class="btn btn-sm" onclick="recordPayment(${due.id}, ${due.userId})" style="padding: 5px 10px; font-size: 12px; background: #ff9800;">
                         <i class="fas fa-check"></i> Ödendi İşaretle
@@ -362,7 +468,7 @@ async function createMonthlyDues(e) {
     }
 }
 
-// Ödemeyi kaydet (UNPAID -> PAID)
+// Ödemeyi kaydet (UNPAID -> PAID) - DAIRE BAZINDA
 async function recordPayment(monthlyDueId, userId) {
     // Modal'da görüntülenecek bilgileri al
     const due = currentMonthlyDues.find(d => d.id === monthlyDueId);
@@ -374,7 +480,26 @@ async function recordPayment(monthlyDueId, userId) {
 
     // Modal açık kılıp daire bilgisini göster
     const residentLabel = document.getElementById('residentLabel');
-    residentLabel.textContent = `Daire: ${due.user.block_no}-${due.user.apartment_no} - ${due.user.full_name}`;
+    residentLabel.textContent = `Daire: ${due.user.block_no}-${due.user.apartment_no}`;
+    
+    // O dairede yaşayan tüm kişileri bul
+    const residentsInApartment = allResidents.filter(r => 
+        r.block_no === due.user.block_no && 
+        r.apartment_no === due.user.apartment_no
+    );
+    
+    // Kişi dropdown'unu doldur
+    const personSelect = document.getElementById('recordPaymentPerson');
+    personSelect.innerHTML = '<option value="">Ödemeyi yapan kişiyi seçin</option>';
+    residentsInApartment.forEach(resident => {
+        const option = document.createElement('option');
+        option.value = resident.id;
+        option.textContent = resident.full_name;
+        if (resident.id === userId) {
+            option.selected = true;  // Default olarak mevcut kişiyi seç
+        }
+        personSelect.appendChild(option);
+    });
     
     // Ödeme yöntemi select'ini sıfırla
     document.getElementById('recordPaymentMethod').value = '';
@@ -399,9 +524,15 @@ async function submitRecordPayment(e) {
     }
 
     const paymentMethod = document.getElementById('recordPaymentMethod').value;
+    const paid_by_user_id = document.getElementById('recordPaymentPerson')?.value;
 
     if (!paymentMethod) {
         alert('Lütfen ödeme yöntemini seçin!');
+        return;
+    }
+
+    if (!paid_by_user_id) {
+        alert('Lütfen ödemeyi yapan kişiyi seçin!');
         return;
     }
 
@@ -417,7 +548,8 @@ async function submitRecordPayment(e) {
             headers,
             body: JSON.stringify({
                 monthlyDueId: pendingPaymentData.monthlyDueId,
-                payment_method: paymentMethod
+                payment_method: paymentMethod,
+                paid_by_user_id: parseInt(paid_by_user_id)  // Ödemeyi yapan kişi
             })
         });
 
@@ -425,11 +557,16 @@ async function submitRecordPayment(e) {
 
         if (!response.ok) throw new Error(result.message);
 
-        alert('✅ Ödeme başarıyla kaydedildi!');
+        // Ödemeyi yapan kişinin adını al
+        const paidByName = document.getElementById('recordPaymentPerson').selectedOptions[0].text;
+        
+        alert(`✅ Ödeme başarıyla kaydedildi!\n\nÖdemeyi yapan: ${paidByName}\n\n⭐ Bu dairede yaşayan tüm sakinler ÖDEMIŞ olarak işaretlendi.`);
         document.getElementById('recordPaymentModal').classList.remove('show');
         document.getElementById('recordPaymentForm').reset();
         pendingPaymentData = null;
         
+        // Verileri tamamen yenile
+        await loadResidents();
         await loadMonthlyData();
 
     } catch (error) {
