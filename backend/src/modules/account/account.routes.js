@@ -18,6 +18,19 @@ const router = express.Router();
  */
 router.use(verifyAdminToken);
 
+
+/**
+ * @route   GET /api/accounts/me
+ * @desc    Giriş yapmış kullanıcının bilgilerini getir
+ * @access  Private
+ */
+router.get('/me', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    data: req.admin
+  });
+});
+
 /**
  * @route   GET /api/accounts/dashboard/stats
  * @desc    Dashboard istatistiklerini getir
