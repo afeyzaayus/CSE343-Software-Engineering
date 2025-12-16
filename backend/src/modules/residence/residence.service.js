@@ -559,7 +559,6 @@ class ResidenceService {
       // PARALLEL DELETE: İlişkili tüm kayıtları paralel sil
       await Promise.all([
         prisma.monthlyDues.deleteMany({ where: { userId: parseInt(id) } }),
-        prisma.payments.deleteMany({ where: { userId: parseInt(id) } }),
         prisma.complaints.deleteMany({ where: { userId: parseInt(id) } })
       ]);
 
