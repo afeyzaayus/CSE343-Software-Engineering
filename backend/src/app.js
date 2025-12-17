@@ -146,7 +146,7 @@ app.use('/api/sites', announcementRoutes); // Announcements için /api/sites/:si
 app.use('/api/payments', paymentRoutes);
 app.use('/api/complaints', requestRoutes);
 app.use('/api/residence', residenceRoutes);
-app.use('/api/sites', socialFacilitiesRoutes);
+app.use('/api/social-facilities', socialFacilitiesRoutes);
 
 // ==========================================================
 // HATA YÖNETİMİ
