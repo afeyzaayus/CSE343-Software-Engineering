@@ -261,17 +261,14 @@ function updateSummary() {
         <div class="summary-card paid">
             <div class="summary-label">Ödenmiş Daire</div>
             <div class="summary-value">${paidCount}</div>
-            <div style="font-size: 12px;">${paidTotal.toFixed(2)} TL</div>
         </div>
         <div class="summary-card unpaid">
             <div class="summary-label">Ödenmemiş Daire</div>
             <div class="summary-value">${unpaidCount}</div>
-            <div style="font-size: 12px;">${unpaidTotal.toFixed(2)} TL</div>
         </div>
         <div class="summary-card overdue">
             <div class="summary-label">Vadesi Geçmiş Daire</div>
             <div class="summary-value">${overdueCount}</div>
-            <div style="font-size: 12px;">${overdueTotal.toFixed(2)} TL</div>
         </div>
     `;
 
@@ -365,7 +362,6 @@ function renderUnpaidTable(unpaid, overdue) {
                 <td><strong>${due.user.block_no}-${due.user.apartment_no}</strong></td>
                 <td>${residentsNames}</td>
                 <td>${dueDate}</td>
-                <td>${due.amount} TL</td>
                 <td><span class="status-badge unpaid">Bekleniyor</span></td>
                 <td>
                     <button class="btn btn-sm" onclick="recordPayment(${due.id}, ${due.userId})" style="padding: 5px 10px; font-size: 12px;">
@@ -413,7 +409,6 @@ function renderOverdueTable(overdue) {
                 <td>${residentsNames}</td>
                 <td>${dueDate.toLocaleDateString('tr-TR')}</td>
                 <td><strong style="color: #f44336;">${daysOverdue} gün</strong></td>
-                <td>${due.amount} TL</td>
                 <td>
                     <button class="btn btn-sm" onclick="recordPayment(${due.id}, ${due.userId})" style="padding: 5px 10px; font-size: 12px; background: #ff9800;">
                         <i class="fas fa-check"></i> Ödendi İşaretle
@@ -525,6 +520,7 @@ async function submitRecordPayment(e) {
 
     const paymentMethod = document.getElementById('recordPaymentMethod').value;
     const paid_by_user_id = document.getElementById('recordPaymentPerson')?.value;
+    const paymentAmount = document.getElementById('recordPaymentAmount')?.value;
 
     if (!paymentMethod) {
         alert('Lütfen ödeme yöntemini seçin!');
@@ -533,6 +529,11 @@ async function submitRecordPayment(e) {
 
     if (!paid_by_user_id) {
         alert('Lütfen ödemeyi yapan kişiyi seçin!');
+        return;
+    }
+
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+        alert('Lütfen geçerli bir tutar girin!');
         return;
     }
 
@@ -549,7 +550,8 @@ async function submitRecordPayment(e) {
             body: JSON.stringify({
                 monthlyDueId: pendingPaymentData.monthlyDueId,
                 payment_method: paymentMethod,
-                paid_by_user_id: parseInt(paid_by_user_id)  // Ödemeyi yapan kişi
+                paid_by_user_id: parseInt(paid_by_user_id),
+                amount: parseFloat(paymentAmount)  // Tutar bilgisi
             })
         });
 
@@ -560,7 +562,7 @@ async function submitRecordPayment(e) {
         // Ödemeyi yapan kişinin adını al
         const paidByName = document.getElementById('recordPaymentPerson').selectedOptions[0].text;
         
-        alert(`✅ Ödeme başarıyla kaydedildi!\n\nÖdemeyi yapan: ${paidByName}\n\n⭐ Bu dairede yaşayan tüm sakinler ÖDEMIŞ olarak işaretlendi.`);
+        alert(`✅ Ödeme başarıyla kaydedildi!\n`);
         document.getElementById('recordPaymentModal').classList.remove('show');
         document.getElementById('recordPaymentForm').reset();
         pendingPaymentData = null;

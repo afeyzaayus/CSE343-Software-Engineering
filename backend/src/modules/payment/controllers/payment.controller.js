@@ -84,7 +84,7 @@ export async function createMonthlyDuesForAllResidents(req, res) {
 // ===== AYLIK ÖDEME KAYDETME (Manuel ödeme - DAIRE BAZINDA) =====
 export async function recordMonthlyPayment(req, res) {
   try {
-    const { monthlyDueId, payment_method, paid_by_user_id } = req.body;
+    const { monthlyDueId, payment_method, paid_by_user_id, amount } = req.body;
 
     if (!monthlyDueId || !payment_method) {
       return res.status(400).json({
@@ -93,7 +93,7 @@ export async function recordMonthlyPayment(req, res) {
       });
     }
 
-    const updated = await recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id);
+    const updated = await recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id, amount);
 
     return res.status(200).json({
       success: true,
