@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Yönetim Sistemi | Yetkilendirme</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <h1>🏢 Site Yönetim Sistemi</h1>
+            <p id="header-subtitle">Hoş Geldiniz</p>
+        </div>
+
+        <div class="auth-content">
+            <div class="auth-tabs">
+                <button class="auth-tab active" id="tab-login">Giriş Yap</button>
+                <button class="auth-tab" id="tab-register">Kayıt Ol</button>
+            </div>
+
+            <div id="login-page" class="page active">
+                <div id="login-alert" class="alert"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>E-posta</label>
+                        <input type="email" id="login-email" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Giriş Yap</button>
+                </form>
+                <div class="text-link">
+                    <a href="#" id="forgot-password-link">Şifremi Unuttum</a>
+                </div>
+            </div>
+                <div id="package-page" class="page">
+                    <button class="back-btn" id="back-to-login">← Geri Dön</button>
+                    <h2 style="margin-bottom: 10px; color: #333;">Paket Seçimi</h2>
+                    <p style="color:#2e86c1; margin-bottom:18px; font-size:15px; font-weight:500;">
+                        Tüm paketler <b>yıllık ücretlendirme</b> esasına göre sunulmaktadır.
+                    </p>
+                    <div class="package-grid">
+                        <div class="package-card" data-package="individual">
+                            <div class="package-icon">👤</div>
+                            <div class="package-name">Bireysel</div>
+                            <div class="package-desc">Tek kullanıcı hesabı</div>
+                            <div class="package-price" id="individual-package-price">Aylık yaklaşık: 0₺</div>
+                            <div class="package-price-yearly" id="individual-package-yearly">Yıllık ödeme: Ücretsiz</div>
+                            <ul class="package-features">
+                                <li>1 site yönetimi</li>
+                                <li>Sınırsız şikayet oluşturma</li>
+                                <li>Kolay kullanım</li>
+                            </ul>
+                        </div>
+                        <div class="package-card" data-package="company">
+                            <div class="package-icon">🏢</div>
+                            <div class="package-name">Şirket</div>
+                            <div class="package-desc">Çoklu site yönetimi</div>
+                            <div class="package-price" id="company-package-price">Aylık yaklaşık: 0₺</div>
+                            <div class="package-price-yearly" id="company-package-yearly">Yıllık ödeme: Ücretsiz</div>
+                            <ul class="package-features">
+                                <li>Sınırsız site yönetimi</li>
+                                <li>Çoklu kullanıcı ve çalışan yönetimi</li>
+                                <li>Gelişmiş raporlama</li>
+                                <li>Öncelikli destek</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            <div id="individual-register-page" class="page">
+                <button class="back-btn" id="back-to-package-from-individual">← Paket Seçimi</button>
+                <h2 style="margin-bottom: 20px; color: #333;">Bireysel Kayıt</h2>
+                <div id="individual-alert" class="alert"></div>
+                <form id="individual-form">
+                    <div class="form-group">
+                        <label>Tam Ad</label>
+                        <input type="text" id="individual-fullname" placeholder="Ad Soyad" required>
+                    </div>
+                    <div class="form-group">
+                        <label>E-posta</label>
+                        <input type="email" id="individual-email" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="individual-password" placeholder="En az 6 karakter" required>
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="individual-strength-bar"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre Tekrar</label>
+                        <input type="password" id="individual-password-confirm" placeholder="Şifreyi tekrar girin" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                </form>
+            </div>
+
+            <div id="company-register-page" class="page">
+                <button class="back-btn" id="back-to-package-from-company">← Paket Seçimi</button>
+                <h2 style="margin-bottom: 20px; color: #333;">Şirket Kaydı</h2>
+                <div id="company-alert" class="alert"></div>
+                <form id="company-form">
+                    <div class="form-group">
+                        <label>Şirket Adı</label>
+                        <input type="text" id="company-name" placeholder="Şirket A.Ş." required>
+                    </div>
+                    <div class="company-id-display" id="company-id-display" style="display: none;">
+                        <small style="color: #666;">Şirket ID</small><br>
+                        <strong id="company-id-value">------</strong>
+                    </div>
+                    <div class="form-group">
+                        <label>Yönetici Adı</label>
+                        <input type="text" id="company-manager-name" placeholder="Ad Soyad" required>
+                    </div>
+                    <div class="form-group">
+                        <label>E-posta</label>
+                        <input type="email" id="company-email" placeholder="ornek@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre</label>
+                        <input type="password" id="company-password" placeholder="En az 6 karakter" required>
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="company-strength-bar"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Şifre Tekrar</label>
+                        <input type="password" id="company-password-confirm" placeholder="Şifreyi tekrar girin" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                </form>
+            </div>
+
+            <div id="verification-page" class="page">
+                <div style="text-align: center; padding: 20px;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                        ✉️
+                    </div>
+                    <h2 style="margin-bottom: 15px; color: #333;">E-posta Doğrulaması</h2>
+                    <p style="color: #666; margin-bottom: 20px; line-height: 1.6;">
+                        Kayıt işleminiz başarılı! E-posta adresinize bir doğrulama linki gönderdik. 
+                        Lütfen e-postanızı kontrol edin ve hesabınızı aktifleştirin.
+                    </p>
+                    <p style="color: #999; font-size: 14px;" id="verification-email"></p>
+                    <button class="btn btn-primary" id="go-to-login-from-verification">Giriş Sayfasına Dön</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="forgot-password-modal">
+        <div class="modal-content">
+            <h3>Şifre Sıfırlama</h3>
+            <div id="forgot-alert" class="alert"></div>
+            <form id="forgot-password-form">
+                <div class="form-group">
+                    <label>E-posta Adresiniz</label>
+                    <input type="email" id="forgot-email" placeholder="ornek@email.com" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Sıfırlama Linki Gönder</button>
+                <button type="button" class="btn btn-secondary" id="close-forgot-modal">İptal</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/login.js"></script>
+</body>
+</html>

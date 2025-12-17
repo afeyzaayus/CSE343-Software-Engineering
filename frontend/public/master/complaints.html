@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şikayetler - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+</head>
+<body>
+    <div id="dashboardPage" class="page active">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Site Portal</h1>
+            </div>
+            <div class="header-right">     
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <div class="user-details">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Çıkış</button>
+            </div>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav>
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    Ana Sayfa
+                </a>
+        
+                <a href="companies.html" class="nav-item">
+                    <span class="icon">🏢</span>
+                    Şirketler
+                </a>
+                <a href="individuals.html" class="nav-item">
+                    <span class="icon">👤</span>
+                    Bireysel Hesaplar
+                </a>
+                <a href="complaints.html" class="nav-item active">
+                    <span class="icon">📝</span>
+                    Şikayetler
+                </a>
+                <a href="masterUsers.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    Kullanıcılar
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div id="complaintsContent" class="content-section active">
+                 <div class="section-header">
+                    <h2>Şikayetler</h2>
+                </div>
+                <!-- Statistics Cards -->
+                 <div class="stats-grid">   
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <h3 id="totalComplaintsCount">0</h3>
+                            <p>Toplam Şikayet</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <h3 id="resolvedComplaintsCount">0</h3>
+                            <p>Çözülen Şikayet</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏳</div>
+                        <div class="stat-info">
+                            <h3 id="pendingComplaintsCount">0</h3>
+                            <p>Bekleyen Şikayet</p>
+                        </div>
+                    </div>
+                 </div>  
+                <!-- Şikayet Listesi -->
+                <div class="filter-box">
+                    <input type="text" id="complaintSearch" placeholder="Şikayet ara (ad, kod)..." aria-label="Şikayet ara">
+                    <select id="complaintFilter">
+                        <option value="all">Tüm Şikayetler</option>
+                        <option value="pending">Bekleyen</option>
+                        <option value="in_progress">İşlemde</option>
+                        <option value="resolved">Çözülen</option>
+                        <option value="rejected">Reddedilen</option>
+                    </select>
+                </div>
+
+                   <div id="complaintsEmptyState" class="empty-state" style="display:none;">
+                    <div class="empty-icon">📝</div>
+                    <h3>Henüz şikayet bulunmuyor</h3>
+                    <p>Sistem kullanıldıkça şikayetler burada listelenecek.</p>
+                </div>
+                <div id="complaintsList" class="list-container"></div>
+            </div>
+
+            <!-- Şikayet Detay Modalı -->
+            <div class="modal" id="complaintDetailModal" style="display:none;">
+                <div class="modal-dialog">
+                    <div class="modal-header">
+                        <h3>Şikayet Detayı</h3>
+                        <button class="modal-close" onclick="closeComplaintDetailModal()">×</button>
+                    </div>
+                    <div class="modal-body" id="complaintDetailBody"></div>
+                    <div class="modal-actions" id="complaintDetailActions"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+<script type="module" src="js/complaints.js"></script>
+</body>
+</html>

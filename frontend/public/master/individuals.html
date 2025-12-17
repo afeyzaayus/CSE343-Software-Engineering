@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bireysel Hesaplar - Site Portal</title>
+    <link rel="stylesheet" href="deneme.css">
+</head>
+<body>
+    <div id="individualsPage" class="page active">
+           <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Site Portal</h1>
+            </div>
+            <div class="header-right">     
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <div class="user-details">
+                        <span id="userName" class="user-name"></span>
+                        <span id="userEmail" class="user-email"></span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="btn btn-secondary">Çıkış</button>
+            </div>
+        </header>
+
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav aria-label="Ana menü">
+                <a href="dashboard.html" class="nav-item">
+                    <span class="icon">📊</span>
+                    <span class="nav-text">Ana Sayfa</span>
+                </a>
+              
+                <a href="companies.html" class="nav-item">
+                    <span class="icon">🏢</span>
+                    <span class="nav-text">Şirketler</span>
+                </a>
+                <a href="individuals.html" class="nav-item active">
+                    <span class="icon">👤</span>
+                    <span class="nav-text">Bireysel Hesaplar</span>
+                </a>
+                <a href="complaints.html" class="nav-item">
+                    <span class="icon">📝</span>
+                    <span class="nav-text">Şikayetler</span>
+                </a>
+               
+                <a href="masterUsers.html" class="nav-item">
+                    <span class="icon">👥</span>
+                    <span class="nav-text">Kullanıcılar</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Individuals Content -->
+            <div id="individualsContent" class="content-section active">
+                <div class="section-header">
+                    <h2>Bireysel Hesaplar</h2>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-icon">👤</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Toplam Hesap</div>
+                            <div class="stat-value" id="totalIndividualsCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Aktif Hesaplar</div>
+                            <div class="stat-value" id="activeIndividualsCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-icon">⏸️</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Askıdaki Hesaplar</div>
+                            <div class="stat-value" id="suspendedIndividualsCount">-</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-danger">
+                        <div class="stat-icon">🗑️</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Silinmiş Hesaplar</div>
+                            <div class="stat-value" id="deletedIndividualsCount">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-box">
+                    <input type="text" id="individualSearch" placeholder="Hesap ara (ad, email)..." aria-label="Hesap ara">
+                    <select id="individualStatusFilter" aria-label="Durum filtresi">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="ACTIVE">Aktif</option>
+                        <option value="SUSPENDED">Askıda</option>
+                    </select>
+                    <label class="checkbox-label show-deleted-toggle">
+                        <input type="checkbox" id="showDeletedIndividuals">
+                        <span class="checkbox-custom"></span>
+                        <span class="checkbox-text">Silinmiş hesapları göster</span>
+                    </label>
+                </div>
+                
+                <div id="individualsList" class="list-container"></div>
+            </div>
+
+            <!-- Individual Detail Content -->
+            <div id="individualDetailContent" class="content-section">
+                <button class="btn btn-secondary back-btn" id="backToIndividuals">
+                    <span class="btn-icon">←</span>
+                    Geri
+                </button>
+                
+                <div id="individualDetailInfo"></div>
+                
+                <div class="detail-actions">
+                    <div class="action-group primary-actions">
+                        <button id="suspendIndividualBtn" class="btn btn-warning">
+                            <span class="btn-icon">⏸️</span>
+                            Askıya Al
+                        </button>
+                        <button id="activateIndividualBtn" class="btn btn-success" style="display: none;">
+                            <span class="btn-icon">✅</span>
+                            Aktif Et
+                        </button>
+                        <button id="deleteIndividualBtn" class="btn btn-danger">
+                            <span class="btn-icon">🗑️</span>
+                            Sil
+                        </button>
+                    </div>
+                    
+                    <div class="action-group filter-actions">
+                        <label class="checkbox-label show-deleted-toggle inline-filter">
+                            <input type="checkbox" id="showDeletedSites">
+                            <span class="checkbox-custom"></span>
+                            <span class="checkbox-text">Silinmiş siteleri göster</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h3>Siteler</h3>
+                </div>
+                <div id="sitesGrid" class="grid-container"></div>
+            </div>
+
+            <!-- Site Detail Content -->
+            <div id="siteDetailContent" class="content-section">
+                <button class="btn btn-secondary back-btn" id="backToIndividualDetail">
+                    <span class="btn-icon">←</span>
+                    Hesap Detayına Dön
+                </button>
+                <div id="siteDetailInfo"></div>
+                <h3>Site Kullanıcıları</h3>
+                <div id="siteUsersGrid" class="cards-grid"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="js/individuals.js"></script>
+</body>
+</html>

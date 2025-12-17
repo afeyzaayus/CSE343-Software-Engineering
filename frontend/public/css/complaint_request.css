@@ -1,0 +1,216 @@
+/* Complaint/Request List Stilleri */
+.complaint-filters {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 10px 20px;
+    border: 2px solid #d1d8e0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 25px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    font-size: 0.85rem;
+    color: #2c3e50;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2e86c1 0%, #3498db 100%);
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+.filter-btn:hover:not(.active) {
+    border-color: #2e86c1;
+    color: #2e86c1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 134, 193, 0.3);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #2e86c1 0%, #3498db 100%);
+    color: white;
+    border-color: #2e86c1;
+    box-shadow: 0 4px 12px rgba(46, 134, 193, 0.4);
+    transform: translateY(-2px);
+}
+
+.filter-btn.active::before {
+    left: 0;
+}
+
+.complaint-item {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--warning-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.complaint-item.resolved {
+    border-left-color: var(--success-color);
+}
+
+.complaint-card {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--warning-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.complaint-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.complaint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.complaint-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.complaint-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: #7f8c8d;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.complaint-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.complaint-content {
+    color: #555;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    font-size: 0.9rem;
+}
+
+.complaint-response {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 3px solid var(--secondary-color);
+    font-size: 0.85rem;
+}
+
+.response-date {
+    display: block;
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.complaint-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Action Buttons */
+.btn-action {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.btn-action:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn-action:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-detail {
+    background: #3498db;
+    color: white;
+}
+
+.btn-detail:hover:not(:disabled) {
+    background: #2980b9;
+}
+
+.btn-process {
+    background: #f39c12;
+    color: white;
+}
+
+.btn-process:hover:not(:disabled) {
+    background: #e67e22;
+}
+
+.btn-resolve {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-resolve:hover:not(:disabled) {
+    background: #229954;
+}
+
+.btn-cancel {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-cancel:hover:not(:disabled) {
+    background: #c0392b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .complaint-meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .complaint-actions {
+        flex-direction: column;
+    }
+
+    .btn-action {
+        width: 100%;
+        justify-content: center;
+    }
+}
