@@ -1,6 +1,6 @@
 import { formatCurrency, showToast, getToken } from './common.js';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 
 // Hesap tipini Türkçe'ye çevir
 function getAccountTypeLabel(accountType) {
@@ -402,7 +402,7 @@ function showPriceUpdateResult(message, type) {
         
         setTimeout(() => {
             resultDiv.classList.remove('show');
-        }, 5000);
+        }, 3000);
     }
 }
 

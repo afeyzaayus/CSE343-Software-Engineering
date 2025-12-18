@@ -6,7 +6,7 @@ import {
     hideModal 
 } from './common.js';
 
-const API_BASE = 'http://localhost:5000/api/auth/master';
+const API_BASE = 'http://localhost:3000/api/auth/master';
 
 // Global State
 let currentUser = null;
@@ -46,7 +46,7 @@ function getRoleBadgeClass(role) {
 
 async function fetchCurrentUser() {
     try {
-        const response = await fetch('http://localhost:5000/api/auth/master/me', {
+        const response = await fetch('http://localhost:3000/api/auth/master/me', {
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }

@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'http://localhost:3000/api/auth';
 
 // --- Page Navigation ---
 function showPage(pageId) {
@@ -20,7 +20,7 @@ function showAlert(elementId, message, type) {
     const alert = document.getElementById(elementId);
     alert.className = `alert ${type} show`;
     alert.textContent = message;
-    setTimeout(() => alert.classList.remove('show'), 5000);
+    setTimeout(() => alert.classList.remove('show'), 3000);
 }
 
 // --- Password Strength ---
@@ -257,7 +257,7 @@ function formatCurrency(value) {
     return Number(value).toLocaleString('tr-TR');
 }
 
-fetch('http://localhost:5000/api/master/prices')
+fetch('http://localhost:3000/api/master/prices')
   .then(res => res.json())
   .then(response => {
     const data = response.data || {};

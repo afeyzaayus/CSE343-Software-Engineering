@@ -1,5 +1,5 @@
 // Residents Management
-const API_BASE_URL = 'http://localhost:5000/api/residence';
+const API_BASE_URL = 'http://localhost:3000/api/residence';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));

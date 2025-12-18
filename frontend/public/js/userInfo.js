@@ -8,7 +8,7 @@ async function fetchAndUpdateUserInfo() {
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/accounts/me', {
+        const response = await fetch('http://localhost:3000/api/accounts/me', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'

@@ -128,7 +128,7 @@ export async function verifyMasterEmailController(req, res) {
     console.log('🔍 Email verification request for token:', token);
 
     // .env'den FRONTEND_URL al
-    const frontendUrl  = 'http://localhost:5000/master';
+    const frontendUrl  = 'http://localhost:3000/master';
 
     if (!token) {
       // Hata sayfasına redirect
@@ -145,7 +145,7 @@ export async function verifyMasterEmailController(req, res) {
   } catch (error) {
     console.error('verifyMasterEmailController hatası:', error);
 
-    const frontendUrl =  'http://localhost:5000/master';
+    const frontendUrl =  'http://localhost:3000/master';
 
     let errorType = 'invalid_token';
     if (error.message.includes('TOKEN_INVALID')) {

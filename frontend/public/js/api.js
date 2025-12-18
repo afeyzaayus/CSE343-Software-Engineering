@@ -2,7 +2,7 @@
 
 export async function apiCall(endpoint, method = 'GET', data = null, requiresAuth = false) {
     // API'nin ana adresi. Tüm çağrılar buraya eklenir.
-    const BASE_API_URL = 'http://localhost:5000/api';
+    const BASE_API_URL = 'http://localhost:3000/api';
     
     // Token'ı kalıcı olarak sessionStorage'dan okuyoruz.
     const token = sessionStorage.getItem('authToken'); 

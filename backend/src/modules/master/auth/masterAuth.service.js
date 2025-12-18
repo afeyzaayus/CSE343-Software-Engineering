@@ -140,7 +140,7 @@ export async function inviteMasterUserService(inviterUserId, { email, full_name,
     });
 
     // ✅ Backend URL (API endpoint)
-    const backendUrl = process.env.BASE_URL || 'http://localhost:5000';
+    const backendUrl = process.env.BASE_URL || 'http://localhost:3000';
     const verificationLink = `${backendUrl}/api/auth/master/verify-email?token=${verificationToken}`;
 
     await sendEmail({

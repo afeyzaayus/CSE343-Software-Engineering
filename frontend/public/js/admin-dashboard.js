@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 
 // Token'ı localStorage'dan al
 function getAuthToken() {
@@ -338,7 +338,7 @@ function selectSite(siteId, siteName) {
     showToast(`✅ "${siteName}" seçildi! Dashboard'a yönlendiriliyorsunuz...`, 'success');
 
     setTimeout(() => {
-        window.location.href = '/dashboard'; 
+        window.location.href = '/dashboard.html'; 
     }, 1000);
 }
 

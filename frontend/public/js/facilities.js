@@ -1,5 +1,5 @@
 // Social Facilities Page Script
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id || selectedSite?.id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));

@@ -1,5 +1,5 @@
 // dashboard.js
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:3000';
 
 // LocalStorage'dan admin ve site bilgilerini al
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));

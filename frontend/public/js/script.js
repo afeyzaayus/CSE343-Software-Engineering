@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:3000';
 
 let currentUser = null;
 let currentToken = null;
@@ -44,7 +44,7 @@ function showAlert(elementId, message, isError = false) {
     alert.textContent = message;
     alert.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
     alert.classList.remove('hidden');
-    setTimeout(() => alert.classList.add('hidden'), 5000);
+    setTimeout(() => alert.classList.add('hidden'), 3000);
 }
 
 function hideAlert(elementId) {
@@ -192,7 +192,7 @@ document.getElementById('send-reset-btn').addEventListener('click', async () => 
     }
 
     try {
-        const response = await fetch('http://localhost:5000/api/auth/admin/forgot-password', {
+        const response = await fetch('http://localhost:3000/api/auth/admin/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })

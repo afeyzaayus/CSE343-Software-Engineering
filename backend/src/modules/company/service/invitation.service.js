@@ -41,7 +41,7 @@ export async function createEmployeeInvitationService(managerId, invitedEmail = 
     const inviteCode = `${companyCode}-${randomPart}`;
 
     // Davet linki oluştur
-    const inviteLink = `http://localhost:5000/register-employee.html?inviteCode=${inviteCode}`;
+    const inviteLink = `http://localhost:3000/register-employee.html?inviteCode=${inviteCode}`;
 
     // Son kullanma tarihi (7 gün sonra)
     const expiresAt = new Date();

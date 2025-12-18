@@ -1,6 +1,6 @@
 import { createStatusBadge, showToast, formatDate } from './common.js';
 
-const API_BASE_URL = 'http://localhost:5000/api/master/complaints';
+const API_BASE_URL = 'http://localhost:3000/api/master/complaints';
 
 // Token al
 function getAuthHeaders() {

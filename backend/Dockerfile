@@ -16,5 +16,5 @@ COPY . .
 # Uygulamayı başlat
 CMD ["npm", "run", "dev"]
 
-# 5000 portunu aç
-EXPOSE 5000
+# 3000 portunu aç
+EXPOSE 3000

@@ -51,7 +51,7 @@ const prisma = new PrismaClient();
 })();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,42 +59,7 @@ const __dirname = path.dirname(__filename);
 const frontendPublicPath = path.join(__dirname, '..', '..', 'frontend', 'public');
 console.log('Frontend public path:', frontendPublicPath);
 
-// Tüm frontend dosyalarını servis et
-app.use(express.static(frontendPublicPath));
 
-// Frontend Route Handler - Tüm HTML sayfalarını otomatik servis et
-app.get('/dashboard', (req, res) => {
-  try {
-    res.sendFile(path.join(frontendPublicPath, 'dashboard.html'));
-  } catch (err) {
-    console.error('Dashboard gönderilirken hata:', err);
-    res.status(500).send('Dashboard dosyası gönderilemedi.');
-  }
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'login.html'));
-});
-
-app.get('/announcements', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'announcements.html'));
-});
-
-app.get('/payment', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'payment.html'));
-});
-
-app.get('/complaints', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'complaint_request.html'));
-});
-
-app.get('/residents', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'residents.html'));
-});
-
-app.get('/social-facilities', (req, res) => {
-    res.sendFile(path.join(frontendPublicPath, 'socialfacilities.html'));
-});
 // JSON body parser
 app.use(express.json());
 
