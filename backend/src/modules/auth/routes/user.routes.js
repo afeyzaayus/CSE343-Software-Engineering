@@ -9,7 +9,7 @@ const router = express.Router();
 
 /**
  * @route   POST /api/auth/user/initiate-password-setup
- * @desc    Şifre belirleme sürecini başlat (SMS kodu gönder)
+ * @desc    Şifre belirleme sürecini başlat (Kullanıcı doğrulama, OTP gönderimi frontendde)
  * @access  Public
  * @body    { phone_number: string, site_id: string }
  */
@@ -17,7 +17,7 @@ router.post('/initiate-password-setup', initiatePasswordSetup);
 
 /**
  * @route   POST /api/auth/user/set-password
- * @desc    SMS kodu ile şifre belirleme
+ * @desc    SMS kodu ile şifre belirleme (OTP doğrulaması frontendde)
  * @access  Public
  * @body    { phone_number: string, code: string, password: string, password_confirm: string }
  */

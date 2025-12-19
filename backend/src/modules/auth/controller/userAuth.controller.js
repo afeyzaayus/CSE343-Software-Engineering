@@ -7,14 +7,13 @@ import { generateToken } from '../../../utils/jwt.utils.js';
 
 /**
  * @route   POST /api/auth/user/initiate-password-setup
- * @desc    Mobil kullanıcı için şifre belirleme sürecini başlat (SMS kodu gönder)
+ * @desc    Mobil kullanıcı için şifre belirleme sürecini başlat (Firebase ile OTP gönderimi frontendde)
  * @access  Public
  */
 export async function initiatePasswordSetup(req, res) {
   try {
     const { phone_number, site_id } = req.body;
 
-    // Validation
     if (!phone_number || !site_id) {
       return res.status(400).json({
         success: false,
@@ -22,6 +21,7 @@ export async function initiatePasswordSetup(req, res) {
       });
     }
 
+    // Sadece kullanıcı doğrulaması yapılır, OTP gönderimi frontendde!
     const result = await initiatePasswordSetupService(phone_number, site_id);
 
     return res.status(200).json({
@@ -42,31 +42,28 @@ export async function initiatePasswordSetup(req, res) {
         error: error.message.replace('USER_ERROR: ', '')
       });
     }
-
     if (error.message.includes('VALIDATION_ERROR')) {
       return res.status(400).json({
         success: false,
         error: error.message.replace('VALIDATION_ERROR: ', '')
       });
     }
-
     return res.status(500).json({
       success: false,
-      error: 'Doğrulama kodu gönderilirken bir hata oluştu.'
+      error: 'Kullanıcı doğrulanırken bir hata oluştu.'
     });
   }
 }
 
 /**
  * @route   POST /api/auth/user/set-password
- * @desc    SMS kodu ile şifre belirleme
+ * @desc    SMS kodu ile şifre belirleme (OTP doğrulaması frontendde)
  * @access  Public
  */
 export async function setPasswordWithCode(req, res) {
   try {
     const { phone_number, code, password, password_confirm } = req.body;
 
-    // Validation
     if (!phone_number || !code || !password || !password_confirm) {
       return res.status(400).json({
         success: false,
@@ -74,6 +71,7 @@ export async function setPasswordWithCode(req, res) {
       });
     }
 
+    // OTP doğrulaması frontendde yapılır, backend sadece şifreyi kaydeder
     const result = await setPasswordWithCodeService(
       phone_number,
       code,
@@ -95,21 +93,18 @@ export async function setPasswordWithCode(req, res) {
         error: error.message.replace('USER_ERROR: ', '')
       });
     }
-
     if (error.message.includes('AUTH_ERROR')) {
       return res.status(401).json({
         success: false,
         error: error.message.replace('AUTH_ERROR: ', '')
       });
     }
-
     if (error.message.includes('VALIDATION_ERROR')) {
       return res.status(400).json({
         success: false,
         error: error.message.replace('VALIDATION_ERROR: ', '')
       });
     }
-
     return res.status(500).json({
       success: false,
       error: 'Şifre belirlenirken bir hata oluştu.'
@@ -126,7 +121,6 @@ export async function loginUser(req, res) {
   try {
     const { phone_number, password } = req.body;
 
-    // Validation
     if (!phone_number || !password) {
       return res.status(400).json({
         success: false,

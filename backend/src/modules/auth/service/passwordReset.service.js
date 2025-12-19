@@ -1,7 +1,6 @@
 import prisma from '../../../prisma/prismaClient.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
-import { sendPasswordResetCode } from '../../../shared/sms.service.js';
 import { sendPasswordResetEmail } from '../../../shared/email.service.js';
 
 const SALT_ROUNDS = 10;
@@ -11,7 +10,7 @@ const SALT_ROUNDS = 10;
 // ============================================
 
 /**
- * Kullanıcı - Şifre sıfırlama için kod gönder
+ * Kullanıcı - Şifre sıfırlama için kod gönder (OTP gönderimi frontendde yapılır)
  */
 export async function forgotUserPasswordService(phone_number) {
   const user = await prisma.user.findUnique({
@@ -27,37 +26,28 @@ export async function forgotUserPasswordService(phone_number) {
     throw new Error('USER_ERROR: Henüz şifre belirlenmemiş. Lütfen şifre belirleme işlemini kullanın.');
   }
 
-  const resetCode = crypto.randomInt(100000, 999999).toString();
-  const resetCodeExpiry = new Date(Date.now() + 5 * 60 * 1000);
-
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { reset_code: resetCode, reset_code_expiry: resetCodeExpiry }
-  });
-
-  await sendPasswordResetCode(phone_number, resetCode);
-
-  return { message: 'Doğrulama kodu telefonunuza gönderildi.' };
+  // Artık kod backend tarafından üretilmiyor, OTP gönderimi ve doğrulaması frontendde!
+  // Sadece kullanıcı doğrulaması yapılır.
+  return { message: 'Telefon numaranıza doğrulama kodu gönderildi (OTP gönderimi frontendde).' };
 }
 
 /**
- * Kullanıcı - Kod ile şifre sıfırlama
+ * Kullanıcı - Kod ile şifre sıfırlama (OTP doğrulaması frontendde yapılır)
  */
 export async function resetUserPasswordService(phone_number, code, newPassword) {
   const user = await prisma.user.findUnique({
     where: { phone_number },
-    select: { id: true, reset_code: true, reset_code_expiry: true, deleted_at: true }
+    select: { id: true, deleted_at: true }
   });
 
   if (!user || user.deleted_at) throw new Error('USER_ERROR: Kullanıcı bulunamadı.');
-  if (user.reset_code !== code) throw new Error('AUTH_ERROR: Geçersiz doğrulama kodu.');
-  if (new Date() > new Date(user.reset_code_expiry)) throw new Error('AUTH_ERROR: Kodun süresi dolmuş.');
 
+  // OTP doğrulaması frontendde yapılır, burada kod kontrolü yapılmaz!
   const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { password: hashedPassword, reset_code: null, reset_code_expiry: null }
+    data: { password: hashedPassword }
   });
 
   return { message: 'Şifreniz başarıyla güncellendi.' };
