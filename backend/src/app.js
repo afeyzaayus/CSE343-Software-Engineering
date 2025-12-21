@@ -65,7 +65,10 @@ app.use(express.json());
 
 // CORS - Tüm kaynaklardan gelen isteklere izin ver
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: [
+    "https://siteportal.com.tr",
+    "https://www.siteportal.com.tr"
+  ],
   credentials: true
 }));
 
