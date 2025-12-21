@@ -125,6 +125,14 @@ class ResidenceService {
       if (id) {
       }
       
+      // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+      if (dataWithoutId.phone_number) {
+        const phoneRegex = /^\+905\d{9}$/;
+        if (!phoneRegex.test(dataWithoutId.phone_number)) {
+          throw new Error('Telefon numarası +905xxxxxxxxx formatında olmalıdır (örnek: +905551234567)');
+        }
+      }
+      
       let blockId = dataWithoutId.block_id;
       
       // Find or create block
@@ -398,7 +406,14 @@ class ResidenceService {
       }
 
       if (data.full_name) updateData.full_name = data.full_name;
-      if (data.phone_number) updateData.phone_number = data.phone_number;
+      if (data.phone_number) {
+        // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+        const phoneRegex = /^\+905\d{9}$/;
+        if (!phoneRegex.test(data.phone_number)) {
+          throw new Error('Telefon numarası +905xxxxxxxxx formatında olmalıdır (örnek: +905551234567)');
+        }
+        updateData.phone_number = data.phone_number;
+      }
       
       // Handle apartment change
       let newApartmentId = null;

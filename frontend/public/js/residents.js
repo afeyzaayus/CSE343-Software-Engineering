@@ -780,6 +780,13 @@ document.getElementById('addResidentForm').addEventListener('submit', async (e) 
         return;
     }
     
+    // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+    const phoneRegex = /^\+905\d{9}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+        alert('Telefon numarası +905xxxxxxxxx formatında olmalıdır.\nÖrnek: +905551234567');
+        return;
+    }
+    
     try {
         const residentData = {
             block_id: blockId,
@@ -817,11 +824,20 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
     
     const residentId = document.getElementById('editResidentId').value;
     const blockId = parseInt(document.getElementById('editBlock').value);
+    const phoneNumber = document.getElementById('editPhone').value.trim();
+    
+    // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+    const phoneRegex = /^\+905\d{9}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+        alert('Telefon numarası +905xxxxxxxxx formatında olmalıdır.\nÖrnek: +905551234567');
+        return;
+    }
+    
     const data = {
         block_id: blockId,
         apartment_no: document.getElementById('editDoorNo').value,
         full_name: document.getElementById('editName').value,
-        phone_number: document.getElementById('editPhone').value,
+        phone_number: phoneNumber,
         plates: document.getElementById('editPlate').value || null,
         resident_count: parseInt(document.getElementById('editPeopleCount').value),
         resident_type: document.getElementById('editStatus').value

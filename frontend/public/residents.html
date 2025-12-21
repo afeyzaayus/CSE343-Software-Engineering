@@ -565,7 +565,9 @@
             <input type="text" id="addResidentName" required>
 
             <label>Telefon:</label>
-            <input type="text" id="addResidentPhone" required>
+            <input type="text" id="addResidentPhone" pattern="\+905\d{9}" 
+                   placeholder="+905XXXXXXXXX" 
+                   title="Format: +905XXXXXXXXX (örnek: +905551234567)" required>
 
             <label>Araç Plakası:</label>
             <input type="text" id="addResidentPlate">
@@ -606,7 +608,9 @@
             <input type="text" id="editName" required>
 
             <label>Telefon:</label>
-            <input type="text" id="editPhone" required>
+            <input type="text" id="editPhone" pattern="\+905\d{9}" 
+                   placeholder="+905XXXXXXXXX" 
+                   title="Format: +905XXXXXXXXX (örnek: +905551234567)" required>
 
             <label>Araç Plakası:</label>
             <input type="text" id="editPlate">
