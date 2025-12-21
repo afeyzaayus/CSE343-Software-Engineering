@@ -1,20 +1,11 @@
-# Temel imaj olarak Node.js kullan
-FROM node:18
+FROM node:18-alpine
 
-# Çalışma dizinini ayarla
 WORKDIR /app
 
-# package.json ve package-lock.json dosyalarını kopyala
 COPY package*.json ./
+RUN npm install --only=production
 
-# Bağımlılıkları yükle
-RUN npm install
-
-# Tüm dosyaları konteynıra kopyala
 COPY . .
 
-# Uygulamayı başlat
-CMD ["npm", "run", "dev"]
-
-# 3000 portunu aç
 EXPOSE 3000
+CMD ["npm", "start"]
