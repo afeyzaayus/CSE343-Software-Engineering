@@ -10,7 +10,7 @@ import {
   updateMasterUserRoleService,
   deactivateMasterUserService,
   reactivateMasterUserService,
-  deleteMasterUserService,
+  softDeleteMasterUserService,
   restoreMasterUserService,
   hardDeleteMasterUserService,
   getCurrentMasterUserService
@@ -126,10 +126,6 @@ export async function verifyMasterEmailController(req, res) {
     const { token } = req.query;
 
     console.log('🔍 Email verification request for token:', token);
-
-    // .env'den FRONTEND_URL al
-    const frontendUrl  = 'http://localhost:3000/master';
-
     if (!token) {
       // Hata sayfasına redirect
       return res.redirect(`${frontendUrl}/verify-error.html?error=missing_token`);
@@ -139,9 +135,8 @@ export async function verifyMasterEmailController(req, res) {
 
     console.log('✅ Email verified successfully:', result.user.email);
 
-    // Başarılı - set-password.html sayfasına redirect
+    const frontendUrl = 'http://localhost:8080/master';
     res.redirect(`${frontendUrl}/set-password.html?userId=${result.user.id}`);
-
   } catch (error) {
     console.error('verifyMasterEmailController hatası:', error);
 
@@ -200,7 +195,6 @@ export async function setInitialPasswordController(req, res) {
  */
 export async function listMasterUsersController(req, res) {
   try {
-    // Add defensive check
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         success: false,
@@ -209,8 +203,9 @@ export async function listMasterUsersController(req, res) {
     }
 
     const requesterId = req.user.id;
+    const includeDeleted = req.query.includeDeleted === 'true'; // <-- ekle
 
-    const result = await listMasterUsersService(requesterId);
+    const result = await listMasterUsersService(requesterId, includeDeleted); // <-- ekle
 
     res.status(200).json({
       success: true,
@@ -382,7 +377,7 @@ export async function reactivateMasterUserController(req, res) {
 /**
  * 🗑️ Kullanıcıyı Soft Delete Et (Sadece MASTER_ADMIN)
  */
-export async function deleteMasterUserController(req, res) {
+export async function softDeleteMasterUserController(req, res) {
   try {
     const adminId = req.user.id;
     const { targetUserId } = req.body;
@@ -394,7 +389,7 @@ export async function deleteMasterUserController(req, res) {
       });
     }
 
-    const result = await deleteMasterUserService(adminId, targetUserId);
+    const result = await softDeleteMasterUserService(adminId, targetUserId);
 
     res.status(200).json({
       success: true,
@@ -402,7 +397,7 @@ export async function deleteMasterUserController(req, res) {
       data: result.user
     });
   } catch (error) {
-    console.error('deleteMasterUserController hatası:', error);
+    console.error('softDeleteMasterUserController hatası:', error);
 
     const statusCode = error.message.includes('AUTH_ERROR') ? 403 : 500;
 
@@ -423,6 +418,7 @@ export async function restoreMasterUserController(req, res) {
     const { targetUserId } = req.body;
 
     if (!targetUserId) {
+      console.error('restoreMasterUserController: targetUserId eksik!', req.body);
       return res.status(400).json({
         success: false,
         message: 'Kullanıcı ID gerekli.'
@@ -437,10 +433,8 @@ export async function restoreMasterUserController(req, res) {
       data: result.user
     });
   } catch (error) {
-    console.error('restoreMasterUserController hatası:', error);
-
+    console.error('restoreMasterUserController hatası:', error, 'Body:', req.body, 'User:', req.user);
     const statusCode = error.message.includes('AUTH_ERROR') ? 403 : 500;
-
     res.status(statusCode).json({
       success: false,
       message: error.message.replace('AUTH_ERROR: ', ''),

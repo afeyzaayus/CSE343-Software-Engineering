@@ -4,21 +4,33 @@ import {
     updateComplaintStatusService,
     addMasterNoteToComplaintService
 } from '../service/master.complaint.service.js';
+const VALID_STATUSES = ['PENDING', 'IN_PROGRESS', 'RESOLVED', 'REJECTED'];
 
-// Tüm admin şikayetlerini listele
 export async function listAdminComplaintsController(req, res) {
     try {
         const filter = {};
-        if (req.query.status) {
-            filter.status = req.query.status;
+        // Sadece ALL değilse filtre uygula
+        if (req.query.status && req.query.status.toUpperCase() !== 'ALL') {
+            if (VALID_STATUSES.includes(req.query.status)) {
+                filter.status = req.query.status;
+            } else {
+                return res.status(400).json({ error: 'Geçersiz durum!' });
+            }
+        }
+        // (Arama desteği varsa ekleyin)
+        if (req.query.search) {
+            filter.OR = [
+                { title: { contains: req.query.search, mode: 'insensitive' } },
+                { content: { contains: req.query.search, mode: 'insensitive' } }
+            ];
         }
         const complaints = await listAdminComplaintsService(filter);
         res.json({ complaints });
     } catch (err) {
+        console.error('Şikayet listeleme hatası:', err); // <-- Hata detayını konsola yaz
         res.status(500).json({ error: 'Şikayetler alınamadı', detail: err.message });
     }
 }
-
 // Tek şikayet detay
 export async function getAdminComplaintByIdController(req, res) {
     try {

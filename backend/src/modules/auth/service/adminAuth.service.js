@@ -143,6 +143,17 @@ export async function registerCompanyManagerService(adminData) {
     include: { company: true }
   });
 
+  // company_employees tablosuna ekle
+  await prisma.company_employees.create({
+    data: {
+      company_id: company.id,
+      admin_id: newAdmin.id,
+      status: 'ACTIVE',
+      joined_at: new Date(),
+      deleted_at: null
+    }
+  });
+
   // Aktivasyon maili gönder
   try {
     await sendCompanyManagerVerificationEmail(

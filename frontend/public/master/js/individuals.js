@@ -566,8 +566,13 @@ document.addEventListener('DOMContentLoaded', () => {
     loadIndividualStats();
 
     // Filtreler
-    document.getElementById('individualSearch')?.addEventListener('input', (e) => {
+    document.getElementById('individualSearch')?.addEventListener('input', async (e) => {
         const query = e.target.value.toLowerCase();
+        if (!query) {
+            // Arama kutusu boşsa, API'den tekrar veri çek
+            await loadIndividuals();
+            return;
+        }
         const filtered = individualsData.filter(i => 
             (i.full_name || '').toLowerCase().includes(query) ||
             (i.email || '').toLowerCase().includes(query)

@@ -188,13 +188,13 @@ model companies {
 model individuals {
   id             Int           @id @default(autoincrement())
   site_id        Int?          @unique
-  admin_id       Int           @unique
+  admin_id       Int?          @unique
   account_status AccountStatus @default(ACTIVE)
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
   deleted_at     DateTime?
   expiry_date    DateTime?
-  admin          Admin         @relation(fields: [admin_id], references: [id])
+  admin          Admin?        @relation(fields: [admin_id], references: [id])
   site           Site?         @relation(fields: [site_id], references: [id])
 
   @@map("individuals")

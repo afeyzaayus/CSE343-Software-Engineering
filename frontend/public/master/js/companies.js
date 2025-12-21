@@ -144,12 +144,13 @@ async function hardDeleteCompany(companyId) {
 // ŞİRKET ÇALIŞANLARI API FONKSİYONLARI
 // ===========================
 
-async function fetchCompanyAdmins(companyId, filters = {}) {
+// Yeni endpoint ile güncellendi:
+async function fetchCompanyEmployees(companyId, filters = {}) {
     const params = new URLSearchParams();
     if (filters.includeDeleted) params.append('includeDeleted', 'true');
     if (filters.status) params.append('status', filters.status);
 
-    const response = await fetch(`${API_BASE_URL}/master/company/${companyId}/admins?${params}`, {
+    const response = await fetch(`${API_BASE_URL}/master/company/${companyId}/employees?${params}`, {
         method: 'GET',
         headers: getAuthHeaders(),
     });
@@ -160,7 +161,7 @@ async function fetchCompanyAdmins(companyId, filters = {}) {
     }
 
     const data = await response.json();
-    return data.data || data.admins || data;
+    return data.data || data.employees || data;
 }
 
 async function updateAdminRole(adminId, newRole) {
@@ -319,7 +320,8 @@ function displayCompanies(companies) {
 
     container.innerHTML = companies.map(company => {
         const siteCount = company.sites?.length || company.site_count || 0;
-        const adminCount = company.admins?.length || company.admin_count || 0;
+        // DÜZELTİLDİ: adminCount yerine employeeCount
+        const employeeCount = company.employees?.length || 0;
         
         return `
             <div class="list-item ${company.deleted_at ? 'deleted' : ''}" data-id="${company.id}">
@@ -330,7 +332,7 @@ function displayCompanies(companies) {
                 <div class="company-info" onclick="viewCompanyDetail(${company.id})">
                     <p><strong>Kod:</strong> ${company.company_code || '-'}</p>
                     <p><strong>Site Sayısı:</strong> ${siteCount}</p>
-                    <p><strong>Çalışan Sayısı:</strong> ${adminCount}</p>
+                    <p><strong>Çalışan Sayısı:</strong> ${employeeCount}</p>
                     <p><strong>Oluşturma:</strong> ${formatDate(company.created_at)}</p>
                 </div>
                 <div class="list-item-actions">
@@ -472,7 +474,7 @@ async function loadCompanyEmployees(companyId) {
             includeDeleted: document.getElementById('showDeletedEmployees')?.checked || false,
         };
 
-        const employees = await fetchCompanyAdmins(companyId, filters);
+        const employees = await fetchCompanyEmployees(companyId, filters);
         displayCompanyEmployees(employees);
     } catch (error) {
         showToast(error.message, 'error');
@@ -491,16 +493,16 @@ function displayCompanyEmployees(employees) {
     }
 
     container.innerHTML = employeesArray.map(emp => `
-        <div class="account-card ${emp.deleted_at ? 'deleted' : ''}" data-id="${emp.id}">
+        <div class="account-card ${emp.admin?.deleted_at ? 'deleted' : ''}" data-id="${emp.id}">
             <div class="account-header">
-                <h4>${emp.full_name || emp.name || 'İsimsiz'}</h4>
-                ${createStatusBadge(emp.account_status)}
+                <h4>${emp.admin?.full_name || emp.admin?.name || 'İsimsiz'}</h4>
+                ${createStatusBadge(emp.admin?.account_status)}
             </div>
             <div class="account-details">
-                <p class="account-email">📧 ${emp.email || '-'}</p>
-                <p><strong>Rol:</strong> ${emp.account_type === 'COMPANY_MANAGER' ? 'Şirket Yöneticisi' : 'Şirket Çalışanı'}</p>
-                <p><strong>Son Giriş:</strong> ${emp.last_login ? formatDate(emp.last_login) : 'Hiç giriş yapmamış'}</p>
-                ${emp.deleted_at ? `<p><strong>Silinme Tarihi:</strong> ${formatDate(emp.deleted_at)}</p>` : ''}
+                <p class="account-email">📧 ${emp.admin?.email || '-'}</p>
+                <p><strong>Rol:</strong> ${emp.admin?.account_type === 'COMPANY_MANAGER' ? 'Şirket Yöneticisi' : 'Şirket Çalışanı'}</p>
+                <p><strong>Son Giriş:</strong> ${emp.admin?.last_login ? formatDate(emp.admin.last_login) : 'Hiç giriş yapmamış'}</p>
+                ${emp.admin?.deleted_at ? `<p><strong>Silinme Tarihi:</strong> ${formatDate(emp.admin.deleted_at)}</p>` : ''}
             </div>
             <div class="card-actions">
                 ${getEmployeeActionButtons(emp)}
@@ -510,17 +512,17 @@ function displayCompanyEmployees(employees) {
 }
 
 function getEmployeeActionButtons(employee) {
-    if (employee.deleted_at) {
+    if (employee.admin?.deleted_at) {
         return `
-            <button class="btn btn-success btn-xs" onclick="handleRestoreAdmin(${employee.id})">
+            <button class="btn btn-success btn-xs" onclick="handleRestoreAdmin(${employee.admin.id})">
                 <span class="btn-icon">↩️</span> Geri Yükle
             </button>
-            <button class="btn btn-danger btn-xs" onclick="handleHardDeleteAdmin(${employee.id})">
+            <button class="btn btn-danger btn-xs" onclick="handleHardDeleteAdmin(${employee.admin.id})">
                 <span class="btn-icon">🗑️</span> Kalıcı Sil
             </button>
         `;
     }
-    return ''; // Silinmemişse hiçbir şey döndür
+    return '';
 }
 // ===========================
 // MODAL FONKSİYONLARI

@@ -110,224 +110,194 @@ export async function getIndividualById(id) {
 
 /**
  * Individual durumunu güncelle (ACTIVE / SUSPENDED)
- * İlişkili admin ve site de aynı duruma güncellenir
+ * İlişkili admin, site ve siteye bağlı user'lar da aynı duruma güncellenir
  */
-export async function updateIndividualStatus(id, status) {
-    const result = await prisma.$transaction(async (tx) => {
-        // Individual durumunu güncelle
+export async function updateIndividualStatus(individualId, status) {
+    const id = parseInt(individualId);
+    return await prisma.$transaction(async (tx) => {
+        // Individual güncelle
         const updatedIndividual = await tx.individuals.update({
-            where: { id: parseInt(id) },
-            data: { 
-                account_status: status,
-                updated_at: new Date()
-            },
-            include: { 
-                admin: {
-                    select: {
-                        id: true,
-                        full_name: true,
-                        email: true,
-                        account_type: true,
-                        account_status: true,
-                    }
-                }
-            }
+            where: { id },
+            data: { account_status: status },
         });
 
-        // İlişkili admin'in durumunu güncelle
-        if (updatedIndividual.admin_id) {
-            await tx.admin.update({
-                where: { id: updatedIndividual.admin_id },
+        // İlişkili admin güncelle
+        await tx.admin.updateMany({
+            where: { individualId: id, deleted_at: null },
+            data: { account_status: status },
+        });
+
+        // İlişkili siteyi bul ve güncelle
+        const site = await tx.site.findFirst({
+            where: { individual_id: id, deleted_at: null }
+        });
+        if (site) {
+            await tx.site.update({
+                where: { id: site.id },
+                data: { site_status: status }
+            });
+
+            // Siteye bağlı user'ları güncelle
+            await tx.user.updateMany({
+                where: { siteId: site.id, deleted_at: null },
                 data: { account_status: status }
             });
         }
 
-        // İlişkili site'nin durumunu güncelle (varsa)
-        if (updatedIndividual.site_id) {
-            await tx.site.update({
-                where: { id: updatedIndividual.site_id },
-                data: { site_status: status }
-            });
-        }
-
-        return {
-            id: updatedIndividual.id,
-            full_name: updatedIndividual.admin?.full_name || 'N/A',
-            email: updatedIndividual.admin?.email || 'N/A',
-            account_status: updatedIndividual.account_status,
-            expiry_date: updatedIndividual.expiry_date,
-            updated_at: updatedIndividual.updated_at
-        };
+        return updatedIndividual;
     });
-
-    return result;
 }
 
 /**
  * Individual'ı soft delete yap
- * İlişkili admin ve site de soft delete edilir
+ * İlişkili admin, site ve siteye bağlı user'lar da soft delete edilir
  */
-export async function softDeleteIndividual(id) {
+export async function softDeleteIndividual(individualId) {
+    const id = parseInt(individualId);
     const now = new Date();
-    
-    const result = await prisma.$transaction(async (tx) => {
-        // Individual kaydını al
-        const individual = await tx.individuals.findUnique({
-            where: { id: parseInt(id) },
-            include: {
-                admin: {
-                    select: {
-                        id: true,
-                        full_name: true,
-                        email: true
-                    }
-                }
-            }
-        });
-
-        // Individual'ı soft delete yap
+    return await prisma.$transaction(async (tx) => {
+        // Individual soft delete
         const deletedIndividual = await tx.individuals.update({
-            where: { id: parseInt(id) },
-            data: { 
+            where: { id },
+            data: {
                 deleted_at: now,
                 account_status: 'DELETED',
                 updated_at: now
             }
         });
 
-        // İlişkili admin'i soft delete yap
-        if (individual.admin_id) {
-            await tx.admin.update({
-                where: { id: individual.admin_id },
-                data: { 
+        // İlişkili admin soft delete
+        await tx.admin.updateMany({
+            where: { individualId: id, deleted_at: null },
+            data: {
+                deleted_at: now,
+                account_status: 'DELETED'
+            }
+        });
+
+        // İlişkili siteyi bul ve soft delete
+        const site = await tx.site.findFirst({
+            where: { individual_id: id, deleted_at: null }
+        });
+        if (site) {
+            await tx.site.update({
+                where: { id: site.id },
+                data: {
+                    deleted_at: now,
+                    site_status: 'DELETED'
+                }
+            });
+
+            // Siteye bağlı user'ları soft delete
+            await tx.user.updateMany({
+                where: { siteId: site.id, deleted_at: null },
+                data: {
                     deleted_at: now,
                     account_status: 'DELETED'
                 }
             });
         }
 
-        // İlişkili site'yi soft delete yap (varsa)
-        if (individual.site_id) {
-            await tx.site.update({
-                where: { id: individual.site_id },
-                data: { 
-                    deleted_at: now,
-                    site_status: 'DELETED'
-                }
-            });
-        }
-
-        return {
-            id: deletedIndividual.id,
-            full_name: individual.admin?.full_name || 'N/A',
-            email: individual.admin?.email || 'N/A',
-            deleted_at: deletedIndividual.deleted_at
-        };
+        return deletedIndividual;
     });
-
-    return result;
 }
 
 /**
  * Soft delete edilmiş individual'ı geri yükle
- * İlişkili admin ve site de geri yüklenir
+ * İlişkili admin, site ve siteye bağlı user'lar da geri yüklenir
  */
-export async function restoreIndividual(id) {
-    const result = await prisma.$transaction(async (tx) => {
-        // Individual kaydını al
-        const individual = await tx.individuals.findUnique({
-            where: { id: parseInt(id) },
-            include: {
-                admin: {
-                    select: {
-                        id: true,
-                        full_name: true,
-                        email: true
-                    }
-                }
-            }
-        });
-
-        // Individual'ı geri yükle
+export async function restoreIndividual(individualId) {
+    const id = parseInt(individualId);
+    return await prisma.$transaction(async (tx) => {
+        // Individual restore
         const restoredIndividual = await tx.individuals.update({
-            where: { id: parseInt(id) },
-            data: { 
+            where: { id },
+            data: {
                 deleted_at: null,
                 account_status: 'ACTIVE',
                 updated_at: new Date()
             }
         });
 
-        // İlişkili admin'i geri yükle
-        if (individual.admin_id) {
-            await tx.admin.update({
-                where: { id: individual.admin_id },
-                data: { 
+        // İlişkili admin restore
+        await tx.admin.updateMany({
+            where: { individualId: id, deleted_at: { not: null } },
+            data: {
+                deleted_at: null,
+                account_status: 'ACTIVE'
+            }
+        });
+
+        // İlişkili siteyi bul ve restore
+        const site = await tx.site.findFirst({
+            where: { individual_id: id, deleted_at: { not: null } }
+        });
+        if (site) {
+            await tx.site.update({
+                where: { id: site.id },
+                data: {
+                    deleted_at: null,
+                    site_status: 'ACTIVE'
+                }
+            });
+
+            // Siteye bağlı user'ları restore
+            await tx.user.updateMany({
+                where: { siteId: site.id, deleted_at: { not: null } },
+                data: {
                     deleted_at: null,
                     account_status: 'ACTIVE'
                 }
             });
         }
 
-        // İlişkili site'yi geri yükle (varsa)
-        if (individual.site_id) {
-            await tx.site.update({
-                where: { id: individual.site_id },
-                data: { 
-                    deleted_at: null,
-                    site_status: 'ACTIVE'
-                }
-            });
-        }
-
-        return {
-            id: restoredIndividual.id,
-            full_name: individual.admin?.full_name || 'N/A',
-            email: individual.admin?.email || 'N/A',
-            account_status: restoredIndividual.account_status
-        };
+        return restoredIndividual;
     });
-
-    return result;
 }
-
-/**
- * Individual'ı hard delete yap (kalıcı olarak sil)
- * İlişkili admin ve site de kalıcı olarak silinir
- */
-export async function hardDeleteIndividual(id) {
-    const result = await prisma.$transaction(async (tx) => {
-        // Individual kaydını al
+export async function hardDeleteIndividual(individualId) {
+    const id = parseInt(individualId);
+    return await prisma.$transaction(async (tx) => {
+        // Individual kaydını al (site_id ve admin_id için)
         const individual = await tx.individuals.findUnique({
-            where: { id: parseInt(id) },
-            select: { admin_id: true, site_id: true }
+            where: { id },
+            select: { admin_id: true }
         });
 
-        // İlişkili site'yi kalıcı olarak sil (varsa)
-        if (individual.site_id) {
+        // Bireysel hesaba bağlı tüm siteleri bul
+        const sites = await tx.site.findMany({
+            where: { individual_id: id }
+        });
+
+        // Her site için önce user'ları sil, sonra siteyi sil
+        for (const site of sites) {
+            await tx.user.deleteMany({
+                where: { siteId: site.id }
+            });
             await tx.site.delete({
-                where: { id: individual.site_id }
+                where: { id: site.id }
             });
         }
 
-        // İlişkili admin'i kalıcı olarak sil
-        if (individual.admin_id) {
+        // Önce individuals tablosunda admin_id'yi null yap
+        if (individual?.admin_id) {
+            await tx.individuals.update({
+                where: { id },
+                data: { admin_id: null }
+            });
+            // Sonra admin'i sil
             await tx.admin.delete({
                 where: { id: individual.admin_id }
             });
         }
 
-        // Individual'ı kalıcı olarak sil
-        const deletedIndividual = await tx.individuals.delete({
-            where: { id: parseInt(id) }
+        // En son individual'ı sil
+        await tx.individuals.delete({
+            where: { id }
         });
 
-        return deletedIndividual;
+        return { success: true };
     });
-
-    return result;
 }
-
 /**
  * Individual istatistikleri
  */

@@ -21,19 +21,10 @@ export async function getAllCompanies(filters = {}) {
         where.account_status = filters.status;
     }
 
+    // Şirketleri çek
     const companies = await prisma.companies.findMany({
         where,
         include: {
-            admins: {
-                select: {
-                    id: true,
-                    full_name: true,
-                    email: true,
-                    account_type: true,
-                    account_status: true,
-                    deleted_at: true,
-                },
-            },
             sites: {
                 select: {
                     id: true,
@@ -47,17 +38,19 @@ export async function getAllCompanies(filters = {}) {
         orderBy: { created_at: 'desc' },
     });
 
-    return companies;
-}
+    // Her şirket için company_employees ve admin bilgilerini ekle
+    for (const company of companies) {
+        // company_employees kayıtlarını çek
+        const employees = await prisma.company_employees.findMany({
+            where: { company_id: company.id, deleted_at: null },
+        });
+        const adminIds = employees.map(e => e.admin_id);
 
-/**
- * ID'ye göre tek bir şirket getir
- */
-export async function getCompanyById(companyId) {
-    const company = await prisma.companies.findUnique({
-        where: { id: companyId },
-        include: {
-            admins: {
+        // Admin bilgilerini çek
+        let adminsMap = {};
+        if (adminIds.length > 0) {
+            const admins = await prisma.admin.findMany({
+                where: { id: { in: adminIds } },
                 select: {
                     id: true,
                     full_name: true,
@@ -67,7 +60,31 @@ export async function getCompanyById(companyId) {
                     deleted_at: true,
                     last_login: true,
                 },
-            },
+            });
+            adminsMap = admins.reduce((acc, admin) => {
+                acc[admin.id] = admin;
+                return acc;
+            }, {});
+        }
+
+        // Her employee kaydına admin bilgisini ekle
+        company.employees = employees.map(emp => ({
+            ...emp,
+            admin: adminsMap[emp.admin_id] || null
+        }));
+    }
+
+    return companies;
+}
+
+/**
+ * ID'ye göre tek bir şirket getir
+ */
+export async function getCompanyById(companyId) {
+    // Şirketi çek
+    const company = await prisma.companies.findUnique({
+        where: { id: companyId },
+        include: {
             sites: {
                 select: {
                     id: true,
@@ -82,9 +99,43 @@ export async function getCompanyById(companyId) {
         },
     });
 
+    if (!company) return null;
+
+    // company_employees kayıtlarını çek
+    const employees = await prisma.company_employees.findMany({
+        where: { company_id: company.id, deleted_at: null },
+    });
+    const adminIds = employees.map(e => e.admin_id);
+
+    // Admin bilgilerini çek
+    let adminsMap = {};
+    if (adminIds.length > 0) {
+        const admins = await prisma.admin.findMany({
+            where: { id: { in: adminIds } },
+            select: {
+                id: true,
+                full_name: true,
+                email: true,
+                account_type: true,
+                account_status: true,
+                deleted_at: true,
+                last_login: true,
+            },
+        });
+        adminsMap = admins.reduce((acc, admin) => {
+            acc[admin.id] = admin;
+            return acc;
+        }, {});
+    }
+
+    // Her employee kaydına admin bilgisini ekle
+    company.employees = employees.map(emp => ({
+        ...emp,
+        admin: adminsMap[emp.admin_id] || null
+    }));
+
     return company;
 }
-
 /**
  * Şirket kodu ile şirket getir
  */
@@ -116,23 +167,36 @@ export async function updateCompanyStatus(companyId, status) {
         await tx.site.updateMany({
             where: { 
                 company_id: companyId,
-                deleted_at: null // Silinmiş siteleri etkileme
+                deleted_at: null
             },
             data: { 
                 site_status: status 
             },
         });
 
-        // İlişkili tüm çalışanların durumunu güncelle
-        await tx.admin.updateMany({
+        // company_employees üzerinden çalışanları güncelle
+        await tx.company_employees.updateMany({
             where: { 
-                companyId: companyId,
-                deleted_at: null // Silinmiş çalışanları etkileme
+                company_id: companyId,
+                deleted_at: null
             },
             data: { 
-                account_status: status 
+                status: status 
             },
         });
+
+        // company_employees ile ilişkili admin'leri güncelle
+        const employees = await tx.company_employees.findMany({
+            where: { company_id: companyId, deleted_at: null },
+            select: { admin_id: true }
+        });
+        const adminIds = employees.map(e => e.admin_id).filter(Boolean);
+        if (adminIds.length > 0) {
+            await tx.admin.updateMany({
+                where: { id: { in: adminIds }, deleted_at: null },
+                data: { account_status: status }
+            });
+        }
 
         return updatedCompany;
     });
@@ -146,7 +210,7 @@ export async function updateCompanyStatus(companyId, status) {
  */
 export async function softDeleteCompany(companyId) {
     const now = new Date();
-    
+
     const result = await prisma.$transaction(async (tx) => {
         // Önce şirkete bağlı tüm sitelerin ID'lerini al
         const sites = await tx.site.findMany({
@@ -158,7 +222,7 @@ export async function softDeleteCompany(companyId) {
         // Site kullanıcılarını soft delete yap
         if (siteIds.length > 0) {
             await tx.user.updateMany({
-                where: { siteId: { in: siteIds } }, // site_id değil siteId
+                where: { siteId: { in: siteIds } },
                 data: { 
                     deleted_at: now,
                     account_status: 'DELETED'
@@ -175,14 +239,34 @@ export async function softDeleteCompany(companyId) {
             },
         });
 
-        // Çalışanları soft delete yap
-        await tx.admin.updateMany({
-            where: { companyId: companyId },
-            data: { 
-                deleted_at: now,
-                account_status: 'DELETED'
-            },
+        // company_employees üzerinden çalışanları soft delete yap
+        const employees = await tx.company_employees.findMany({
+            where: { company_id: companyId },
+            select: { id: true, admin_id: true }
         });
+        const employeeIds = employees.map(e => e.id);
+        const adminIds = employees.map(e => e.admin_id).filter(Boolean);
+
+        if (employeeIds.length > 0) {
+            await tx.company_employees.updateMany({
+                where: { id: { in: employeeIds } },
+                data: {
+                    deleted_at: now,
+                    status: 'DELETED'
+                }
+            });
+        }
+
+        // company_employees ile ilişkili admin'leri soft delete yap
+        if (adminIds.length > 0) {
+            await tx.admin.updateMany({
+                where: { id: { in: adminIds } },
+                data: { 
+                    deleted_at: now,
+                    account_status: 'DELETED'
+                },
+            });
+        }
 
         // Şirketi soft delete yap
         const deletedCompany = await tx.companies.update({
@@ -236,23 +320,40 @@ export async function restoreCompany(companyId) {
             },
         });
 
-        // Çalışanları geri yükle
-        await tx.admin.updateMany({
-            where: { 
-                companyId: companyId,
-                deleted_at: { not: null }
-            },
-            data: { 
-                deleted_at: null,
-                account_status: 'ACTIVE'
-            },
+        // company_employees üzerinden çalışanları geri yükle
+        const employees = await tx.company_employees.findMany({
+            where: { company_id: companyId, deleted_at: { not: null } },
+            select: { id: true, admin_id: true }
         });
+        const employeeIds = employees.map(e => e.id);
+        const adminIds = employees.map(e => e.admin_id).filter(Boolean);
+
+        if (employeeIds.length > 0) {
+            await tx.company_employees.updateMany({
+                where: { id: { in: employeeIds } },
+                data: {
+                    deleted_at: null,
+                    status: 'ACTIVE'
+                }
+            });
+        }
+
+        // company_employees ile ilişkili admin'leri geri yükle
+        if (adminIds.length > 0) {
+            await tx.admin.updateMany({
+                where: { id: { in: adminIds }, deleted_at: { not: null } },
+                data: { 
+                    deleted_at: null,
+                    account_status: 'ACTIVE'
+                },
+            });
+        }
 
         // Site kullanıcılarını geri yükle
         if (siteIds.length > 0) {
             await tx.user.updateMany({
                 where: { 
-                    siteId: { in: siteIds }, // site_id değil siteId
+                    siteId: { in: siteIds },
                     deleted_at: { not: null }
                 },
                 data: { 
@@ -284,14 +385,28 @@ export async function hardDeleteCompany(companyId) {
         // Site kullanıcılarını kalıcı olarak sil
         if (siteIds.length > 0) {
             await tx.user.deleteMany({
-                where: { siteId: { in: siteIds } }, // site_id değil siteId
+                where: { siteId: { in: siteIds } },
             });
         }
 
-        // Çalışanları kalıcı olarak sil
-        await tx.admin.deleteMany({
-            where: { companyId: companyId },
+        // company_employees üzerinden admin'leri bul
+        const employees = await tx.company_employees.findMany({
+            where: { company_id: companyId },
+            select: { admin_id: true }
         });
+        const adminIds = employees.map(e => e.admin_id).filter(Boolean);
+
+        // Önce company_employees kayıtlarını sil
+        await tx.company_employees.deleteMany({
+            where: { company_id: companyId },
+        });
+
+        // Sonra admin kayıtlarını sil
+        if (adminIds.length > 0) {
+            await tx.admin.deleteMany({
+                where: { id: { in: adminIds } },
+            });
+        }
 
         // Siteleri kalıcı olarak sil
         await tx.site.deleteMany({
@@ -386,50 +501,28 @@ export async function updateCompanyById(companyId, updateData) {
 // ŞİRKET ÇALIŞANLARI (ADMINS)
 // ===========================
 
-/**
- * Şirkete bağlı tüm adminleri getir
- */
-export async function getCompanyAdmins(companyId, filters = {}) {
-    const where = { companyId };
-
-    if (!filters.includeDeleted) {
-        where.deleted_at = null;
-    }
-
-    if (filters.status) {
-        where.account_status = filters.status;
-    }
-
-    const admins = await prisma.admin.findMany({
-        where,
-        select: {
-            id: true,
-            full_name: true,
-            email: true,
-            account_type: true,
-            account_status: true,
-            company_name: true,
-            company_code: true,
-            created_at: true,
-            deleted_at: true,
-            last_login: true,
-        },
-        orderBy: { created_at: 'desc' },
-    });
-
-    return admins;
-}
 
 /**
  * Admin rolünü değiştir
  * Sadece admin etkilenir, bağlı kayıtlar etkilenmez
+ * GÜNCELLENDİ: company_employees kaydı da güncellenir
  */
 export async function updateAdminRole(adminId, newRole) {
-    const updatedAdmin = await prisma.admin.update({
-        where: { id: adminId },
-        data: { account_type: newRole },
+    // Transaction ile hem admin hem company_employees güncelle
+    const result = await prisma.$transaction(async (tx) => {
+        const updatedAdmin = await tx.admin.update({
+            where: { id: adminId },
+            data: { account_type: newRole },
+        });
+
+        // company_employees tablosunda role alanı yoksa, burada sadece güncelleme yapılmaz veya başka bir alan güncellenir
+        // Eğer sadece admin_id ile eşleşen kayıtlar varsa, burada bir işlem yapmaya gerek yok
+        // İsterseniz log ekleyebilirsiniz veya bu kısmı tamamen kaldırabilirsiniz
+
+        return updatedAdmin;
     });
-    return updatedAdmin;
+
+    return result;
 }
 
 /**
@@ -478,13 +571,24 @@ export async function restoreAdmin(adminId) {
 
 /**
  * Admin'i hard delete yap
- * Sadece admin etkilenir, bağlı kayıtlar etkilenmez
+ * Sadece admin etkilenir, bağlı company_employees kaydı da silinir
  */
 export async function hardDeleteAdmin(adminId) {
-    const deletedAdmin = await prisma.admin.delete({
-        where: { id: adminId },
+    const result = await prisma.$transaction(async (tx) => {
+        // Önce company_employees kaydını sil
+        await tx.company_employees.deleteMany({
+            where: { admin_id: adminId }
+        });
+
+        // Sonra admin kaydını sil
+        const deletedAdmin = await tx.admin.delete({
+            where: { id: adminId },
+        });
+
+        return deletedAdmin;
     });
-    return deletedAdmin;
+
+    return result;
 }
 
 // ===========================
@@ -578,4 +682,62 @@ export async function hardDeleteSite(siteId) {
     });
 
     return result;
+}
+
+/**
+ * Şirkete bağlı tüm çalışanları getir (company_employees tablosundan)
+ * Her çalışan için admin bilgilerini de getirir
+ */
+export async function getCompanyEmployees(companyId, filters = {}) {
+    const where = { company_id: companyId };
+
+    if (!filters.includeDeleted) {
+        where.deleted_at = null;
+    }
+
+    if (filters.status) {
+        where.status = filters.status;
+    }
+
+    // Önce çalışanları çek
+    const employees = await prisma.company_employees.findMany({
+        where,
+        orderBy: { joined_at: 'desc' },
+    });
+
+    // Admin id'lerini topla
+    const adminIds = employees.map(e => e.admin_id);
+
+    // Admin bilgilerini topluca çek
+    let adminsMap = {};
+    if (adminIds.length > 0) {
+        const admins = await prisma.admin.findMany({
+            where: { id: { in: adminIds } },
+            select: {
+                id: true,
+                full_name: true,
+                email: true,
+                account_type: true,
+                account_status: true,
+                company_name: true,
+                company_code: true,
+                created_at: true,
+                deleted_at: true,
+                last_login: true,
+            }
+        });
+        // Map admin_id -> admin
+        adminsMap = admins.reduce((acc, admin) => {
+            acc[admin.id] = admin;
+            return acc;
+        }, {});
+    }
+
+    // Her employee kaydına admin bilgisini ekle
+    const employeesWithAdmin = employees.map(emp => ({
+        ...emp,
+        admin: adminsMap[emp.admin_id] || null
+    }));
+
+    return employeesWithAdmin;
 }

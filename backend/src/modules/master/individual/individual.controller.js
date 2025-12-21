@@ -20,12 +20,10 @@ import {
 export async function getAllIndividualsHandler(req, res) {
     try {
         const { includeDeleted, status } = req.query;
-        
         const filters = {
             includeDeleted: includeDeleted === 'true',
             status: status || null
         };
-
         const individuals = await getAllIndividuals(filters);
 
         return res.status(200).json({
@@ -50,7 +48,6 @@ export async function getAllIndividualsHandler(req, res) {
 export async function getIndividualByIdHandler(req, res) {
     try {
         const { id } = req.params;
-
         const individual = await getIndividualById(id);
 
         if (!individual) {
@@ -77,6 +74,7 @@ export async function getIndividualByIdHandler(req, res) {
 /**
  * Bireysel hesap durumunu güncelle
  * PATCH /api/master/individuals/:id/status
+ * Hesap askıya alınırsa/sürdürülürse bağlı site, admin ve siteye bağlı user'lar da aynı duruma alınır.
  */
 export async function updateIndividualStatusHandler(req, res) {
     try {
@@ -90,11 +88,12 @@ export async function updateIndividualStatusHandler(req, res) {
             });
         }
 
+        // Hesap, bağlı site, admin ve user'lar topluca güncellenir
         const updatedIndividual = await updateIndividualStatus(id, status);
 
         return res.status(200).json({
             success: true,
-            message: `${updatedIndividual.full_name} hesabının durumu ${status} olarak güncellendi`,
+            message: `Bireysel hesap ve bağlı site/admin/user'lar durumu ${status} olarak güncellendi`,
             data: updatedIndividual
         });
     } catch (error) {
@@ -110,16 +109,18 @@ export async function updateIndividualStatusHandler(req, res) {
 /**
  * Bireysel hesabı soft delete yap
  * DELETE /api/master/individuals/:id/soft
+ * Hesap silinirse bağlı site, admin ve siteye bağlı user'lar da soft delete yapılır.
  */
 export async function softDeleteIndividualHandler(req, res) {
     try {
         const { id } = req.params;
 
+        // Hesap, bağlı site, admin ve user'lar topluca soft delete yapılır
         const deletedIndividual = await softDeleteIndividual(id);
 
         return res.status(200).json({
             success: true,
-            message: `${deletedIndividual.full_name} hesabı başarıyla silindi`,
+            message: `Bireysel hesap ve bağlı site/admin/user'lar başarıyla silindi`,
             data: deletedIndividual
         });
     } catch (error) {
@@ -135,16 +136,18 @@ export async function softDeleteIndividualHandler(req, res) {
 /**
  * Soft delete edilmiş hesabı geri yükle
  * PATCH /api/master/individuals/:id/restore
+ * Hesap geri yüklenirse bağlı site, admin ve siteye bağlı user'lar da geri yüklenir.
  */
 export async function restoreIndividualHandler(req, res) {
     try {
         const { id } = req.params;
 
+        // Hesap, bağlı site, admin ve user'lar topluca geri yüklenir
         const restoredIndividual = await restoreIndividual(id);
 
         return res.status(200).json({
             success: true,
-            message: `${restoredIndividual.full_name} hesabı başarıyla geri yüklendi`,
+            message: `Bireysel hesap ve bağlı site/admin/user'lar başarıyla geri yüklendi`,
             data: restoredIndividual
         });
     } catch (error) {
@@ -160,16 +163,18 @@ export async function restoreIndividualHandler(req, res) {
 /**
  * Hesabı kalıcı olarak sil
  * DELETE /api/master/individuals/:id/hard
+ * Hesap silinirse bağlı site, admin ve siteye bağlı user'lar da kalıcı olarak silinir.
  */
 export async function hardDeleteIndividualHandler(req, res) {
     try {
         const { id } = req.params;
 
+        // Hesap, bağlı site, admin ve user'lar topluca kalıcı olarak silinir
         await hardDeleteIndividual(id);
 
         return res.status(200).json({
             success: true,
-            message: 'Bireysel hesap kalıcı olarak silindi'
+            message: 'Bireysel hesap ve bağlı site/admin/user\'lar kalıcı olarak silindi'
         });
     } catch (error) {
         console.error('❌ Bireysel hesap kalıcı silme hatası:', error);
@@ -226,14 +231,14 @@ export async function getSitesByIndividualIdHandler(req, res) {
         });
     } catch (error) {
         console.error('❌ Site getirme hatası:', error);
-        
+
         if (error.message === 'Bireysel hesap bulunamadı') {
             return res.status(404).json({
                 success: false,
                 message: error.message
             });
         }
-        
+
         return res.status(500).json({
             success: false,
             message: 'Site getirilemedi',

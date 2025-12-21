@@ -13,15 +13,19 @@ function getAuthHeaders() {
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchAndRenderComplaints();
+
+    // Filtre kutusu ALL haricinde büyük harfe çevirme kaldırıldı, doğrudan value gönderiliyor
     document.getElementById('complaintFilter').addEventListener('change', fetchAndRenderComplaints);
 });
 
 // Şikayetleri getir ve listele
+// Şikayetleri getir ve listele
 async function fetchAndRenderComplaints() {
     const filterValue = document.getElementById('complaintFilter').value;
     let url = API_BASE_URL;
-    if (filterValue && filterValue !== 'all') {
-        url += `?status=${filterValue.toUpperCase()}`;
+    // "ALL" haricinde filtre uygula, value'yu doğrudan gönder
+    if (filterValue && filterValue !== 'ALL') {
+        url += `?status=${filterValue}`;
     }
     const res = await fetch(url);
     const data = await res.json();
@@ -102,7 +106,6 @@ async function openComplaintDetailModal(complaintId) {
         ${complaint.admin?.company_code ? `<p><strong>Şirket Kodu:</strong> ${complaint.admin.company_code}</p>` : ''}
         ${complaint.master_note ? `<hr><p><strong>Master Notu:</strong> <span id="masterNoteText">${complaint.master_note}</span></p>` : ''}
     `;
-    // ...existing code...
     // Aksiyonlar (tek bir kaydet butonu)
     const actions = document.getElementById('complaintDetailActions');
     actions.innerHTML = `

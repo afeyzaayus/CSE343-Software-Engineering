@@ -305,7 +305,7 @@ export async function setInitialPasswordService(userId, password) {
 /**
  * 👥 Tüm master kullanıcıları listele (Tüm roller görebilir)
  */
-export async function listMasterUsersService(requesterId) {
+export async function listMasterUsersService(requesterId, includeDeleted = false) {
   try {
     const requester = await prisma.masterUser.findUnique({
       where: { id: requesterId },
@@ -316,9 +316,9 @@ export async function listMasterUsersService(requesterId) {
       throw new Error('AUTH_ERROR: Yetkiniz yok veya hesabınız aktif değil.');
     }
 
-    // Tüm roller görebilir
+    // Silinmişleri de dahil et
     const users = await prisma.masterUser.findMany({
-      where: { deleted_at: null },
+      where: includeDeleted ? {} : { deleted_at: null },
       select: {
         id: true,
         email: true,
@@ -327,7 +327,8 @@ export async function listMasterUsersService(requesterId) {
         is_active: true,
         is_verified: true,
         last_login_at: true,
-        created_at: true
+        created_at: true,
+        deleted_at: true // <-- silinmişleri göstermek için ekle
       },
       orderBy: { created_at: 'desc' }
     });
@@ -511,9 +512,10 @@ export async function reactivateMasterUserService(adminId, targetUserId) {
 }
 
 /**
- * 🗑️ Kullanıcıyı soft delete, geri yükle veya hard delete (Sadece MASTER_ADMIN)
+ * 🗑️ Master user'ı soft delete (sadece silinmiş göster)
+ * Sadece MASTER_ADMIN
  */
-export async function deleteMasterUserService(adminId, targetUserId) {
+export async function softDeleteMasterUserService(adminId, targetUserId) {
   try {
     const admin = await prisma.masterUser.findUnique({
       where: { id: adminId },
@@ -538,21 +540,20 @@ export async function deleteMasterUserService(adminId, targetUserId) {
       }
     });
 
-    console.log(`✅ Kullanıcı silindi (soft delete): ${deletedUser.email}`);
-    
+    console.log(`✅ Master user soft delete: ${deletedUser.email}`);
     return {
-      message: 'Kullanıcı başarıyla silindi.',
+      message: 'Kullanıcı başarıyla soft delete yapıldı.',
       user: deletedUser
     };
-
   } catch (error) {
-    console.error('deleteMasterUserService hatası:', error);
+    console.error('softDeleteMasterUserService hatası:', error);
     throw error;
   }
 }
 
 /**
- * ♻️ Silinen kullanıcıyı geri yükle (Sadece MASTER_ADMIN)
+ * ♻️ Soft delete edilen master user'ı geri yükle
+ * Sadece MASTER_ADMIN
  */
 export async function restoreMasterUserService(adminId, targetUserId) {
   try {
@@ -565,6 +566,14 @@ export async function restoreMasterUserService(adminId, targetUserId) {
       throw new Error('AUTH_ERROR: Sadece Master Admin kullanıcı geri yükleyebilir.');
     }
 
+    // Sadece silinmiş kullanıcılar geri yüklenebilir
+    const user = await prisma.masterUser.findUnique({
+      where: { id: targetUserId }
+    });
+    if (!user || !user.deleted_at) {
+      throw new Error('AUTH_ERROR: Sadece silinmiş kullanıcılar geri yüklenebilir.');
+    }
+
     const restoredUser = await prisma.masterUser.update({
       where: { id: targetUserId },
       data: { 
@@ -575,17 +584,17 @@ export async function restoreMasterUserService(adminId, targetUserId) {
       select: {
         id: true,
         email: true,
-        full_name: true
+        full_name: true,
+        is_active: true,
+        deleted_at: true
       }
     });
 
-    console.log(`✅ Kullanıcı geri yüklendi: ${restoredUser.email}`);
-    
+    console.log(`✅ Master user restore: ${restoredUser.email}`);
     return {
       message: 'Kullanıcı başarıyla geri yüklendi.',
       user: restoredUser
     };
-
   } catch (error) {
     console.error('restoreMasterUserService hatası:', error);
     throw error;
@@ -593,7 +602,8 @@ export async function restoreMasterUserService(adminId, targetUserId) {
 }
 
 /**
- * ❌ Kullanıcıyı tamamen sil (hard delete) (Sadece MASTER_ADMIN)
+ * ❌ Master user'ı hard delete (veritabanından tamamen sil)
+ * Sadece MASTER_ADMIN
  */
 export async function hardDeleteMasterUserService(adminId, targetUserId) {
   try {
@@ -606,6 +616,14 @@ export async function hardDeleteMasterUserService(adminId, targetUserId) {
       throw new Error('AUTH_ERROR: Sadece Master Admin kullanıcı tamamen silebilir.');
     }
 
+    // Sadece silinmiş kullanıcılar kalıcı silinebilir
+    const user = await prisma.masterUser.findUnique({
+      where: { id: targetUserId }
+    });
+    if (!user || !user.deleted_at) {
+      throw new Error('AUTH_ERROR: Sadece silinmiş kullanıcılar kalıcı olarak silinebilir.');
+    }
+
     const deletedUser = await prisma.masterUser.delete({
       where: { id: targetUserId },
       select: {
@@ -615,13 +633,11 @@ export async function hardDeleteMasterUserService(adminId, targetUserId) {
       }
     });
 
-    console.log(`❌ Kullanıcı tamamen silindi (hard delete): ${deletedUser.email}`);
-    
+    console.log(`❌ Master user hard delete: ${deletedUser.email}`);
     return {
       message: 'Kullanıcı kalıcı olarak silindi.',
       user: deletedUser
     };
-
   } catch (error) {
     console.error('hardDeleteMasterUserService hatası:', error);
     throw error;

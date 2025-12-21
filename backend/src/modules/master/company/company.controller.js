@@ -7,17 +7,17 @@ import {
     restoreCompany,
     hardDeleteCompany,
     getActiveCompanyCounts,
-    getSuspendedCompanyCounts, // Değişti
+    getSuspendedCompanyCounts,
     getDeletedCompanyCounts,
     getTotalCompanyCounts,
-    getCompanyAdmins,
     updateAdminRole,
     restoreAdmin,
     hardDeleteAdmin,
     getCompanySites,
     restoreSite,
     hardDeleteSite,
-    updateCompanyById
+    updateCompanyById,
+    getCompanyEmployees // EKLENDİ
 } from './company.service.js';
 
 // ===========================
@@ -196,6 +196,7 @@ export async function updateCompanyHandler(req, res) {
 /**
  * DELETE /api/master/companies/:id/soft
  * Şirketi soft delete yap
+ * Not: Şirkete bağlı tüm adminler ve company_employees kayıtları da soft delete edilir.
  */
 export async function softDeleteCompanyHandler(req, res) {
     try {
@@ -212,14 +213,14 @@ export async function softDeleteCompanyHandler(req, res) {
 
         res.json({
             success: true,
-            message: 'Şirket başarıyla silindi (soft delete).',
+            message: 'Şirket ve bağlı tüm adminler ile company_employees kayıtları başarıyla soft delete yapıldı.',
             data: deletedCompany,
         });
     } catch (error) {
         console.error('Soft delete company error:', error);
         res.status(500).json({
             success: false,
-            message: 'Şirket silinirken bir hata oluştu.',
+            message: 'Şirket silinirken bir hata oluştu. Bağlı adminler ve company_employees kayıtları da etkilenmiş olabilir.',
             error: error.message,
         });
     }
@@ -228,6 +229,7 @@ export async function softDeleteCompanyHandler(req, res) {
 /**
  * PATCH /api/master/companies/:id/restore
  * Soft delete edilmiş şirketi geri yükle
+ * Not: Şirkete bağlı tüm adminler ve company_employees kayıtları da geri yüklenir.
  */
 export async function restoreCompanyHandler(req, res) {
     try {
@@ -244,14 +246,14 @@ export async function restoreCompanyHandler(req, res) {
 
         res.json({
             success: true,
-            message: 'Şirket başarıyla geri yüklendi.',
+            message: 'Şirket ve bağlı tüm adminler ile company_employees kayıtları başarıyla geri yüklendi.',
             data: restoredCompany,
         });
     } catch (error) {
         console.error('Restore company error:', error);
         res.status(500).json({
             success: false,
-            message: 'Şirket geri yüklenirken bir hata oluştu.',
+            message: 'Şirket geri yüklenirken bir hata oluştu. Bağlı adminler ve company_employees kayıtları da etkilenmiş olabilir.',
             error: error.message,
         });
     }
@@ -260,6 +262,7 @@ export async function restoreCompanyHandler(req, res) {
 /**
  * DELETE /api/master/companies/:id/hard
  * Şirketi kalıcı olarak sil
+ * Not: Şirkete bağlı tüm adminler ve company_employees kayıtları da kalıcı olarak silinir.
  */
 export async function hardDeleteCompanyHandler(req, res) {
     try {
@@ -276,13 +279,13 @@ export async function hardDeleteCompanyHandler(req, res) {
 
         res.json({
             success: true,
-            message: 'Şirket kalıcı olarak silindi.',
+            message: 'Şirket ve bağlı tüm adminler ile company_employees kayıtları kalıcı olarak silindi.',
         });
     } catch (error) {
         console.error('Hard delete company error:', error);
         res.status(500).json({
             success: false,
-            message: 'Şirket silinirken bir hata oluştu.',
+            message: 'Şirket silinirken bir hata oluştu. Bağlı adminler ve company_employees kayıtları da etkilenmiş olabilir.',
             error: error.message,
         });
     }
@@ -300,7 +303,7 @@ export async function getCompanyStatsHandler(req, res) {
     try {
         const [active, suspended, deleted, total] = await Promise.all([
             getActiveCompanyCounts(),
-            getSuspendedCompanyCounts(), // Değişti
+            getSuspendedCompanyCounts(),
             getDeletedCompanyCounts(),
             getTotalCompanyCounts(),
         ]);
@@ -309,7 +312,7 @@ export async function getCompanyStatsHandler(req, res) {
             success: true,
             data: {
                 active,
-                suspended, // Değişti
+                suspended,
                 deleted,
                 total,
             },
@@ -568,6 +571,43 @@ export async function hardDeleteSiteHandler(req, res) {
         res.status(500).json({
             success: false,
             message: 'Site silinirken bir hata oluştu.',
+            error: error.message,
+        });
+    }
+}
+
+/**
+ * GET /api/master/companies/:id/employees
+ * Şirkete bağlı çalışanları (company_employees) listele
+ */
+export async function getCompanyEmployeesHandler(req, res) {
+    try {
+        const companyId = parseInt(req.params.id);
+
+        if (isNaN(companyId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Geçersiz şirket ID.',
+            });
+        }
+
+        const filters = {
+            includeDeleted: req.query.includeDeleted === 'true',
+            status: req.query.status || null,
+        };
+
+        const employees = await getCompanyEmployees(companyId, filters);
+
+        res.json({
+            success: true,
+            message: 'Şirket çalışanları başarıyla getirildi.',
+            data: employees,
+        });
+    } catch (error) {
+        console.error('Get company employees error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Çalışanlar getirilirken bir hata oluştu.',
             error: error.message,
         });
     }

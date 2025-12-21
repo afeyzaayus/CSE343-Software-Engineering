@@ -14,6 +14,9 @@ let allUsers = [];
 let pendingInvites = [];
 let selectedUserId = null;
 
+// Silinenleri göster/gizle için global flag
+let showDeletedUsers = false;
+
 // ========================================
 // 🔧 UTILITY FUNCTIONS
 // ========================================
@@ -74,7 +77,12 @@ async function fetchCurrentUser() {
 
 async function fetchUsers() {
     try {
-        const response = await fetch(`${API_BASE}/users`, {
+        // Silinenleri göster/gizle checkbox'ına göre API'ye parametre ekle
+        const url = showDeletedUsers
+            ? `${API_BASE}/users?includeDeleted=true`
+            : `${API_BASE}/users`;
+
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${getToken()}`
             }
@@ -121,18 +129,29 @@ function renderUsers() {
 
     // Filtreleme
     let filteredUsers = allUsers;
-    
+
+    // Silinenleri göster/gizle filtresi
+    if (!showDeletedUsers) {
+        // Sadece silinmemiş kullanıcılar
+        filteredUsers = filteredUsers.filter(u => !u.deleted_at);
+    } else {
+        // Silinmiş kullanıcılar: deleted_at !== null ve is_active === false
+        filteredUsers = filteredUsers.filter(u =>
+            !u.deleted_at || (u.deleted_at && u.is_active === false)
+        );
+    }
+
     if (roleFilter !== 'all') {
         filteredUsers = filteredUsers.filter(u => u.master_role === roleFilter);
     }
     
     if (statusFilter !== 'all') {
         if (statusFilter === 'ACTIVE') {
-            filteredUsers = filteredUsers.filter(u => u.is_active && u.is_verified);
+            filteredUsers = filteredUsers.filter(u => u.is_active && u.is_verified && !u.deleted_at);
         } else if (statusFilter === 'PASSIVE') {
-            filteredUsers = filteredUsers.filter(u => !u.is_active);
+            filteredUsers = filteredUsers.filter(u => !u.is_active && !u.deleted_at);
         } else if (statusFilter === 'PENDING') {
-            filteredUsers = filteredUsers.filter(u => !u.is_verified);
+            filteredUsers = filteredUsers.filter(u => !u.is_verified && !u.deleted_at);
         }
     }
 
@@ -179,9 +198,13 @@ function renderUsers() {
             </div>
             ${currentUser?.master_role === 'MASTER_ADMIN' && currentUser.id !== user.id ? `
                 <div class="user-card-footer">
-                    <button class="btn btn-sm btn-primary" onclick="window.openUserActions(${user.id})">
-                        İşlemler
-                    </button>
+                    ${user.deleted_at
+                        ? `<button class="btn btn-sm btn-success" onclick="restoreUser(${user.id})">Geri Yükle</button>
+                           <button class="btn btn-sm btn-danger" onclick="hardDeleteUser(${user.id})">Kalıcı Sil</button>`
+                        : `<button class="btn btn-sm btn-primary" onclick="window.openUserActions(${user.id})">
+                            İşlemler
+                        </button>`
+                    }
                 </div>
             ` : ''}
         </div>
@@ -265,23 +288,25 @@ window.openUserActions = function(userId) {
         </span>
     `;
 
-    // Aktif/Pasif butonlarını göster/gizle
+    // Aktif/Pasif/Silinmiş durumuna göre butonları göster/gizle
     if (user.is_active && !user.deleted_at) {
         document.getElementById('deactivateUserBtn').style.display = 'block';
         document.getElementById('activateUserBtn').style.display = 'none';
         document.getElementById('restoreUserBtn').style.display = 'none';
         document.getElementById('hardDeleteUserBtn').style.display = 'none';
+        document.getElementById('deleteUserBtn').style.display = 'block';
     } else if (!user.is_active && !user.deleted_at) {
         document.getElementById('deactivateUserBtn').style.display = 'none';
         document.getElementById('activateUserBtn').style.display = 'block';
         document.getElementById('restoreUserBtn').style.display = 'none';
         document.getElementById('hardDeleteUserBtn').style.display = 'none';
+        document.getElementById('deleteUserBtn').style.display = 'block';
     } else if (user.deleted_at) {
-        // Silinmiş kullanıcı için sadece geri yükle ve hard delete göster
         document.getElementById('deactivateUserBtn').style.display = 'none';
         document.getElementById('activateUserBtn').style.display = 'none';
         document.getElementById('restoreUserBtn').style.display = 'block';
         document.getElementById('hardDeleteUserBtn').style.display = 'block';
+        document.getElementById('deleteUserBtn').style.display = 'none';
     }
 
     // Mevcut rolü select'te seç
@@ -405,10 +430,7 @@ async function deleteUser(userId) {
         showNotification(error.message, 'error');
     }
 }
-
 async function restoreUser(userId) {
-    if (!confirm('Bu kullanıcıyı geri yüklemek istediğinize emin misiniz?')) return;
-
     try {
         const response = await fetch(`${API_BASE}/users/restore`, {
             method: 'PATCH',
@@ -418,22 +440,19 @@ async function restoreUser(userId) {
             },
             body: JSON.stringify({ targetUserId: userId })
         });
-
         const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Kullanıcı geri yüklenemedi');
+        if (data.success) {
+            showNotification('Kullanıcı başarıyla geri yüklendi.', 'success');
+            await fetchUsers();
+        } else {
+            console.error('Restore API error:', data);
+            showNotification(data.message || 'Geri yükleme başarısız.', 'error');
         }
-
-        showNotification('Kullanıcı başarıyla geri yüklendi', 'success');
-        hideModal('userActionsModal');
-        await fetchUsers();
     } catch (error) {
-        console.error('Geri yükleme hatası:', error);
-        showNotification(error.message, 'error');
+        console.error('Restore fetch error:', error);
+        showNotification('Geri yükleme sırasında hata oluştu.', 'error');
     }
 }
-
 async function hardDeleteUser(userId) {
     if (!confirm('Bu kullanıcıyı tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!')) return;
 
@@ -564,3 +583,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Silinenleri göster/gizle checkbox bağla
+    const showDeletedCheckbox = document.getElementById('showDeletedUsers');
+    if (showDeletedCheckbox) {
+        showDeletedCheckbox.addEventListener('change', async () => {
+            showDeletedUsers = showDeletedCheckbox.checked;
+            await fetchUsers(); // Kullanıcıları tekrar çek
+        });
+    }
+});
+
+// Fonksiyonu global yap
+window.restoreUser = restoreUser;
+window.hardDeleteUser = hardDeleteUser;

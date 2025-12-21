@@ -11,7 +11,7 @@ import {
   updateMasterUserRoleController,
   deactivateMasterUserController,
   reactivateMasterUserController,
-  deleteMasterUserController,
+  softDeleteMasterUserController,  // eklendi
   restoreMasterUserController,      // eklendi
   hardDeleteMasterUserController,   // eklendi
   getCurrentUserController
@@ -128,7 +128,7 @@ router.patch('/users/reactivate',
  */
 router.delete('/users',
   verifyMasterAdmin,
-  deleteMasterUserController
+  softDeleteMasterUserController // soft delete fonksiyonunu kullan!
 );
 
 /**

@@ -8,14 +8,14 @@ import {
     restoreCompanyHandler,
     hardDeleteCompanyHandler,
     getCompanyStatsHandler,
-    getCompanyAdminsHandler,
     updateAdminRoleHandler,
     restoreAdminHandler,
     hardDeleteAdminHandler,
     getCompanySitesHandler,
     restoreSiteHandler,
     hardDeleteSiteHandler,
-    updateCompanyHandler
+    updateCompanyHandler,
+    getCompanyEmployeesHandler
 } from './company.controller.js';
 
 const router = express.Router();
@@ -63,9 +63,9 @@ router.delete('/:id/hard', hardDeleteCompanyHandler);
 // ŞİRKET ÇALIŞANLARI (ADMINS)
 // ===========================
 
-// Şirkete bağlı adminleri listele (query params: ?includeDeleted=true&status=ACTIVE)
-// GET /api/master/company/:id/admins
-router.get('/:id/admins', getCompanyAdminsHandler);
+// Şirkete bağlı çalışanları (company_employees) listele
+// GET /api/master/company/:id/employees
+router.get('/:id/employees', getCompanyEmployeesHandler);
 
 // Admin rolünü değiştir
 // PATCH /api/master/company/admins/:id/role

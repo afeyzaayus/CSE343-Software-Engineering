@@ -111,6 +111,8 @@ app.get('/health', async (req, res) => {
   }
 });
 
+app.use('/master', express.static(path.join(__dirname, 'frontend/public/master')));
+
 // API rotaları
 app.use('/api/auth/master', masterAuthRoutes);
 app.use('/api/master', masterDashboardRoutes);

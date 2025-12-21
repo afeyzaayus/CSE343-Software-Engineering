@@ -10,12 +10,6 @@ export {
 } from './shared/email.service.js';
 
 export {
-  twilioClient,
-  sendPasswordSetupCode,
-  sendPasswordResetCode
-} from './shared/sms.service.js';
-
-export {
   validatePhoneNumber,
   validatePassword,
   validatePasswordMatch,
@@ -73,4 +67,3 @@ export {
   getSiteByIdService,
   deleteSiteService
 } from './modules/site/site.service.js';
-
