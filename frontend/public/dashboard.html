@@ -1,19 +1,21 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ana Sayfa - Site Yönetim Sistemi</title>
-    
-    <link rel="stylesheet" href="css/base.css">         
-    <link rel="stylesheet" href="css/dashboard.css">    
+
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
 </head>
+
 <body>
     <div class="container">
-        
+
         <div class="sidebar">
             <div class="logo">
                 <h1>Site Yönetim Sistemi</h1>
@@ -23,12 +25,12 @@
                 <li><a href="/residents"><i class="fas fa-users"></i> Daire Sahipleri</a></li>
                 <li><a href="/payment"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
                 <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
-                <li><a href="/social-facilities"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li><a href="/complaints"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li><a href="/socialfacilities"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
+                <li><a href="/complaint_request"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
-        
+
         <div class="main-content">
             <div class="header">
                 <h2 id="dashboard-title">Ana Sayfa - Yeşil Vadi Sitesi</h2>
@@ -40,15 +42,15 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="dashboard-content">
-                
+
                 <div class="dashboard-cards">
-                    
+
                     <div class="card" id="occupancy-card">
                         <div class="card-header">
                             <div class="card-title">Daire Doluluk Oranı</div>
-                            <div class="card-icon blue"><i class="fas fa-home"></i></div> 
+                            <div class="card-icon blue"><i class="fas fa-home"></i></div>
                         </div>
                         <div class="card-value">--%</div>
                         <div class="card-footer">-- dolu</div>
@@ -82,7 +84,7 @@
                     </div>
 
                 </div>
-                
+
                 <div class="announcements-section">
                     <div class="announcements-header">
                         <div class="announcements-title">Son Duyurular</div>
@@ -98,6 +100,7 @@
         </div>
     </div>
     <script src="js/userInfo.js"></script>
-   <script type="module" src="js/dashboard.js"></script>
+    <script type="module" src="js/dashboard.js"></script>
 </body>
+
 </html>
