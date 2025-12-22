@@ -9,7 +9,7 @@ function getRoleText(role) {
     const roleMap = {
         'COMPANY_MANAGER': 'Şirket Yöneticisi',
         'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
-        'INDIVIDUAL': 'Bireysel',
+        'INDIVIDUAL': 'Bireysel Hesap',
     };
     return roleMap[role] || role;
 }

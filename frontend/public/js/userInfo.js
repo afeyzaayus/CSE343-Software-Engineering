@@ -87,11 +87,9 @@ function updateUserInfoDisplay(userData) {
 // Rol ismini Türkçe'ye çevir
 function getRoleText(role) {
     const roleMap = {
-        'SUPER_ADMIN': 'Süper Yönetici',
         'COMPANY_MANAGER': 'Şirket Yöneticisi',
-        'INDIVIDUAL': 'Bireysel',
-        'USER': 'Kullanıcı',
-        'ADMIN': 'Yönetici'
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel Hesap'
     };
     return roleMap[role] || role;
 }
