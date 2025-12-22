@@ -11,14 +11,17 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - FRONTEND_URL=https://siteportal.com.tr
+      - BASE_URL=https://api.siteportal.com.tr
+      - PORT=3000
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
 
   reverse-proxy:
     image: nginx:alpine
