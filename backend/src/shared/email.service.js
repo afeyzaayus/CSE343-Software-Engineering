@@ -4,18 +4,20 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Email transporter
-export const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT),
-  secure: process.env.SMTP_SECURE === 'true',
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 2525,
+  secure: false, // STARTTLS kullanıyorsan false
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  family: 4
 });
+
 
 /**
  * Bireysel hesap doğrulama maili
