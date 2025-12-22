@@ -14,11 +14,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Prisma client oluştur
-RUN npx prisma generate
-
 # Tüm uygulama dosyalarını kopyala
 COPY . .
+
+# Prisma client oluştur
+RUN npx prisma generate
 
 # Port ve start
 EXPOSE 3000
