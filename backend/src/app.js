@@ -65,11 +65,9 @@ app.use(express.json());
 
 // CORS - Tüm kaynaklardan gelen isteklere izin ver
 app.use(cors({
-  origin: [
-    "https://siteportal.com.tr",
-    "https://www.siteportal.com.tr"
-  ],
-  credentials: true
+  origin: 'https://www.siteportal.com.tr', // veya '*' test için
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true // eğer cookie veya auth header kullanıyorsan
 }));
 
 // Request logger (development)
