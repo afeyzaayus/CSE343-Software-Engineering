@@ -15,6 +15,10 @@ function showPage(pageId) {
     document.getElementById('header-subtitle').textContent = subtitles[pageId] || 'Hoş Geldiniz';
 }
 
+document.getElementById('go-to-master-panel').addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.href = 'master/login.html';
+});
 // --- Alerts ---
 function showAlert(elementId, message, type) {
     const alert = document.getElementById(elementId);
