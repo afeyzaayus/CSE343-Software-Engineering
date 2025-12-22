@@ -1,61 +1,50 @@
 #!/bin/bash
 
-# SSL Sertifikası Kurulum Scripti
+# SSL Sertifikası Kurulum Scripti (Düzeltilmiş Versiyon)
 # Bu script Let's Encrypt ile SSL sertifikası oluşturur
 
 domains=(siteportal.com.tr api.siteportal.com.tr)
 rsa_key_size=4096
 data_path="./certbot"
-email="5w1m.sitemanagement@gmail.com" # Email adresinizi buraya yazın
+email="5w1m.sitemanagement@gmail.com"
 staging=0 # Test için 1, production için 0
 
-if [ -d "$data_path" ]; then
-  read -p "Mevcut sertifika verileri bulundu. Devam etmek sertifikaları silecek. Devam edilsin mi? (y/N) " decision
-  if [ "$decision" != "Y" ] && [ "$decision" != "y" ]; then
-    exit
-  fi
-fi
+echo "### Adım 1: SSL parametreleri indiriliyor..."
+mkdir -p "$data_path/conf"
+mkdir -p "$data_path/www"
 
-# Certbot dizinlerini oluştur
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
-  echo "### SSL parametreleri indiriliyor..."
-  mkdir -p "$data_path/conf"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
-  echo
 fi
-
-# Her domain için dummy sertifika oluştur
-for domain in "${domains[@]}"; do
-  echo "### $domain için dummy sertifika oluşturuluyor..."
-  path="/etc/letsencrypt/live/$domain"
-  mkdir -p "$data_path/conf/live/$domain"
-  docker-compose run --rm --entrypoint "\
-    openssl req -x509 -nodes -newkey rsa:$rsa_key_size -days 1\
-      -keyout '$path/privkey.pem' \
-      -out '$path/fullchain.pem' \
-      -subj '/CN=localhost'" certbot
-  echo
-done
-
-# Nginx'i başlat
-echo "### Nginx başlatılıyor..."
-docker-compose up --force-recreate -d reverse-proxy
 echo
 
-# Dummy sertifikaları sil
-for domain in "${domains[@]}"; do
-  echo "### $domain için dummy sertifika siliniyor..."
-  docker-compose run --rm --entrypoint "\
-    rm -Rf /etc/letsencrypt/live/$domain && \
-    rm -Rf /etc/letsencrypt/archive/$domain && \
-    rm -Rf /etc/letsencrypt/renewal/$domain.conf" certbot
-  echo
-done
+echo "### Adım 2: Geçici HTTP-only nginx yapılandırması ile başlatılıyor..."
+# Geçici olarak HTTP-only config kullan
+cp nginx.conf nginx.conf.backup
+cp nginx-http-only.conf nginx.conf
 
-# Her domain için gerçek sertifika al
+# Container'ları durdur
+docker-compose down
+
+# Sadece gerekli servisleri başlat
+docker-compose up -d backend frontend reverse-proxy
+echo "Nginx'in başlaması bekleniyor..."
+sleep 5
+echo
+
+# Nginx'in çalıştığını kontrol et
+if ! docker-compose ps | grep -q "reverse-proxy.*Up"; then
+    echo "HATA: Nginx başlatılamadı!"
+    docker-compose logs reverse-proxy
+    exit 1
+fi
+
+echo "### Adım 3: Let's Encrypt sertifikaları alınıyor..."
+
+# Her domain için sertifika al
 for domain in "${domains[@]}"; do
-  echo "### $domain için Let's Encrypt sertifikası isteniyor..."
+  echo "### $domain için sertifika isteniyor..."
   
   # Staging veya production
   if [ $staging != "0" ]; then staging_arg="--staging"; fi
@@ -67,12 +56,37 @@ for domain in "${domains[@]}"; do
       -d $domain \
       --rsa-key-size $rsa_key_size \
       --agree-tos \
+      --non-interactive \
       --force-renewal" certbot
+  
+  if [ $? -ne 0 ]; then
+    echo "HATA: $domain için sertifika alınamadı!"
+    echo "Orijinal nginx.conf geri yükleniyor..."
+    mv nginx.conf.backup nginx.conf
+    exit 1
+  fi
   echo
 done
 
+echo "### Adım 4: HTTPS yapılandırması aktif ediliyor..."
+# Orijinal (HTTPS'li) config'i geri yükle
+mv nginx.conf.backup nginx.conf
+
 # Nginx'i reload et
-echo "### Nginx reload ediliyor..."
 docker-compose exec reverse-proxy nginx -s reload
 
-echo "### Kurulum tamamlandı!"
+if [ $? -ne 0 ]; then
+    echo "Nginx reload başarısız, yeniden başlatılıyor..."
+    docker-compose restart reverse-proxy
+fi
+
+echo
+echo "### Adım 5: Certbot otomatik yenileme servisi başlatılıyor..."
+docker-compose up -d certbot
+
+echo
+echo "✅ Kurulum tamamlandı!"
+echo
+echo "Test edin:"
+echo "  https://siteportal.com.tr"
+echo "  https://api.siteportal.com.tr"
