@@ -16,7 +16,9 @@ services:
       - NODE_ENV=development
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
     # Frontend portu artık dışarıya açılmayacak, nginx reverse proxy üzerinden erişilecek
     volumes:
       - ./frontend/public:/usr/share/nginx/html:ro
