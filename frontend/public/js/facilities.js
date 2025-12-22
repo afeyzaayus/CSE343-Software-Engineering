@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!currentUser) {
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
         return;
     }
 
@@ -144,7 +144,7 @@ function setupFacilityForm() {
         const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
         if (!token) {
             alert('Oturum süresi dolmuş. Lütfen tekrar giriş yapın.');
-            window.location.href = '/login.html';
+            window.location.href = '/index.html';
             return;
         }
 

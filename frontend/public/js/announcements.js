@@ -39,7 +39,7 @@ async function apiRequest(endpoint, data = null, method = 'GET') {
 // -----------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !selectedSite) {
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
     }
 

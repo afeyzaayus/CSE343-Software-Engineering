@@ -8,7 +8,7 @@ const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !selectedSite) {
         // Kullanıcı veya site seçimi yoksa login sayfasına yönlendir
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
         return;
     }
 

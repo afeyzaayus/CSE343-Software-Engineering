@@ -101,7 +101,7 @@
                     <div class="invalid-invite-icon">⚠️</div>
                     <h3>Davet Kodu Geçersiz</h3>
                     <p>${message || 'Bu sayfaya erişmek için geçerli bir davet linki gereklidir.'}</p>
-                    <a href="login.html" class="btn btn-primary">← Giriş Sayfasına Dön</a>
+                    <a href="index.html" class="btn btn-primary">← Giriş Sayfasına Dön</a>
                 </div>
             `;
         }
@@ -148,7 +148,7 @@
 
                 if (data.success) {
                     showToast('✅ Kayıt başarılı! Yönlendiriliyorsunuz...', 'success');
-                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    setTimeout(() => window.location.href = 'index.html', 2000);
                 }
             } catch (error) {
                 console.error(error);

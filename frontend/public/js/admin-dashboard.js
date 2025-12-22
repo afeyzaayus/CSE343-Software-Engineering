@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!token || !userData) {
         console.error('❌ Token veya user data bulunamadı');
         localStorage.clear();
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
         return;
     }
     
@@ -153,7 +153,7 @@ async function fetchSites() {
             if (response.status === 401) {
                 console.error('❌ Token geçersiz, login sayfasına yönlendiriliyor...');
                 localStorage.clear();
-                window.location.href = '/login.html';
+                window.location.href = '/index.html';
                 return;
             }
             
@@ -311,7 +311,7 @@ function selectSite(siteId, siteName) {
     
     if (!token || !currentUser) {
         showToast('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.', 'error');
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -349,7 +349,7 @@ document.getElementById("createSiteForm").addEventListener("submit", async (e) =
     const token = getAuthToken(); // ✅ Token ekledik
     if (!token) {
         showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -421,7 +421,7 @@ if (editForm) {
         const token = getAuthToken(); // ✅ Token ekledik
         if (!token) {
             showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
-            setTimeout(() => window.location.href = '/login.html', 1500);
+            setTimeout(() => window.location.href = '/index.html', 1500);
             return;
         }
 
@@ -505,7 +505,7 @@ async function deleteSite(siteId) {
     
     if (!token) {
         showToast("Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.", "error");
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -628,7 +628,7 @@ function logout() {
         localStorage.removeItem('adminToken');
         localStorage.removeItem('user');
         localStorage.removeItem('selectedSite');
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
     }
 }
 
@@ -638,7 +638,7 @@ document.addEventListener('visibilitychange', () => {
         const token = getAuthToken();
         if (!token) {
             localStorage.clear();
-            window.location.href = '/login.html';
+            window.location.href = '/index.html';
         }
     }
 });
@@ -808,7 +808,7 @@ async function suspendEmployee(employeeId) {
     
     if (!token) {
         showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -859,7 +859,7 @@ async function activateEmployee(employeeId) {
     
     if (!token) {
         showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -910,7 +910,7 @@ async function deleteEmployee(employeeId) {
     
     if (!token) {
         showToast('Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
-        setTimeout(() => window.location.href = '/login.html', 1500);
+        setTimeout(() => window.location.href = '/index.html', 1500);
         return;
     }
 
@@ -1051,7 +1051,7 @@ async function deleteInvitation(invitationId, invitedEmail) {
         
         if (!token) {
             showToast('❌ Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.', 'error');
-            setTimeout(() => window.location.href = '/login.html', 1500);
+            setTimeout(() => window.location.href = '/index.html', 1500);
             return;
         }
 
@@ -1107,7 +1107,7 @@ async function deleteInvitation(invitationId, invitedEmail) {
         if (err.message.includes('Oturum')) {
             setTimeout(() => {
                 localStorage.clear();
-                window.location.href = '/login.html';
+                window.location.href = '/index.html';
             }, 2000);
         }
     }

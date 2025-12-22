@@ -16,7 +16,7 @@ export function closeModal(modalId) {
     }
 }
 
-// Sekme geçişlerini ayarlar (login.html için)
+// Sekme geçişlerini ayarlar (index.html için)
 export function setupTabSwitching() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');

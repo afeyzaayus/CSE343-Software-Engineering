@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (!currentUser) {
-        window.location.href = '/login.html';
+        window.location.href = '/index.html';
         return;
     }
 
