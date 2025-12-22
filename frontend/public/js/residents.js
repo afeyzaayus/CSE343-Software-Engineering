@@ -5,6 +5,14 @@ const SITE_ID = selectedSite?.site_id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const ITEMS_PER_PAGE = 5;
 
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 // Keep track of expanded blocks and shown items
 const blockStates = {};
 
@@ -17,7 +25,7 @@ let currentSearchQuery = '';
 async function fetchResidents(siteId) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents`, { headers });
         if (!res.ok) throw new Error('Sakinler alınamadı');
@@ -34,7 +42,7 @@ async function fetchResidents(siteId) {
 async function fetchBlocks(siteId) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks`, { headers });
         if (!res.ok) throw new Error('Bloklar alınamadı');
@@ -49,11 +57,11 @@ async function fetchBlocks(siteId) {
 // Create block
 async function createBlock(siteId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-    const headers = { 
+    const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
     };
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks`, {
             method: 'POST',
@@ -77,18 +85,18 @@ async function createBlock(siteId, data) {
 async function deleteBlock(siteId, blockId) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks/${blockId}`, {
             method: 'DELETE',
             headers
         });
-        
+
         if (!res.ok) {
             const errorData = await res.json();
             throw new Error(errorData.message || 'Blok silinemedi');
         }
-        
+
         return await res.json();
     } catch (err) {
         console.error('Delete block error:', err);
@@ -100,11 +108,11 @@ async function deleteBlock(siteId, blockId) {
 // Update block
 async function updateBlock(siteId, blockId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-    const headers = { 
+    const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
     };
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/blocks/${blockId}`, {
             method: 'PUT',
@@ -127,11 +135,11 @@ async function updateBlock(siteId, blockId, data) {
 // Create resident
 async function createResident(siteId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-    const headers = { 
+    const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
     };
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents`, {
             method: 'POST',
@@ -154,11 +162,11 @@ async function createResident(siteId, data) {
 // Update resident
 async function updateResident(siteId, userId, data) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-    const headers = { 
+    const headers = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` })
     };
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/residents/${userId}`, {
             method: 'PUT',
@@ -182,18 +190,18 @@ async function updateResident(siteId, userId, data) {
 async function deleteApartment(siteId, blockId, apartmentNo) {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${siteId}/apartments/${blockId}/${apartmentNo}`, {
             method: 'DELETE',
             headers
         });
-        
+
         if (!res.ok) {
             const errorData = await res.json();
             throw new Error(errorData.message || 'Daire silinemedi');
         }
-        
+
         return await res.json();
     } catch (err) {
         console.error('Delete apartment error:', err);
@@ -208,7 +216,7 @@ async function renderResidents() {
         window.location.href = '/admin-dashboard.html';
         return;
     }
-    
+
     const container = document.getElementById('blocks-container');
     container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;"><i class="fas fa-spinner fa-spin"></i> Veriler yükleniyor...</div>';
 
@@ -257,7 +265,7 @@ async function renderResidents() {
         blocks.forEach(block => {
             const blockResidents = residentsGroupedByBlock[block.id] || [];
             console.log(`🏢 Block: ${block.block_name} (ID: ${block.id}) - Residents: ${blockResidents.length}`);
-            
+
             // Initialize block state (preserve expanded state if already set)
             if (!blockStates[block.id]) {
                 blockStates[block.id] = {
@@ -290,7 +298,7 @@ function createBlockCard(block, residents) {
     // Calculate occupied/empty apartments - count unique apartments with residents
     const occupiedApartments = new Set(residents.map(r => r.apartment_no)).size;
     const totalApartments = block.apartment_count || 0;
-    
+
     // Calculate total resident count
     const totalResidents = block.resident_count || 0;
 
@@ -329,12 +337,12 @@ function createBlockCard(block, residents) {
     for (let i = 1; i <= apartmentCount; i++) {
         const apartmentNo = i.toString();
         const apartmentResidents = residentsGroupedByApartment[apartmentNo] || [];
-        
+
         // If searching, only show apartments with residents
         if (currentSearchQuery && apartmentResidents.length === 0) {
             continue;
         }
-        
+
         const apartmentCard = createApartmentCard(block, apartmentNo, apartmentResidents);
         apartmentsContainer.appendChild(apartmentCard);
     }
@@ -406,8 +414,8 @@ function createResidentInApartmentItem(resident) {
     const item = document.createElement('div');
     item.className = 'resident-in-apartment';
 
-    const statusText = resident.resident_type === 'OWNER' ? 'Ev Sahibi' : 
-                      resident.resident_type === 'HIRER' ? 'Kiracı' : '-';
+    const statusText = resident.resident_type === 'OWNER' ? 'Ev Sahibi' :
+        resident.resident_type === 'HIRER' ? 'Kiracı' : '-';
     const statusClass = resident.resident_type === 'OWNER' ? 'owner' : 'hirer';
 
     const info = document.createElement('div');
@@ -477,7 +485,7 @@ function toggleBlockExpand(blockId) {
 // Update block dropdowns in modals
 async function updateBlockDropdowns() {
     const blocks = await fetchBlocks(SITE_ID);
-    
+
     // Update add modal dropdown
     const addBlockSelect = document.querySelector('#addApartmentForm select[name="block"]');
     if (addBlockSelect) {
@@ -489,7 +497,7 @@ async function updateBlockDropdowns() {
             addBlockSelect.appendChild(option);
         });
     }
-    
+
     // Update edit modal dropdown
     const editBlockSelect = document.getElementById('editBlock');
     if (editBlockSelect) {
@@ -518,7 +526,7 @@ async function openAddModalForBlock(blockId) {
     // Store block ID and reset form
     document.getElementById('blockIdForApartment').value = blockId;
     document.getElementById('apartmentCount').value = 1;
-    
+
     document.getElementById('addApartmentModal').style.display = 'flex';
     document.getElementById('apartmentCount').focus();
 }
@@ -532,7 +540,7 @@ function closeAddModal() {
 // Open edit modal
 async function openEditModal(resident) {
     await updateBlockDropdowns();
-    
+
     document.getElementById('editResidentId').value = resident.id;
     document.getElementById('editBlock').value = resident.block_id;
     document.getElementById('editDoorNo').value = resident.apartment_no;
@@ -541,7 +549,7 @@ async function openEditModal(resident) {
     document.getElementById('editPlate').value = resident.plates || '';
     document.getElementById('editPeopleCount').value = resident.resident_count || 1;
     document.getElementById('editStatus').value = resident.resident_type || 'HIRER';
-    
+
     document.getElementById('editApartmentModal').style.display = 'flex';
 }
 
@@ -556,21 +564,21 @@ async function deleteResidentConfirm(resident) {
     if (!confirm(`${resident.full_name} sakinini silmek istediğinizden emin misiniz?`)) {
         return;
     }
-    
+
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const res = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/residents/${resident.id}`, {
             method: 'DELETE',
             headers
         });
-        
+
         if (!res.ok) {
             const errorData = await res.json();
             throw new Error(errorData.message || 'Silme işlemi başarısız');
         }
-        
+
         alert('Sakin başarıyla silindi!');
         renderResidents();
     } catch (err) {
@@ -584,17 +592,17 @@ async function deleteApartmentConfirm(blockId, apartmentNo) {
     if (!confirm(`Daire ${apartmentNo}'u ve içindeki tüm sakınları silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
         return;
     }
-    
+
     try {
         await deleteApartment(SITE_ID, blockId, apartmentNo);
-        
+
         // Decrease block apartment count
         const block = allBlocks.find(b => b.id === blockId);
         if (block && block.apartment_count > 0) {
             const newCapacity = block.apartment_count - 1;
             await updateBlock(SITE_ID, blockId, { apartment_count: newCapacity });
         }
-        
+
         alert('Daire ve içindeki sakinler başarıyla silindi!');
         renderResidents();
     } catch (err) {
@@ -613,14 +621,14 @@ async function openManageBlocksModal() {
 async function renderBlocksList() {
     const blocksList = document.getElementById('blocksList');
     blocksList.innerHTML = '<p style="text-align:center;">Yükleniyor...</p>';
-    
+
     const blocks = await fetchBlocks(SITE_ID);
-    
+
     if (blocks.length === 0) {
         blocksList.innerHTML = '<p style="text-align:center;color:#999;">Henüz blok oluşturulmamış.</p>';
         return;
     }
-    
+
     blocksList.innerHTML = blocks.map(block => `
         <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; margin-bottom: 10px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #2e86c1;">
             <div>
@@ -648,11 +656,11 @@ async function deleteBlockConfirm(blockId, blockName) {
     if (!confirm(`"${blockName}" bloğunu ve bu bloktaki tüm daireleri silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!`)) {
         return;
     }
-    
+
     try {
         await deleteBlock(SITE_ID, blockId);
         alert('Blok ve bağlı daireler başarıyla silindi!');
-        
+
         // Reload everything
         await renderBlocksList();
         await updateBlockDropdowns();
@@ -679,7 +687,7 @@ function closeEditBlockModal() {
 // Open modal to add resident to apartment
 function openAddResidentToApartmentModal(blockId, apartmentNo) {
     console.log('📝 Opening add resident modal for block:', blockId, 'apartment:', apartmentNo);
-    
+
     // Set apartment info
     document.getElementById('addResidentBlockId').value = blockId;
     document.getElementById('addResidentApartmentNo').value = apartmentNo;
@@ -687,7 +695,7 @@ function openAddResidentToApartmentModal(blockId, apartmentNo) {
     document.getElementById('addResidentPhone').value = '';
     document.getElementById('addResidentPlate').value = '';
     document.getElementById('addResidentStatus').value = 'OWNER';
-    
+
     document.getElementById('addResidentModal').style.display = 'flex';
     document.getElementById('addResidentName').focus();
 }
@@ -703,18 +711,18 @@ async function autoIncreaseBlockCapacity(blockId, apartmentNo) {
     try {
         const block = allBlocks.find(b => b.id === blockId);
         if (!block) return;
-        
+
         const apartmentNum = parseInt(apartmentNo);
         const currentCapacity = block.apartment_count || 0;
-        
+
         // If the apartment number is greater than current capacity, increase capacity
         if (apartmentNum > currentCapacity) {
             console.log(`🔄 Auto-increasing block capacity from ${currentCapacity} to ${apartmentNum}`);
-            
+
             const updateData = {
                 apartment_count: apartmentNum
             };
-            
+
             await updateBlock(SITE_ID, blockId, updateData);
             console.log(`✅ Block capacity auto-increased to ${apartmentNum}`);
         }
@@ -726,36 +734,36 @@ async function autoIncreaseBlockCapacity(blockId, apartmentNo) {
 // Handle add form submit - Add multiple empty apartments
 document.getElementById('addApartmentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const blockId = parseInt(document.getElementById('blockIdForApartment').value);
     const apartmentCountToAdd = parseInt(document.getElementById('apartmentCount').value);
-    
+
     if (!blockId || apartmentCountToAdd < 1) {
         alert('Geçersiz blok veya daire sayısı');
         return;
     }
-    
+
     try {
         const block = allBlocks.find(b => b.id === blockId);
         if (!block) {
             alert('Blok bulunamadı');
             return;
         }
-        
+
         const currentCapacity = block.apartment_count || 0;
         const newCapacity = currentCapacity + apartmentCountToAdd;
-        
+
         // Update block capacity
         await updateBlock(SITE_ID, blockId, { apartment_count: newCapacity });
-        
+
         alert(`${apartmentCountToAdd} daire başarıyla bloka eklendi!`);
         closeAddModal();
-        
+
         // Ensure the block is expanded when we re-render
         if (blockStates[blockId]) {
             blockStates[blockId].expanded = true;
         }
-        
+
         console.log('🔄 Re-rendering after adding apartments...');
         renderResidents();
     } catch (err) {
@@ -767,19 +775,19 @@ document.getElementById('addApartmentForm').addEventListener('submit', async (e)
 // Handle add resident form submit
 document.getElementById('addResidentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const blockId = parseInt(document.getElementById('addResidentBlockId').value);
     const apartmentNo = document.getElementById('addResidentApartmentNo').value;
     const fullName = document.getElementById('addResidentName').value.trim();
     const phoneNumber = document.getElementById('addResidentPhone').value.trim();
     const plates = document.getElementById('addResidentPlate').value.trim();
     const residentType = document.getElementById('addResidentStatus').value;
-    
+
     if (!blockId || !apartmentNo || !fullName || !phoneNumber) {
         alert('Zorunlu alanları lütfen doldurunuz');
         return;
     }
-    
+
     try {
         const residentData = {
             block_id: blockId,
@@ -790,21 +798,21 @@ document.getElementById('addResidentForm').addEventListener('submit', async (e) 
             resident_type: residentType,
             password: 'defaultPassword123'
         };
-        
+
         console.log('📝 Creating resident with data:', residentData);
-        
+
         const resident = await createResident(SITE_ID, residentData);
-        
+
         console.log('✅ Resident created successfully:', resident);
-        
+
         alert(`${fullName} başarıyla eklendi!`);
         closeAddResidentModal();
-        
+
         // Ensure the block is expanded when we re-render
         if (blockStates[blockId]) {
             blockStates[blockId].expanded = true;
         }
-        
+
         renderResidents();
     } catch (err) {
         console.error('Add resident failed:', err);
@@ -814,7 +822,7 @@ document.getElementById('addResidentForm').addEventListener('submit', async (e) 
 // Handle edit form submit
 document.getElementById('editApartmentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const residentId = document.getElementById('editResidentId').value;
     const blockId = parseInt(document.getElementById('editBlock').value);
     const data = {
@@ -831,12 +839,12 @@ document.getElementById('editApartmentForm').addEventListener('submit', async (e
         await updateResident(SITE_ID, residentId, data);
         alert('Sakin başarıyla güncellendi!');
         closeEditModal();
-        
+
         // Ensure the block is expanded when we re-render
         if (blockStates[blockId]) {
             blockStates[blockId].expanded = true;
         }
-        
+
         renderResidents();
     } catch (err) {
         console.error('Update resident failed:', err);
@@ -864,7 +872,7 @@ document.getElementById('closeEditBlockModal').addEventListener('click', closeEd
 // Handle edit block form submit
 document.getElementById('editBlockForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const blockId = parseInt(document.getElementById('editBlockId').value);
     const data = {
         block_name: document.getElementById('editBlockName').value,
@@ -875,7 +883,7 @@ document.getElementById('editBlockForm').addEventListener('submit', async (e) =>
         await updateBlock(SITE_ID, blockId, data);
         alert('Blok başarıyla güncellendi!');
         closeEditBlockModal();
-        
+
         // Reload everything
         await renderBlocksList();
         await updateBlockDropdowns();
@@ -888,7 +896,7 @@ document.getElementById('editBlockForm').addEventListener('submit', async (e) =>
 // Handle create block form submit
 document.getElementById('createBlockForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(e.target);
     const data = {
         block_name: formData.get('block_name'),
@@ -901,7 +909,7 @@ document.getElementById('createBlockForm').addEventListener('submit', async (e) 
         alert('Blok başarıyla oluşturuldu!');
         document.getElementById('createBlockModal').style.display = 'none';
         document.getElementById('createBlockForm').reset();
-        
+
         // Reload blocks and update dropdowns
         await updateBlockDropdowns();
         renderResidents();
@@ -913,14 +921,14 @@ document.getElementById('createBlockForm').addEventListener('submit', async (e) 
 // Highlight search query in text
 function highlightText(text, query) {
     if (!query) return text;
-    
+
     const query_lower = query.toLowerCase();
     const text_lower = text.toLowerCase();
-    
+
     if (!text_lower.includes(query_lower)) {
         return text;
     }
-    
+
     // Find all occurrences and replace with highlighted version
     const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
     return text.replace(regex, '<mark style="background-color: #ffeb3b; padding: 2px 4px; border-radius: 3px; font-weight: bold;">$1</mark>');
@@ -929,14 +937,14 @@ function highlightText(text, query) {
 // Search functionality
 function filterResidents(residents) {
     if (!currentSearchQuery) return residents;
-    
+
     const query = currentSearchQuery.toLowerCase().trim();
-    
+
     return residents.filter(resident => {
         const fullName = (resident.full_name || '').toLowerCase();
         const phone = (resident.phone_number || '').toLowerCase();
         const plates = (resident.plates || '').toLowerCase();
-        
+
         return fullName.includes(query) || phone.includes(query) || plates.includes(query);
     });
 }
@@ -978,7 +986,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Search event listeners
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clearSearchBtn');
-    
+
     if (searchInput) {
         // Real-time search as user types
         searchInput.addEventListener('input', performSearch);
@@ -989,7 +997,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     }
-    
+
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', clearSearch);
     }

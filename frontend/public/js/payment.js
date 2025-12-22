@@ -4,6 +4,14 @@ const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 // Ayları Türkçeye çevir
 const monthNames = {
     1: 'Ocak', 2: 'Şubat', 3: 'Mart', 4: 'Nisan',
@@ -42,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
             </div>
         `;
     }
@@ -96,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function fillYearSelect() {
     const yearSelect = document.getElementById('yearSelect');
     const currentYearValue = currentYear;
-    
+
     for (let year = currentYearValue - 2; year <= currentYearValue + 2; year++) {
         const option = document.createElement('option');
         option.value = year;
@@ -110,7 +118,7 @@ function fillYearSelect() {
 async function loadMonthlyData() {
     const month = document.getElementById('monthSelect').value;
     const year = document.getElementById('yearSelect').value;
-    
+
     currentMonth = parseInt(month);
     currentYear = parseInt(year);
 
@@ -171,7 +179,7 @@ async function loadResidents() {
 // Daireleri unique olarak listele
 function buildApartmentsList() {
     const apartmentsMap = new Map();
-    
+
     allResidents.forEach(resident => {
         const key = `${resident.block_no}-${resident.apartment_no}`;
         if (!apartmentsMap.has(key)) {
@@ -183,7 +191,7 @@ function buildApartmentsList() {
         }
         apartmentsMap.get(key).residents.push(resident);
     });
-    
+
     allApartments = Array.from(apartmentsMap.values());
 }
 
@@ -199,7 +207,7 @@ function fillApartmentSelect() {
         option.textContent = `${apt.block_no}-${apt.apartment_no} (${residentsNames})`;
         select.appendChild(option);
     });
-    
+
     // Daire seçim değişikliğini dinle
     select.addEventListener('change', onApartmentSelected);
 }
@@ -208,19 +216,19 @@ function fillApartmentSelect() {
 function onApartmentSelected() {
     const select = document.getElementById('paymentApartment');
     const apartmentIndex = select.value;
-    
+
     if (apartmentIndex === '') {
         document.getElementById('paymentPerson').innerHTML = '<option value="">Kişi seçin</option>';
         selectedApartmentForPayment = null;
         return;
     }
-    
+
     selectedApartmentForPayment = allApartments[apartmentIndex];
-    
+
     // O dairede yaşayan kişileri göster
     const personSelect = document.getElementById('paymentPerson');
     personSelect.innerHTML = '<option value="">Ödemeyi yapan kişiyi seçin</option>';
-    
+
     selectedApartmentForPayment.residents.forEach(resident => {
         const option = document.createElement('option');
         option.value = resident.id;
@@ -298,7 +306,7 @@ function renderTables() {
 // Ödenmiş tablosu (DAIRE BAZINDA - unique daireler)
 function renderPaidTable(paid) {
     const tbody = document.querySelector('#paid-section tbody');
-    
+
     if (paid.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Bu ayda henüz ödeme yapılmamış.</td></tr>';
         return;
@@ -332,7 +340,7 @@ function renderPaidTable(paid) {
 // Ödenmemiş tablosu (DAIRE BAZINDA)
 function renderUnpaidTable(unpaid, overdue) {
     const tbody = document.querySelector('#unpaid-section tbody');
-    
+
     if (unpaid.length === 0) {
         if (overdue.length > 0) {
             tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #ff9800;">Bu ayda yeni ödenmemiş aidatı yok (tüm aidatlar vadesi geçmiştir)</td></tr>';
@@ -354,12 +362,12 @@ function renderUnpaidTable(unpaid, overdue) {
     tbody.innerHTML = Array.from(uniqueApartments.values()).map(due => {
         const dueDate = new Date(due.due_date).toLocaleDateString('tr-TR');
         // O dairede yaşayan insanları listele
-        const residentsInApartment = unpaid.filter(d => 
-            d.user.block_no === due.user.block_no && 
+        const residentsInApartment = unpaid.filter(d =>
+            d.user.block_no === due.user.block_no &&
             d.user.apartment_no === due.user.apartment_no
         );
         const residentsNames = residentsInApartment.map(r => r.user.full_name).join(', ');
-        
+
         return `
             <tr>
                 <td><strong>${due.user.block_no}-${due.user.apartment_no}</strong></td>
@@ -380,7 +388,7 @@ function renderUnpaidTable(unpaid, overdue) {
 // Overdue tablosu (DAIRE BAZINDA)
 function renderOverdueTable(overdue) {
     const tbody = document.querySelector('#overdue-section tbody');
-    
+
     if (overdue.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">Vadesi geçmiş aidatı yok.</td></tr>';
         return;
@@ -399,10 +407,10 @@ function renderOverdueTable(overdue) {
         const dueDate = new Date(due.due_date);
         const today = new Date();
         const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
-        
+
         // O dairede yaşayan insanları listele
-        const residentsInApartment = overdue.filter(d => 
-            d.user.block_no === due.user.block_no && 
+        const residentsInApartment = overdue.filter(d =>
+            d.user.block_no === due.user.block_no &&
             d.user.apartment_no === due.user.apartment_no
         );
         const residentsNames = residentsInApartment.map(r => r.user.full_name).join(', ');
@@ -459,7 +467,7 @@ async function createMonthlyDues(e) {
         alert('✅ ' + result.message);
         document.getElementById('createMonthlyModal').classList.remove('show');
         document.getElementById('createMonthlyForm').reset();
-        
+
         // Verileri yenile
         await loadMonthlyData();
 
@@ -472,7 +480,7 @@ async function createMonthlyDues(e) {
 async function recordPayment(monthlyDueId, userId) {
     // Modal'da görüntülenecek bilgileri al
     const due = currentMonthlyDues.find(d => d.id === monthlyDueId);
-    
+
     if (!due) {
         alert('Aidatı kaydı bulunamadı!');
         return;
@@ -481,13 +489,13 @@ async function recordPayment(monthlyDueId, userId) {
     // Modal açık kılıp daire bilgisini göster
     const residentLabel = document.getElementById('residentLabel');
     residentLabel.textContent = `Daire: ${due.user.block_no}-${due.user.apartment_no}`;
-    
+
     // O dairede yaşayan tüm kişileri bul
-    const residentsInApartment = allResidents.filter(r => 
-        r.block_no === due.user.block_no && 
+    const residentsInApartment = allResidents.filter(r =>
+        r.block_no === due.user.block_no &&
         r.apartment_no === due.user.apartment_no
     );
-    
+
     // Kişi dropdown'unu doldur
     const personSelect = document.getElementById('recordPaymentPerson');
     personSelect.innerHTML = '<option value="">Ödemeyi yapan kişiyi seçin</option>';
@@ -500,16 +508,16 @@ async function recordPayment(monthlyDueId, userId) {
         }
         personSelect.appendChild(option);
     });
-    
+
     // Ödeme yöntemi select'ini sıfırla
     document.getElementById('recordPaymentMethod').value = '';
-    
+
     // Ödemeyi kaydet verilerini sakla
     pendingPaymentData = {
         monthlyDueId: monthlyDueId,
         userId: userId
     };
-    
+
     // Modal'ı aç
     document.getElementById('recordPaymentModal').classList.add('show');
 }
@@ -559,12 +567,12 @@ async function submitRecordPayment(e) {
 
         // Ödemeyi yapan kişinin adını al
         const paidByName = document.getElementById('recordPaymentPerson').selectedOptions[0].text;
-        
+
         alert(`✅ Ödeme başarıyla kaydedildi!\n\nÖdemeyi yapan: ${paidByName}\n\n⭐ Bu dairede yaşayan tüm sakinler ÖDEMIŞ olarak işaretlendi.`);
         document.getElementById('recordPaymentModal').classList.remove('show');
         document.getElementById('recordPaymentForm').reset();
         pendingPaymentData = null;
-        
+
         // Verileri tamamen yenile
         await loadResidents();
         await loadMonthlyData();
@@ -579,23 +587,23 @@ async function submitRecordPayment(e) {
 async function loadPayments() {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         // API URL: GET /api/payments/site/:siteId (path parameter kullan)
         console.log(`📡 API isteği: ${API_BASE_URL}/payments/site/${SITE_ID}`);
         const response = await fetch(`${API_BASE_URL}/payments/site/${SITE_ID}`, { headers });
-        
+
         if (!response.ok) {
             const error = await response.json().catch(() => ({}));
             console.error('API Hatası:', response.status, error);
             throw new Error(`API Error ${response.status}: ${error.message || 'Bilinmeyen hata'}`);
         }
-        
+
         const result = await response.json();
         const payments = result.data || result.payments || [];
-        
+
         console.log('✅ Ödemeler yüklendi:', payments.length, 'adet');
-        
+
         // Ödeyenler ve ödemeyenler listelerini render et
         renderPaidAndUnpaidLists(payments);
     } catch (error) {

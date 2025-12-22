@@ -3,6 +3,14 @@ const API_BASE_URL = 'http://localhost:3000/api';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
             </div>
         `;
     }
@@ -54,17 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadComplaints() {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/complaints?siteId=${SITE_ID}`, { headers });
         if (!response.ok) {
             throw new Error('Şikayetler yüklenemedi');
         }
-        
+
         const result = await response.json();
         console.log('API Yanıtı:', result);
         const complaints = result.data || result.complaints || [];
-        
+
         renderComplaintsByStatus(complaints);
     } catch (error) {
         console.error('Şikayetler yüklenirken hata:', error);
@@ -177,7 +185,7 @@ function showErrorMessage(message) {
     const pendingList = document.getElementById('pending-requests-list');
     const inprogressList = document.getElementById('inprogress-requests-list');
     const resolvedList = document.getElementById('resolved-requests-list');
-    
+
     const errorHTML = `<p style="text-align:center;color:#e74c3c;padding:20px;">${message}</p>`;
     if (pendingList) pendingList.innerHTML = errorHTML;
     if (inprogressList) inprogressList.innerHTML = errorHTML;
@@ -197,9 +205,9 @@ function setupFilters() {
         btn.addEventListener('click', () => {
             filterBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
+
             const filter = btn.getAttribute('data-filter');
-            
+
             // Tüm bölümleri göster/gizle
             if (filter === 'all') {
                 Object.values(sections).forEach(section => {

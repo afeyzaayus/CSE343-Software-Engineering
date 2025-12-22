@@ -4,7 +4,14 @@ const BASE_URL = 'http://localhost:3000';
 // LocalStorage'dan admin ve site bilgilerini al
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
-
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser || !selectedSite) {
         // Kullanıcı veya site seçimi yoksa login sayfasına yönlendir
@@ -22,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
         <div style="margin-left: 10px;">
             <div style="font-weight: 600;">${currentUser.full_name}</div>
-            <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+            <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
         </div>
     `;
 
@@ -50,19 +57,19 @@ async function loadDashboardData() {
     const headers = {
         'Content-Type': 'application/json'
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     try {
         // Dashboard istatistiklerini tek endpoint'ten çek
         const url = `${BASE_URL}/api/dashboard/statistics/${selectedSite.site_id}`;
         console.log('📊 Dashboard URL:', url);
         console.log('📊 Token:', token ? 'Mevcin' : 'Yok');
         console.log('📊 Site ID:', selectedSite.site_id);
-        
-        const response = await fetch(url, { 
+
+        const response = await fetch(url, {
             headers,
             credentials: 'include'
         });
@@ -75,7 +82,7 @@ async function loadDashboardData() {
         }
 
         const result = await response.json();
-        
+
         if (!result.success) {
             throw new Error(result.message || 'Veri alınamadı');
         }
@@ -126,7 +133,7 @@ async function loadDashboardData() {
 // Son duyuruları göster
 function displayRecentAnnouncements(announcements) {
     const container = document.getElementById('current-announcements');
-    
+
     if (!announcements || announcements.length === 0) {
         container.innerHTML = '<p style="text-align: center; padding: 15px; color: #7f8c8d;">Henüz duyuru yok</p>';
         return;
@@ -155,7 +162,7 @@ let showingAll = false;
 function toggleAllAnnouncements() {
     const container = document.getElementById('current-announcements');
     const button = document.getElementById('toggleAnnouncementsBtn');
-    
+
     if (showingAll) {
         // Son 3 duyuruya geri dön
         showingAll = false;
@@ -176,15 +183,15 @@ async function loadAllAnnouncements() {
     const headers = {
         'Content-Type': 'application/json'
     };
-    
+
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
-    
+
     try {
         container.innerHTML = '<p style="text-align: center; padding: 15px; color: #7f8c8d;">Duyurular yükleniyor...</p>';
-        
-        const response = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements`, { 
+
+        const response = await fetch(`${BASE_URL}/api/sites/${selectedSite.site_id}/announcements`, {
             headers,
             credentials: 'include'
         });
@@ -194,14 +201,14 @@ async function loadAllAnnouncements() {
         }
 
         const result = await response.json();
-        
+
         if (!result.success) {
             throw new Error(result.message || 'Duyurular alınamadı');
         }
 
         const data = result.data;
         const allAnnouncements = [...(data.active || []), ...(data.past || [])];
-        
+
         if (allAnnouncements.length === 0) {
             container.innerHTML = '<p style="text-align: center; padding: 15px; color: #7f8c8d;">Duyuru bulunmamaktadır.</p>';
             return;

@@ -1,14 +1,14 @@
 // Kullanıcı bilgilerini API'den güncel olarak çek ve göster
 async function fetchAndUpdateUserInfo() {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
-    
+
     if (!token) {
         console.warn('Token bulunamadı, kullanıcı bilgisi güncellenemiyor');
         return null;
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/accounts/me', {
+        const response = await fetch('/api/accounts/me', {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -45,7 +45,7 @@ async function fetchAndUpdateUserInfo() {
 function updateUserInfoDisplay(userData) {
     // dashboard-user-info elementini ara
     let userInfo = document.getElementById('dashboard-user-info');
-    
+
     // Yoksa .user-info class'ı ile ara
     if (!userInfo) {
         userInfo = document.querySelector('.user-info');
@@ -78,7 +78,7 @@ function updateUserInfoDisplay(userData) {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${firstLetter}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${fullName}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${accountType}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(accountType)}</div>
             </div>
         `;
     }

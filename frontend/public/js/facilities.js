@@ -3,7 +3,14 @@ const API_BASE_URL = 'http://localhost:3000/api';
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
 const SITE_ID = selectedSite?.site_id || selectedSite?.id;
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 // Tesisleri bellekte tut
 let facilitiesCache = [];
 
@@ -38,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
             </div>
         `;
     }
@@ -62,25 +69,25 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadFacilities() {
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-    
+
     console.log('📡 [LOAD] Tesisler yükleniyor...');
     console.log('📡 [LOAD] URL:', `${API_BASE_URL}/sites/${SITE_ID}/social-amenities`);
-    
+
     try {
         const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities`, { headers });
         console.log('📡 [LOAD] Response status:', response.status);
-        
+
         const result = await response.json();
         console.log('📡 [LOAD] Response data:', result);
-        
+
         if (!response.ok) throw new Error(result.message || 'Sosyal tesisler yüklenemedi');
-        
+
         const facilities = result.data || result.facilities || [];
         console.log('📡 [LOAD] Facilities:', facilities);
-        
+
         // Cache'e kaydet
         facilitiesCache = facilities;
-        
+
         renderFacilities(facilities);
     } catch (error) {
         console.error('❌ [LOAD] Hata:', error);
@@ -155,7 +162,7 @@ function setupFacilityForm() {
         const operatingHours = document.getElementById('operatingHours')?.value || '';
 
         const data = { name, description, capacity, operating_hours: operatingHours, status: 'Açık' };
-        
+
         console.log('📤 [SUBMIT] Form gönderiliyor...');
         console.log('📤 [SUBMIT] SITE_ID:', SITE_ID);
         console.log('📤 [SUBMIT] facilityId:', facilityId);
@@ -207,19 +214,19 @@ function setupFacilityForm() {
 }
 
 // Tesis düzenleme
-window.editFacility = async function(facilityId) {
+window.editFacility = async function (facilityId) {
     console.log('✏️ [EDIT] facilityId:', facilityId);
-    
+
     // Cache'den tesis bilgisini al
     const facility = facilitiesCache.find(f => f.id === facilityId);
     console.log('✏️ [EDIT] facility from cache:', facility);
-    
+
     if (!facility) {
         alert('Tesis bilgisi bulunamadı. Sayfa yenileniyor...');
         await loadFacilities();
         return;
     }
-    
+
     try {
         document.getElementById('facilityId').value = facility.id;
         document.getElementById('facilityName').value = facility.name;
@@ -235,7 +242,7 @@ window.editFacility = async function(facilityId) {
 
         const formTitle = document.getElementById('form-title');
         if (formTitle) formTitle.textContent = 'Tesis Düzenle';
-        
+
         // Forma scroll yap
         document.getElementById('editFacilityForm')?.scrollIntoView({ behavior: 'smooth' });
     } catch (error) {
@@ -245,7 +252,7 @@ window.editFacility = async function(facilityId) {
 };
 
 // Tesis silme
-window.deleteFacility = async function(facilityId) {
+window.deleteFacility = async function (facilityId) {
     if (!confirm('Bu tesisi silmek istediğinizden emin misiniz?')) return;
 
     const token = localStorage.getItem('adminToken') || localStorage.getItem('authToken');

@@ -1,6 +1,16 @@
 // js/modules/announcement.js - Standalone Version
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = '';
 const API_BASE = '/api/sites';
+
+// Rol ismini Türkçe'ye çevir
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel',
+    };
+    return roleMap[role] || role;
+}
 
 // Kullanıcı ve seçili site bilgisi localStorage'dan
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -23,9 +33,9 @@ async function apiRequest(endpoint, data = null, method = 'GET') {
 
         const response = await fetch(`${BASE_URL}${endpoint}`, options);
         const result = await response.json();
-        
+
         console.log('🔵 API Response:', { status: response.status, ok: response.ok, result });
-        
+
         return { ok: response.ok, data: result };
     } catch (error) {
         console.error('❌ API Hatası:', error);
@@ -56,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
             </div>
         `;
     }
@@ -75,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupAnnouncements();
     setupAnnouncementForm();
     setupEditForm();
-    
+
     // Bugünden önceki tarihleri disable et (bugün dahil kabul et)
     const today = new Date().toISOString().split('T')[0];
     const announcementExpiry = document.getElementById('announcementExpiry');
@@ -231,7 +241,7 @@ function setupAnnouncementForm() {
             alert('Tüm alanları doldurun!');
             return;
         }
-        
+
         // Tarih karşılaştırması (sadece gün kısmına göre)
         if (startDate > endDate) {
             alert('Başlangıç tarihi bitiş tarihinden önce olmalıdır!');
@@ -261,12 +271,12 @@ window.openEditModal = function (id, title, content, startDate, endDate, priorit
     document.getElementById('editAnnouncementContent').value = content;
     document.getElementById('editAnnouncementDate').value = startDate.split('T')[0];
     document.getElementById('editAnnouncementExpiry').value = endDate.split('T')[0];
-    
+
     // Min date'i bugünün tarihine ayarla
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('editAnnouncementDate').min = today;
     document.getElementById('editAnnouncementExpiry').min = today;
-    
+
     modal.style.display = 'flex';
 };
 
