@@ -22,10 +22,10 @@ import requestRoutes from './modules/request/request.routes.js';
 import residenceRoutes from './modules/residence/residence.routes.js';
 import socialFacilitiesRoutes from './modules/social-facilities/social-facilities.routes.js';
 
-import masterAuthRoutes from './modules/master/auth/masterAuth.routes.js' ;
+import masterAuthRoutes from './modules/master/auth/masterAuth.routes.js';
 import masterDashboardRoutes from './modules/master/dashboard/dashboard.routes.js';
-import masterCompanyRoutes from './modules/master/company/company.routes.js' ;
-import individualRoutes from './modules/master/individual/individual.routes.js' ;
+import masterCompanyRoutes from './modules/master/company/company.routes.js';
+import individualRoutes from './modules/master/individual/individual.routes.js';
 import { seedMasterAdmin } from './modules/master/auth/masterAuth.service.js';
 
 // Yeni eklenen şikayet rotalarını import et
@@ -65,7 +65,11 @@ app.use(express.json());
 
 // CORS - Tüm kaynaklardan gelen isteklere izin ver
 app.use(cors({
-  origin: 'https://www.siteportal.com.tr', // veya '*' test için
+  origin: [
+    'https://siteportal.com.tr',
+    'https://www.siteportal.com.tr',
+    'https://api.siteportal.com.tr'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true // eğer cookie veya auth header kullanıyorsan
 }));
@@ -156,7 +160,7 @@ app.use((req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error:', err);
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Sunucu hatası',
