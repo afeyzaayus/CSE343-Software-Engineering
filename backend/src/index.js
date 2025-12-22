@@ -2,7 +2,7 @@
 
 // Shared Services
 export {
-  transporter,
+  sendEmail,
   sendIndividualVerificationEmail,
   sendCompanyManagerVerificationEmail,
   sendEmployeeInvitationEmail,

@@ -1,13 +1,11 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
-// Email transporter
-const transporter = nodemailer.createTransport({
+export const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
-  port: 2525,
-  secure: false, // STARTTLS kullanıyorsan false
+  port: 2525,  // bulut sunucu SMTP portu
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
@@ -17,6 +15,7 @@ const transporter = nodemailer.createTransport({
   },
   family: 4
 });
+
 
 
 /**
