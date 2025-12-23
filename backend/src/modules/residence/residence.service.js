@@ -120,13 +120,21 @@ class ResidenceService {
   // Create a new resident
   async createResident(data) {
     try {
-      
+
       const { id, ...dataWithoutId } = data;
       if (id) {
       }
-      
+
+      // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+      if (dataWithoutId.phone_number) {
+        const phoneRegex = /^\+905\d{9}$/;
+        if (!phoneRegex.test(dataWithoutId.phone_number)) {
+          throw new Error('Telefon numarası +905xxxxxxxxx formatında olmalıdır (örnek: +905551234567)');
+        }
+      }
+
       let blockId = dataWithoutId.block_id;
-      
+
       // Find or create block
       if (dataWithoutId.block_name && !blockId) {
         let block = await prisma.blocks.findFirst({
@@ -135,7 +143,7 @@ class ResidenceService {
             block_name: dataWithoutId.block_name
           }
         });
-        
+
         if (!block) {
           block = await prisma.blocks.create({
             data: {
@@ -144,10 +152,10 @@ class ResidenceService {
             }
           });
         }
-        
+
         blockId = block.id;
       }
-      
+
       // Normalize resident_type
       let residentType = dataWithoutId.resident_type;
       if (residentType === 'active' || residentType === 'HIRER') {
@@ -157,7 +165,7 @@ class ResidenceService {
       } else {
         residentType = 'OWNER';
       }
-      
+
       // PARALLEL CHECK: Phone number ve block bilgisi paralel kontrol et
       const [existingUser, blockInfo] = await Promise.all([
         prisma.user.findUnique({
@@ -168,11 +176,11 @@ class ResidenceService {
           select: { apartment_count: true, block_name: true }
         }) : Promise.resolve(null)
       ]);
-      
+
       if (existingUser) {
         throw new Error(`Bu telefon numarasÄ± zaten kayÄ±tlÄ±: ${dataWithoutId.phone_number}`);
       }
-      
+
       // Auto-increase block capacity if needed
       const apartmentNo = parseInt(dataWithoutId.apartment_no || 0);
       if (blockId && blockInfo && apartmentNo > (blockInfo.apartment_count || 0)) {
@@ -181,7 +189,7 @@ class ResidenceService {
           data: { apartment_count: apartmentNo }
         });
       }
-      
+
       // Get or create apartment
       let apartment = null;
       if (blockId && dataWithoutId.apartment_no) {
@@ -193,7 +201,7 @@ class ResidenceService {
             }
           }
         });
-        
+
         if (!apartment) {
           apartment = await prisma.apartments.create({
             data: {
@@ -205,13 +213,13 @@ class ResidenceService {
           });
         }
       }
-      
+
       // Reset sequence if needed
       try {
         await prisma.$executeRaw`SELECT setval(pg_get_serial_sequence('"public"."users"', 'id'), COALESCE((SELECT MAX(id) FROM "public"."users"), 1), true)`;
       } catch (seqError) {
       }
-      
+
       // Create user
       const resident = await prisma.user.create({
         data: {
@@ -244,7 +252,7 @@ class ResidenceService {
           }
         }
       });
-      
+
       // PARALLEL UPDATE: Apartment ve block bilgileri güncellemelerini paralel yap
       if (apartment || blockId) {
         // Önce apartment resident_count'unu güncelle
@@ -255,7 +263,7 @@ class ResidenceService {
               deleted_at: null
             }
           });
-          
+
           await prisma.apartments.update({
             where: { id: apartment.id },
             data: {
@@ -264,16 +272,16 @@ class ResidenceService {
             }
           });
         }
-        
+
         // Sonra block resident_count'unu güncelle (tüm apartment'ların güncel değerleriyle)
         if (blockId) {
           const blockApartments = await prisma.apartments.findMany({
             where: { block_id: parseInt(blockId) },
             select: { resident_count: true }
           });
-          
+
           const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-          
+
           await prisma.blocks.update({
             where: { id: parseInt(blockId) },
             data: { resident_count: totalBlockResidents }
@@ -287,9 +295,9 @@ class ResidenceService {
         const currentMonth = now.getMonth() + 1;
         const currentYear = now.getFullYear();
         const dueDate = new Date(currentYear, currentMonth - 1, 15);
-        
+
         let paymentStatus = 'UNPAID';
-        
+
         if (apartment?.id) {
           const otherResidentsInApartment = await prisma.user.findMany({
             where: {
@@ -299,7 +307,7 @@ class ResidenceService {
             },
             select: { id: true }
           });
-          
+
           if (otherResidentsInApartment.length > 0) {
             const otherResidentIds = otherResidentsInApartment.map(r => r.id);
             const existingDues = await prisma.monthlyDues.findFirst({
@@ -311,13 +319,13 @@ class ResidenceService {
               },
               select: { payment_status: true }
             });
-            
+
             if (existingDues) {
               paymentStatus = existingDues.payment_status;
             }
           }
         }
-        
+
         try {
           await prisma.monthlyDues.upsert({
             where: {
@@ -382,7 +390,7 @@ class ResidenceService {
             block_name: data.block_name
           }
         });
-        
+
         if (!block) {
           block = await prisma.blocks.create({
             data: {
@@ -391,15 +399,22 @@ class ResidenceService {
             }
           });
         }
-        
+
         updateData.block_id = block.id;
       } else if (data.block_id) {
         updateData.block_id = parseInt(data.block_id);
       }
 
       if (data.full_name) updateData.full_name = data.full_name;
-      if (data.phone_number) updateData.phone_number = data.phone_number;
-      
+      if (data.phone_number) {
+        // Telefon numarası formatını kontrol et: +905xxxxxxxxx
+        const phoneRegex = /^\+905\d{9}$/;
+        if (!phoneRegex.test(data.phone_number)) {
+          throw new Error('Telefon numarası +905xxxxxxxxx formatında olmalıdır (örnek: +905551234567)');
+        }
+        updateData.phone_number = data.phone_number;
+      }
+
       // Handle apartment change
       let newApartmentId = null;
       if (data.apartment_no && updateData.block_id) {
@@ -411,7 +426,7 @@ class ResidenceService {
             }
           }
         });
-        
+
         if (!apartment) {
           apartment = await prisma.apartments.create({
             data: {
@@ -422,7 +437,7 @@ class ResidenceService {
             }
           });
         }
-        
+
         newApartmentId = apartment.id;
         updateData.apartment_id = newApartmentId;
         updateData.apartment_no = data.apartment_no;
@@ -466,7 +481,7 @@ class ResidenceService {
               deleted_at: null
             }
           });
-          
+
           apartmentUpdates.push(
             prisma.apartments.update({
               where: { id: currentResident.apartment_id },
@@ -485,7 +500,7 @@ class ResidenceService {
             deleted_at: null
           }
         });
-        
+
         apartmentUpdates.push(
           prisma.apartments.update({
             where: { id: newApartmentId },
@@ -502,15 +517,15 @@ class ResidenceService {
         // Sonra block resident counts'ları güncelle
         if (updateData.block_id && updateData.block_id !== currentResident.block_id) {
           const blockUpdates = [];
-          
+
           if (currentResident.block_id) {
             const oldBlockApartments = await prisma.apartments.findMany({
               where: { block_id: currentResident.block_id },
               select: { resident_count: true }
             });
-            
+
             const oldBlockTotal = oldBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-            
+
             blockUpdates.push(
               prisma.blocks.update({
                 where: { id: currentResident.block_id },
@@ -523,9 +538,9 @@ class ResidenceService {
             where: { block_id: updateData.block_id },
             select: { resident_count: true }
           });
-          
+
           const newBlockTotal = newBlockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-          
+
           blockUpdates.push(
             prisma.blocks.update({
               where: { id: updateData.block_id },
@@ -540,9 +555,9 @@ class ResidenceService {
             where: { block_id: updateData.block_id },
             select: { resident_count: true }
           });
-          
+
           const totalBlockResidents = blockApartments.reduce((sum, apt) => sum + (apt.resident_count || 0), 0);
-          
+
           await prisma.blocks.update({
             where: { id: updateData.block_id },
             data: { resident_count: totalBlockResidents }
@@ -829,15 +844,15 @@ class ResidenceService {
       // Eğer apartment_count artırıldıysa, yeni boş daireler ekle
       if (apartment_count !== undefined && apartment_count > block.apartment_count) {
         const apartmentsToCreate = [];
-        
+
         // Mevcut daireleri kontrol et
         const existingApartments = await prisma.apartments.findMany({
           where: { block_id: parseInt(blockId) },
           select: { apartment_no: true }
         });
-        
+
         const existingApartmentNumbers = new Set(existingApartments.map(apt => apt.apartment_no));
-        
+
         // Eksik daireleri oluştur
         for (let i = 1; i <= parseInt(apartment_count); i++) {
           const apartmentNo = i.toString();
@@ -852,7 +867,7 @@ class ResidenceService {
             });
           }
         }
-        
+
         if (apartmentsToCreate.length > 0) {
           await prisma.apartments.createMany({
             data: apartmentsToCreate,
@@ -871,7 +886,7 @@ class ResidenceService {
   // Delete an apartment (hard delete - also hard deletes all residents in that apartment)
   async deleteApartment(blockId, apartmentNo) {
     try {
-      
+
       // First, try to find the apartment
       let apartment = await prisma.apartments.findUnique({
         where: {
@@ -935,4 +950,3 @@ class ResidenceService {
 }
 
 export default new ResidenceService();
-

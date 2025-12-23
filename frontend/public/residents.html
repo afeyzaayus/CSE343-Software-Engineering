@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daire Sahipleri - Site Yönetim Sistemi</title>
-    
+
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/table.css">
@@ -22,6 +23,7 @@
             align-items: center;
             z-index: 1000;
         }
+
         .modal-box {
             background: white;
             padding: 30px;
@@ -31,26 +33,32 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+
         .modal-box h2 {
             margin-bottom: 20px;
         }
+
         .modal-box label {
             display: block;
             margin-top: 15px;
             font-weight: 500;
         }
-        .modal-box input, .modal-box select {
+
+        .modal-box input,
+        .modal-box select {
             width: 100%;
             padding: 10px;
             margin-top: 5px;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+
         .modal-buttons {
             display: flex;
             gap: 10px;
             margin-top: 20px;
         }
+
         .modal-buttons button {
             flex: 1;
             padding: 10px;
@@ -66,7 +74,7 @@
             gap: 20px;
             margin-top: 20px;
         }
-        
+
         .block-card {
             background: white;
             border: 1px solid #e0e0e0;
@@ -74,7 +82,7 @@
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
+
         .block-header {
             background: linear-gradient(135deg, #2e86c1 0%, #1a5490 100%);
             color: white;
@@ -85,23 +93,23 @@
             align-items: center;
             transition: all 0.3s ease;
         }
-        
+
         .block-header:hover {
             background: linear-gradient(135deg, #1a5490 0%, #0d2d52 100%);
         }
-        
+
         .block-header-title {
             display: flex;
             align-items: center;
             gap: 10px;
             flex: 1;
         }
-        
+
         .block-header-title h3 {
             margin: 0;
             font-size: 18px;
         }
-        
+
         .block-count {
             background: rgba(255, 255, 255, 0.2);
             padding: 4px 12px;
@@ -109,26 +117,26 @@
             font-size: 12px;
             font-weight: bold;
         }
-        
+
         .block-toggle-icon {
             transition: transform 0.3s ease;
             font-size: 16px;
         }
-        
+
         .block-content {
             overflow-y: auto;
             transition: max-height 0.3s ease;
         }
-        
+
         .block-content.collapsed {
             max-height: 0;
             overflow: hidden;
         }
-        
+
         .residents-list {
             padding: 15px 20px;
         }
-        
+
         .resident-item {
             background: #f8f9fa;
             padding: 12px;
@@ -139,22 +147,22 @@
             justify-content: space-between;
             align-items: center;
         }
-        
+
         .resident-item:last-child {
             margin-bottom: 0;
         }
-        
+
         .resident-info {
             flex: 1;
             min-width: 0;
         }
-        
+
         .resident-name {
             font-weight: 600;
             color: #2c3e50;
             margin-bottom: 4px;
         }
-        
+
         .resident-details {
             font-size: 12px;
             color: #7f8c8d;
@@ -162,13 +170,13 @@
             grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
-        
+
         .resident-detail-item {
             display: flex;
             align-items: center;
             gap: 4px;
         }
-        
+
         .resident-type {
             display: inline-block;
             padding: 2px 8px;
@@ -177,29 +185,29 @@
             font-weight: bold;
             margin-top: 4px;
         }
-        
+
         .resident-type.owner {
             background: #d4edda;
             color: #155724;
         }
-        
+
         .resident-type.hirer {
             background: #e7d4f5;
             color: #6c2e7f;
         }
-        
+
         .resident-actions {
             display: flex;
             gap: 6px;
             margin-left: 10px;
             flex-shrink: 0;
         }
-        
+
         .resident-actions .btn {
             padding: 6px 10px;
             font-size: 12px;
         }
-        
+
         .show-more-btn {
             display: flex;
             justify-content: center;
@@ -207,7 +215,7 @@
             background: #f8f9fa;
             border-top: 1px solid #e0e0e0;
         }
-        
+
         .show-more-btn button {
             background: #2e86c1;
             color: white;
@@ -219,11 +227,11 @@
             font-size: 13px;
             font-weight: 500;
         }
-        
+
         .show-more-btn button:hover {
             background: #1a5490;
         }
-        
+
         .empty-block {
             padding: 20px;
             text-align: center;
@@ -396,13 +404,13 @@
                 flex-direction: column;
                 align-items: flex-start;
             }
-            
+
             .resident-actions {
                 margin-left: 0;
                 margin-top: 10px;
                 width: 100%;
             }
-            
+
             .resident-actions .btn {
                 flex: 1;
             }
@@ -413,6 +421,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
@@ -435,7 +444,7 @@
                 <h2 id="page-title">Daire Sahipleri</h2>
                 <div class="user-info"> ... </div>
             </div>
-            
+
             <div class="residents-content">
                 <div class="table-header">
                     <div class="table-title">Daire ve Sakin Bilgileri</div>
@@ -447,12 +456,10 @@
                 </div>
 
                 <!-- Blok filtreleme -->
-                <div class="filter-container" style="margin:10px 0; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <div class="filter-container"
+                    style="margin:10px 0; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                     <div style="display: flex; gap: 10px; align-items: center; flex: 1; min-width: 300px;">
-                        <input 
-                            type="text" 
-                            id="searchInput" 
-                            placeholder="İsim, telefon veya araç plakasına göre ara..." 
+                        <input type="text" id="searchInput" placeholder="İsim, telefon veya araç plakasına göre ara..."
                             style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;">
                         <button class="btn btn-secondary btn-sm" id="clearSearchBtn">
                             <i class="fas fa-times"></i> Temizle
@@ -473,162 +480,165 @@
         </div>
     </div>
 
-<!-- Blokları Yönet Modal -->
-<div id="manageBlocksModal" class="modal-overlay">
-    <div class="modal-box" style="max-width: 700px;">
-        <h2>Blok Yönetimi</h2>
-        
-        <div id="blocksList" style="margin-top: 20px;">
-            <!-- Bloklar JS ile gelecek -->
+    <!-- Blokları Yönet Modal -->
+    <div id="manageBlocksModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 700px;">
+            <h2>Blok Yönetimi</h2>
+
+            <div id="blocksList" style="margin-top: 20px;">
+                <!-- Bloklar JS ile gelecek -->
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" class="btn btn-secondary" id="closeManageBlocksModal">Kapat</button>
+            </div>
         </div>
+    </div>
 
-        <div class="modal-buttons">
-            <button type="button" class="btn btn-secondary" id="closeManageBlocksModal">Kapat</button>
+    <!-- Blok Düzenle Modal -->
+    <div id="editBlockModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Blok Düzenle</h2>
+
+            <form id="editBlockForm">
+                <input type="hidden" id="editBlockId">
+
+                <label>Blok Adı:</label>
+                <input type="text" id="editBlockName" required placeholder="Örn: A Blok">
+
+                <label>Daire Sayısı:</label>
+                <input type="number" id="editApartmentCount" required min="1" placeholder="Daire sayısı">
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" class="btn btn-secondary" id="closeEditBlockModal">İptal</button>
+                </div>
+            </form>
         </div>
     </div>
-</div>
 
-<!-- Blok Düzenle Modal -->
-<div id="editBlockModal" class="modal-overlay">
-    <div class="modal-box">
-        <h2>Blok Düzenle</h2>
+    <!-- Blok Oluştur Modal -->
+    <div id="createBlockModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Yeni Blok Oluştur</h2>
 
-        <form id="editBlockForm">
-            <input type="hidden" id="editBlockId">
-            
-            <label>Blok Adı:</label>
-            <input type="text" id="editBlockName" required placeholder="Örn: A Blok">
+            <form id="createBlockForm">
+                <label>Blok Adı:</label>
+                <input type="text" name="block_name" required placeholder="Örn: A Blok, B Blok">
 
-            <label>Daire Sayısı:</label>
-            <input type="number" id="editApartmentCount" required min="1" placeholder="Daire sayısı">
+                <label>Bu Blokta Kaç Daire Var?</label>
+                <input type="number" name="apartment_count" required min="1" placeholder="Daire sayısı">
 
-            <div class="modal-buttons">
-                <button type="submit" class="btn btn-primary">Güncelle</button>
-                <button type="button" class="btn btn-secondary" id="closeEditBlockModal">İptal</button>
-            </div>
-        </form>
+                <label>Açıklama (Opsiyonel):</label>
+                <input type="text" name="description" placeholder="İsteğe bağlı blok açıklaması">
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Oluştur</button>
+                    <button type="button" class="btn btn-secondary" id="closeCreateBlockModal">İptal</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Blok Oluştur Modal -->
-<div id="createBlockModal" class="modal-overlay">
-    <div class="modal-box">
-        <h2>Yeni Blok Oluştur</h2>
+    <!-- Yeni Daire Ekle Modal -->
+    <div id="addApartmentModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Bloka Daire Ekle</h2>
 
-        <form id="createBlockForm">
-            <label>Blok Adı:</label>
-            <input type="text" name="block_name" required placeholder="Örn: A Blok, B Blok">
+            <form id="addApartmentForm">
+                <input type="hidden" name="block" id="blockIdForApartment" required>
 
-            <label>Bu Blokta Kaç Daire Var?</label>
-            <input type="number" name="apartment_count" required min="1" placeholder="Daire sayısı">
+                <label>Kaç Daire Eklemek İstiyorsunuz?</label>
+                <input type="number" name="apartmentCount" id="apartmentCount" required min="1" value="1"
+                    placeholder="Örn: 5">
 
-            <label>Açıklama (Opsiyonel):</label>
-            <input type="text" name="description" placeholder="İsteğe bağlı blok açıklaması">
-
-            <div class="modal-buttons">
-                <button type="submit" class="btn btn-primary">Oluştur</button>
-                <button type="button" class="btn btn-secondary" id="closeCreateBlockModal">İptal</button>
-            </div>
-        </form>
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Daire Ekle</button>
+                    <button type="button" class="btn btn-secondary" id="closeAddModal">İptal</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Yeni Daire Ekle Modal -->
-<div id="addApartmentModal" class="modal-overlay">
-    <div class="modal-box">
-        <h2>Bloka Daire Ekle</h2>
+    <!-- Yeni Sakin Ekle Modal -->
+    <div id="addResidentModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Yeni Sakin Ekle</h2>
 
-        <form id="addApartmentForm">
-            <input type="hidden" name="block" id="blockIdForApartment" required>
+            <form id="addResidentForm">
+                <input type="hidden" id="addResidentBlockId">
+                <input type="hidden" id="addResidentApartmentNo">
 
-            <label>Kaç Daire Eklemek İstiyorsunuz?</label>
-            <input type="number" name="apartmentCount" id="apartmentCount" required min="1" value="1" placeholder="Örn: 5">
+                <label>Ad Soyad:</label>
+                <input type="text" id="addResidentName" required>
 
-            <div class="modal-buttons">
-                <button type="submit" class="btn btn-primary">Daire Ekle</button>
-                <button type="button" class="btn btn-secondary" id="closeAddModal">İptal</button>
-            </div>
-        </form>
+                <label>Telefon:</label>
+                <input type="text" id="addResidentPhone" pattern="\+905\d{9}" placeholder="+905XXXXXXXXX"
+                    title="Format: +905XXXXXXXXX (örnek: +905551234567)" required>
+
+                <label>Araç Plakası:</label>
+                <input type="text" id="addResidentPlate">
+
+                <label>Durum:</label>
+                <select id="addResidentStatus" required>
+                    <option value="HIRER">Kiracı</option>
+                    <option value="OWNER">Ev Sahibi</option>
+                </select>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Ekle</button>
+                    <button type="button" class="btn btn-secondary" id="closeAddResidentModal">İptal</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Yeni Sakin Ekle Modal -->
-<div id="addResidentModal" class="modal-overlay">
-    <div class="modal-box">
-        <h2>Yeni Sakin Ekle</h2>
+    <!-- Düzenle Modal -->
+    <div id="editApartmentModal" class="modal-overlay">
+        <div class="modal-box">
+            <h2>Sakin Bilgilerini Düzenle</h2>
 
-        <form id="addResidentForm">
-            <input type="hidden" id="addResidentBlockId">
-            <input type="hidden" id="addResidentApartmentNo">
-            
-            <label>Ad Soyad:</label>
-            <input type="text" id="addResidentName" required>
+            <form id="editApartmentForm">
+                <input type="hidden" id="editResidentId">
 
-            <label>Telefon:</label>
-            <input type="text" id="addResidentPhone" required>
+                <label>Blok:</label>
+                <select id="editBlock" required>
+                    <option value="A">A Blok</option>
+                    <option value="B">B Blok</option>
+                    <option value="C">C Blok</option>
+                </select>
 
-            <label>Araç Plakası:</label>
-            <input type="text" id="addResidentPlate">
+                <label>Daire No:</label>
+                <input type="text" id="editDoorNo" required>
 
-            <label>Durum:</label>
-            <select id="addResidentStatus" required>
-                <option value="HIRER">Kiracı</option>
-                <option value="OWNER">Ev Sahibi</option>
-            </select>
+                <label>Ad Soyad:</label>
+                <input type="text" id="editName" required>
 
-            <div class="modal-buttons">
-                <button type="submit" class="btn btn-primary">Ekle</button>
-                <button type="button" class="btn btn-secondary" id="closeAddResidentModal">İptal</button>
-            </div>
-        </form>
+                <label>Telefon:</label>
+                <input type="text" id="editPhone" pattern="\+905\d{9}" placeholder="+905XXXXXXXXX"
+                    title="Format: +905XXXXXXXXX (örnek: +905551234567)" required>
+
+                <label>Araç Plakası:</label>
+                <input type="text" id="editPlate">
+
+                <label>Yaşayan Kişi Sayısı:</label>
+                <input type="number" id="editPeopleCount" required min="1">
+
+                <label>Durum:</label>
+                <select id="editStatus">
+                    <option value="HIRER">Kiracı</option>
+                    <option value="OWNER">Ev Sahibi</option>
+                </select>
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                    <button type="button" class="btn btn-secondary" id="closeEditModal">İptal</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
-
-<!-- Düzenle Modal -->
-<div id="editApartmentModal" class="modal-overlay">
-    <div class="modal-box">
-        <h2>Sakin Bilgilerini Düzenle</h2>
-
-        <form id="editApartmentForm">
-            <input type="hidden" id="editResidentId">
-            
-            <label>Blok:</label>
-            <select id="editBlock" required>
-                <option value="A">A Blok</option>
-                <option value="B">B Blok</option>
-                <option value="C">C Blok</option>
-            </select>
-
-            <label>Daire No:</label>
-            <input type="text" id="editDoorNo" required>
-
-            <label>Ad Soyad:</label>
-            <input type="text" id="editName" required>
-
-            <label>Telefon:</label>
-            <input type="text" id="editPhone" required>
-
-            <label>Araç Plakası:</label>
-            <input type="text" id="editPlate">
-
-            <label>Yaşayan Kişi Sayısı:</label>
-            <input type="number" id="editPeopleCount" required min="1">
-
-            <label>Durum:</label>
-            <select id="editStatus">
-                <option value="HIRER">Kiracı</option>
-                <option value="OWNER">Ev Sahibi</option>
-            </select>
-
-            <div class="modal-buttons">
-                <button type="submit" class="btn btn-primary">Güncelle</button>
-                <button type="button" class="btn btn-secondary" id="closeEditModal">İptal</button>
-            </div>
-        </form>
-    </div>
-</div>
     <script src="js/userInfo.js"></script>
     <script src="js/residents.js"></script>
 </body>
-</html>
 
+</html>

@@ -156,7 +156,7 @@ function sendVerificationSuccessHtml(res, message) {
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         </style>
         <script>
-            setTimeout(() => { window.location.href = '${frontendUrl}/login.html'; }, 2000);
+            setTimeout(() => { window.location.href = '${frontendUrl}/index.html'; }, 2000);
         </script>
     </head>
     <body>
