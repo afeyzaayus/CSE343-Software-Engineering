@@ -1,15 +1,14 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 // Email transporter
-export const transporter = nodemailer.createTransport({
-  service: 'gmail',
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT),
+  secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    user: process.env.SMTP_LOGIN,      // Güncellendi
+    pass: process.env.SMTP_PASSWORD,   // Güncellendi
+  },
 });
 
 /**
@@ -17,7 +16,7 @@ export const transporter = nodemailer.createTransport({
  */
 export async function sendIndividualVerificationEmail(email, full_name, verificationLink) {
   return await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
     subject: 'Bireysel Hesap Doğrulama',
     html: `<p>Merhaba ${full_name},</p>
@@ -33,7 +32,7 @@ export async function sendIndividualVerificationEmail(email, full_name, verifica
  */
 export async function sendCompanyManagerVerificationEmail(email, full_name, company_name, company_code, verificationLink) {
   return await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
     subject: 'Şirket Yöneticisi Hesap Doğrulama',
     html: `
@@ -46,9 +45,10 @@ export async function sendCompanyManagerVerificationEmail(email, full_name, comp
     `
   });
 }
+
 export async function sendEmployeeInvitationEmail(toEmail, companyName, inviteCode, inviteLink) {
   const mailOptions = {
-    from: `"${companyName}" <${process.env.SMTP_USER}>`,
+    from: `"${companyName}" <${process.env.SMTP_FROM}>`,
     to: toEmail,
     subject: `🎉 ${companyName} Şirketine Davetlisiniz!`,
     html: `
@@ -176,6 +176,7 @@ export async function sendEmployeeInvitationEmail(toEmail, companyName, inviteCo
     throw new Error('E-posta gönderilemedi: ' + error.message);
   }
 }
+
 export async function sendPasswordResetEmail(email, full_name, resetLink) {
   if (!email) {
     console.warn('sendPasswordResetEmail: Alıcı e-posta adresi tanımlı değil, e-posta gönderilmedi.');
@@ -183,7 +184,7 @@ export async function sendPasswordResetEmail(email, full_name, resetLink) {
   }
 
   return await transporter.sendMail({
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to: email,
     subject: 'Şifre Sıfırlama Talebi',
     html: `
@@ -222,7 +223,7 @@ export async function sendEmail({ to, subject, html }) {
   }
 
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: process.env.SMTP_FROM,
     to,
     subject,
     html
