@@ -1018,6 +1018,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearSearchBtn.addEventListener('click', clearSearch);
     }
 
+     // Logout
+     const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('selectedSite');
+        window.location.href = 'admin-dashboard.html';
+    });
+
     await updateBlockDropdowns();
     renderResidents();
 });

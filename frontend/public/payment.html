@@ -430,7 +430,6 @@
                                 <tr>
                                     <th>Daire No</th>
                                     <th>Daire Sahibi</th>
-                                    <th>Telefon</th>
                                     <th>Son Ödeme Tarihi</th>
                                     <th>Durum</th>
                                     <th>İşlem</th>
@@ -454,7 +453,6 @@
                                 <tr>
                                     <th>Daire No</th>
                                     <th>Daire Sahibi</th>
-                                    <th>Telefon</th>
                                     <th>Son Ödeme Tarihi</th>
                                     <th>Gecikme (Gün)</th>
                                     <th>İşlem</th>
@@ -551,6 +549,10 @@
                     <select id="recordPaymentPerson" required>
                         <option value="">Kişi seçin</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label for="recordPaymentAmount">Tutar</label>
+                    <input type="number" id="recordPaymentAmount" step="0.01" required>
                 </div>
                 <div class="form-group">
                     <label for="recordPaymentMethod">Ödeme Yöntemi</label>

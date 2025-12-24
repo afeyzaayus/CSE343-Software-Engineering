@@ -50,16 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Logout
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            localStorage.removeItem('selectedSite');
-            window.location.href = '/admin-dashboard.html';
-        });
-    }
-
+   const logoutBtn = document.getElementById('logoutBtn');
+    logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('selectedSite');
+        window.location.href = 'admin-dashboard.html';
+    });
+    
     // Sosyal tesisleri yükle
     loadFacilities();
     setupFacilityForm();
