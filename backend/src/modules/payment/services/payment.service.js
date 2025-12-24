@@ -238,7 +238,7 @@ export async function createMonthlyDuesForAllResidentsService(siteIdParam, month
 }
 
 // ===== AYLIK ÖDEME KAYDETME (UNPAID -> PAID) - DAIRE BAZINDA =====
-export async function recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id = null) {
+export async function recordMonthlyPaymentService(monthlyDueId, payment_method, paid_by_user_id = null, amount = null) {
   const monthlyDue = await prisma.monthlyDues.findUnique({
     where: { id: parseInt(monthlyDueId) },
     include: {
@@ -270,6 +270,8 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
 
   const normalized_payment_method = normalizePaymentMethod(payment_method);
   const paid_date = new Date();
+  // Eğer amount gönderilmişse kullan, yoksa mevcut amount'u koru
+  const finalAmount = amount ? parseFloat(amount) : monthlyDue.amount;
 
 
   // Önceki ayları OVERDUE olarak işaretle
@@ -343,7 +345,8 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
         payment_status: 'PAID',
         paid_date: paid_date,
         payment_method: normalized_payment_method,
-        paid_by_user_id: paid_by_user_id || monthlyDue.userId
+        paid_by_user_id: paid_by_user_id || monthlyDue.userId,
+        amount: finalAmount
       }
     });
   } else if (monthlyDue.users.block_id && monthlyDue.users.apartment_no) {
@@ -373,7 +376,8 @@ export async function recordMonthlyPaymentService(monthlyDueId, payment_method, 
           payment_status: 'PAID',
           paid_date: paid_date,
           payment_method: normalized_payment_method,
-          paid_by_user_id: paid_by_user_id || monthlyDue.userId
+          paid_by_user_id: paid_by_user_id || monthlyDue.userId,
+          amount: finalAmount
         }
       });
     } else {
