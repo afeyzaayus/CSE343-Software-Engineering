@@ -35,11 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Logout işlemi
     const logoutBtn = document.getElementById('logoutBtn');
-    logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('selectedSite');
-        window.location.href = 'admin-dashboard.html';
-    });
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('selectedSite');
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');
+            window.location.href = 'admin-dashboard.html';
+        });
+    }
 
     // Tümünü Gör butonu
     const toggleBtn = document.getElementById('toggleAnnouncementsBtn');

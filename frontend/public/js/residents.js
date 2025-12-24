@@ -1020,11 +1020,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
      // Logout
      const logoutBtn = document.getElementById('logoutBtn');
-    logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('currentUser');
-        localStorage.removeItem('selectedSite');
-        window.location.href = 'admin-dashboard.html';
-    });
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('selectedSite');
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('authToken');
+            window.location.href = 'admin-dashboard.html';
+        });
+    }
 
     await updateBlockDropdowns();
     renderResidents();
