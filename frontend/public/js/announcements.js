@@ -71,16 +71,14 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    // Logout
-    const logoutBtn = document.getElementById('logoutBtn');
+     // Logout
+     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
+        logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('selectedSite');
             window.location.href = 'admin-dashboard.html';
         });
     }
-
     // Duyuruları yükle
     setupAnnouncements();
     setupAnnouncementForm();

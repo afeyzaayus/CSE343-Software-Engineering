@@ -49,18 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
     }
-
-   const logoutBtn = document.getElementById('logoutBtn');
+     // Logout
+    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            localStorage.removeItem('currentUser');
             localStorage.removeItem('selectedSite');
-            localStorage.removeItem('adminToken');
-            localStorage.removeItem('authToken');
             window.location.href = 'admin-dashboard.html';
         });
     }
-    
+
     // Sosyal tesisleri yükle
     loadFacilities();
     setupFacilityForm();

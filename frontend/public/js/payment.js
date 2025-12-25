@@ -576,15 +576,16 @@ async function submitRecordPayment(e) {
     }
 }
 
-// Çıkış butonunu admin-dashboard'a yönlendir
-document.getElementById('logoutBtn')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    // Gerekirse token temizle
-    localStorage.removeItem('adminToken');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
-    window.location.href = '/admin-dashboard.html';
-});
+
+     // Logout
+     const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('selectedSite');
+            window.location.href = 'admin-dashboard.html';
+        });
+    }
+
 
 // Ödemeleri API'den çek
 async function loadPayments() {
