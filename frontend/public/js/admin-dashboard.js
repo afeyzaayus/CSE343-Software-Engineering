@@ -38,7 +38,7 @@ function setupUI(userData) {
     // Kullanıcı bilgileri
     const userName = userData.name || userData.full_name || 'Kullanıcı';
     const userRole = userData.role || userData.account_type || 'USER';
-    const userEmail = userData.email || '-';
+    const userEmail = userData.email || userData.user_email || userData.mail || '-';
 
     document.getElementById('userName').textContent = userName;
     document.getElementById('userAvatar').textContent = userName.charAt(0).toUpperCase();

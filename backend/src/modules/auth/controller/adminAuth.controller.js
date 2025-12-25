@@ -203,6 +203,7 @@ export async function loginAdmin(req, res) {
         admin: {
           id: adminData.id,
           name: adminData.full_name,
+          email: adminData.email,
           role: adminData.account_type,
           company_name: adminData.company_name ?? null,
           company_code: adminData.company_code ?? null
