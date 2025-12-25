@@ -79,6 +79,135 @@ body {
     color: #1a5276;
 }
 
+/* USER DROPDOWN MENU */
+.user-section {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 15px);
+    right: 0;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    min-width: 320px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    border: 2px solid #e0e0e0;
+}
+
+.user-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.user-dropdown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    right: 20px;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid #e0e0e0;
+}
+
+.user-dropdown::after {
+    content: '';
+    position: absolute;
+    top: -6px;
+    right: 21px;
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid white;
+}
+
+.dropdown-header {
+    padding: 20px 20px 15px;
+    border-bottom: 2px solid #f0f2f5;
+}
+
+.dropdown-header h4 {
+    margin: 0;
+    color: #1a5276;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.dropdown-body {
+    padding: 15px 20px;
+}
+
+.account-info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.account-info-item:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.info-value {
+    font-size: 13px;
+    color: #333;
+    font-weight: 600;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.dropdown-footer {
+    padding: 15px 20px 20px;
+    border-top: 2px solid #f0f2f5;
+}
+
+.btn-change-password {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #2e86c1, #3498db);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-change-password:hover {
+    background: linear-gradient(135deg, #3498db, #5dade2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 134, 193, 0.3);
+}
+
+.btn-change-password:active {
+    transform: translateY(0);
+}
+
 .dashboard-content {
     background: white;
     padding: 30px;

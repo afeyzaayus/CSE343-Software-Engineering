@@ -3,8 +3,10 @@ import {
   registerIndividual,
   registerCompanyManager,
   verifyEmail,
-  loginAdmin
+  loginAdmin,
+  changePassword
 } from '../controller/adminAuth.controller.js';
+import { verifyAdminToken } from '../middleware/adminAuth.middleware.js';
 
 const router = express.Router();
 
@@ -37,5 +39,12 @@ router.get('/verify-email', verifyEmail);
  * @access  Public
  */
 router.post('/login', loginAdmin);
+
+/**
+ * @route   PUT /api/auth/change-password
+ * @desc    Şifre değiştirme (JWT gerekli)
+ * @access  Private
+ */
+router.put('/change-password', verifyAdminToken, changePassword);
 
 export default router;

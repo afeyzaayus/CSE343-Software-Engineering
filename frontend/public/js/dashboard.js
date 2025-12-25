@@ -13,9 +13,14 @@ function getRoleText(role) {
     return roleMap[role] || role;
 }
 document.addEventListener('DOMContentLoaded', () => {
-    if (!currentUser || !selectedSite) {
-        // Kullanıcı veya site seçimi yoksa login sayfasına yönlendir
+    if (!currentUser) {
+        // Kullanıcı yoksa login sayfasına yönlendir
         window.location.href = 'index.html';
+        return;
+    }
+    if (!selectedSite) {
+        // Kullanıcı varsa ama site seçili değilse admin-dashboard'a yönlendir
+        window.location.href = 'admin-dashboard.html';
         return;
     }
 

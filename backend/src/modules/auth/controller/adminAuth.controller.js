@@ -1,7 +1,8 @@
 import {
   registerIndividualService,
   registerCompanyManagerService,
-  loginAdminService
+  loginAdminService,
+  changePasswordService
 } from '../../../../src/index.js';
 import { generateToken } from '../../../utils/jwt.utils.js';
 import prisma from '../../../prisma/prismaClient.js';
@@ -227,3 +228,66 @@ export async function loginAdmin(req, res) {
     return res.status(statusCode).json({ success: false, message: errorMessage });
   }
 }
+
+/**
+ * Şifre Değiştirme
+ * @route PUT /api/auth/change-password
+ * @access Private (JWT required)
+ */
+export async function changePassword(req, res) {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    // Validasyon
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Mevcut şifre ve yeni şifre zorunludur.'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'Yeni şifre en az 6 karakter olmalıdır.'
+      });
+    }
+
+    // req.admin JWT middleware'den geliyor
+    if (!req.admin || !req.admin.id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Yetkilendirme bilgisi bulunamadı.'
+      });
+    }
+
+    // Service fonksiyonunu çağır
+    const result = await changePasswordService(
+      req.admin.id,
+      currentPassword,
+      newPassword
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: result.message
+    });
+
+  } catch (error) {
+    console.error('changePassword controller hatası:', error);
+
+    let errorMessage = 'Şifre değiştirme sırasında bir hata oluştu.';
+    let statusCode = 500;
+
+    if (error.message.includes('AUTH_ERROR')) {
+      statusCode = 401;
+      errorMessage = error.message.replace('AUTH_ERROR: ', '');
+    }
+
+    return res.status(statusCode).json({
+      success: false,
+      error: errorMessage
+    });
+  }
+}
+

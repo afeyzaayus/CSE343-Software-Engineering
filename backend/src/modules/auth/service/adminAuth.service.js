@@ -96,7 +96,7 @@ export async function registerCompanyManagerService(adminData) {
   validateCompanyCode(company_code, 4);
 
   const expiryDate = new Date();
-  expiryDate.setFullYear(expiryDate.getFullYear() + 1);  
+  expiryDate.setFullYear(expiryDate.getFullYear() + 1);
 
   const existingAdmin = await prisma.admin.findUnique({ where: { email } });
   if (existingAdmin) throw new Error('AUTH_ERROR: Bu e-posta adresi zaten kayıtlı.');
@@ -233,3 +233,65 @@ export async function loginAdminService({ email, password }) {
   const { password: _, ...adminData } = admin;
   return adminData;
 }
+
+/**
+ * Şifre Değiştirme
+ * @param {number} adminId - Admin ID
+ * @param {string} currentPassword - Mevcut şifre
+ * @param {string} newPassword - Yeni şifre
+ */
+export async function changePasswordService(adminId, currentPassword, newPassword) {
+  try {
+    // Admin'i bul
+    const admin = await prisma.admin.findUnique({
+      where: { id: adminId },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        account_status: true,
+        deleted_at: true
+      }
+    });
+
+    if (!admin) {
+      throw new Error('AUTH_ERROR: Kullanıcı bulunamadı.');
+    }
+
+    if (admin.deleted_at) {
+      throw new Error('AUTH_ERROR: Bu hesap silinmiş.');
+    }
+
+    if (admin.account_status === 'SUSPENDED') {
+      throw new Error('AUTH_ERROR: Hesabınız askıya alınmış.');
+    }
+
+    // Mevcut şifreyi doğrula
+    const isPasswordValid = await bcrypt.compare(currentPassword, admin.password);
+    if (!isPasswordValid) {
+      throw new Error('AUTH_ERROR: Mevcut şifre hatalı.');
+    }
+
+    // Yeni şifreyi hashle
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    // Şifreyi güncelle
+    await prisma.admin.update({
+      where: { id: adminId },
+      data: {
+        password: hashedPassword,
+        updated_at: new Date()
+      }
+    });
+
+    return {
+      success: true,
+      message: 'Şifreniz başarıyla güncellendi.'
+    };
+
+  } catch (error) {
+    console.error('changePasswordService hatası:', error);
+    throw error;
+  }
+}
+

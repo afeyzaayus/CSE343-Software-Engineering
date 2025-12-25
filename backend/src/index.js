@@ -38,7 +38,8 @@ export {
   registerIndividualService,
   registerCompanyManagerService,
   verifyEmailService,
-  loginAdminService
+  loginAdminService,
+  changePasswordService
 } from './modules/auth/service/adminAuth.service.js';
 
 // Company Services
@@ -56,7 +57,7 @@ export {
   acceptEmployeeInvitationService,
   getCompanyInvitationsService,
   deleteInvitationService,
-  verifyEmployeeInvitationService 
+  verifyEmployeeInvitationService
 } from './modules//company/service/invitation.service.js';
 
 // Site Services
