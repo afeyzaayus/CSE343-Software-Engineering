@@ -69,10 +69,10 @@ async function loadFacilities() {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     console.log('📡 [LOAD] Tesisler yükleniyor...');
-    console.log('📡 [LOAD] URL:', `${API_BASE_URL}/sites/${SITE_ID}/social-amenities`);
+    console.log('📡 [LOAD] URL:', `${API_BASE_URL}/social-facilities/site/${SITE_ID}/social-amenities`);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities`, { headers });
+        const response = await fetch(`${API_BASE_URL}/social-facilities/site/${SITE_ID}/social-amenities`, { headers });
         console.log('📡 [LOAD] Response status:', response.status);
 
         const result = await response.json();
