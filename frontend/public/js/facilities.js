@@ -176,7 +176,7 @@ function setupFacilityForm() {
             let url;
             if (facilityId) {
                 // Güncelleme
-                url = `${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`;
+                url = `${API_BASE_URL}/social-facilities/site/${SITE_ID}/social-amenities/${facilityId}`;
                 console.log('📤 [SUBMIT] PUT URL:', url);
                 response = await fetch(url, {
                     method: 'PUT',
@@ -185,7 +185,7 @@ function setupFacilityForm() {
                 });
             } else {
                 // Yeni ekleme
-                url = `${API_BASE_URL}/sites/${SITE_ID}/social-amenities`;
+                url = `${API_BASE_URL}/social-facilities/site/${SITE_ID}/social-amenities`;
                 console.log('📤 [SUBMIT] POST URL:', url);
                 response = await fetch(url, {
                     method: 'POST',
@@ -257,7 +257,7 @@ window.deleteFacility = async function (facilityId) {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     try {
-        const response = await fetch(`${API_BASE_URL}/sites/${SITE_ID}/social-amenities/${facilityId}`, {
+        const response = await fetch(`${API_BASE_URL}/social-facilities/site/${SITE_ID}/social-amenities/${facilityId}`, {
             method: 'DELETE',
             headers
         });
