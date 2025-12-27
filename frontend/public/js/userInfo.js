@@ -67,3 +67,18 @@ if (document.readyState === 'loading') {
     updateUserInfoDisplay();
 }
 
+// ✅ Başka sekmede localStorage değişince güncelle
+window.addEventListener('storage', (e) => {
+    // currentUser veya user değiştiğinde güncelle
+    if (e.key === 'currentUser' || e.key === 'user') {
+        console.log('🔄 localStorage değişti, kullanıcı bilgisi güncelleniyor...');
+        updateUserInfoDisplay();
+    }
+
+    // Logout yapıldığında (token silindiğinde) login sayfasına yönlendir
+    if (e.key === 'adminToken' && e.newValue === null) {
+        console.log('🚪 Başka sekmede çıkış yapıldı, login sayfasına yönlendiriliyorsunuz...');
+        window.location.href = '/index.html';
+    }
+});
+

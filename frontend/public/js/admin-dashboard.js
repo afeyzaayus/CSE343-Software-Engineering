@@ -660,6 +660,7 @@ function logout() {
         console.log('👋 Çıkış yapılıyor...');
         localStorage.removeItem('adminToken');
         localStorage.removeItem('user');
+        localStorage.removeItem('currentUser'); // ✅ Kullanıcı bilgisini temizle
         localStorage.removeItem('selectedSite');
         window.location.href = 'index.html';
     }
