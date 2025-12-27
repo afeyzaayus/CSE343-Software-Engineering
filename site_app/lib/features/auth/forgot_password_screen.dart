@@ -7,7 +7,10 @@ import '../../globals.dart';
 
 /// Provider to manage the local state of the password reset flow.
 final resetPasswordNotifierProvider =
-    StateNotifierProvider<ResetPasswordNotifier, ResetPasswordState>((ref) {
+    StateNotifierProvider.autoDispose<
+      ResetPasswordNotifier,
+      ResetPasswordState
+    >((ref) {
       return ResetPasswordNotifier();
     });
 
@@ -37,12 +40,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   void initState() {
     super.initState();
-    // Check if verification is already in progress when the widget builds
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(resetPasswordNotifierProvider);
-      if (state.verificationId != null && state.verificationId!.isNotEmpty) {
-        _showResetDialog();
-      }
+      ref.read(resetPasswordNotifierProvider.notifier).reset();
+      _otpController.clear();
+      _newPasswordController.clear();
+      _phoneController.clear();
     });
   }
 
