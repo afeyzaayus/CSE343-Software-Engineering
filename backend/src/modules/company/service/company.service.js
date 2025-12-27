@@ -141,7 +141,10 @@ export async function getCompanyEmployeesService(adminId) {
 
     // Raw employees (ekstra kontrol/diagnostic amaçlı)
     const employeesRaw = await prisma.company_employees.findMany({
-      where: { company_id: admin.companyId }
+      where: {
+        company_id: admin.companyId,
+        deleted_at: null  // Soft delete edilmiş çalışanları hariç tut
+      }
     });
     console.log(`✅ ${employeesRaw.length} çalışan bulundu (raw)`);
 
@@ -150,7 +153,10 @@ export async function getCompanyEmployeesService(adminId) {
     let employees;
     try {
       employees = await prisma.company_employees.findMany({
-        where: { company_id: admin.companyId },
+        where: {
+          company_id: admin.companyId,
+          deleted_at: null  // Soft delete edilmiş çalışanları hariç tut
+        },
         include: {
           admins: {
             select: {

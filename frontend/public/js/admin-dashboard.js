@@ -819,7 +819,21 @@ function renderEmployeeList(employees) {
         return;
     }
 
-    employees.forEach(emp => {
+    // ✅ Soft delete edilmiş çalışanları filtrele (ekstra güvenlik)
+    const activeEmployees = employees.filter(emp => emp.status !== 'DELETED');
+
+    if (activeEmployees.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <h3>Henüz Çalışan Yok</h3>
+                <p>Yeni çalışan davet ederek başlayabilirsiniz</p>
+            </div>
+        `;
+        return;
+    }
+
+    activeEmployees.forEach(emp => {
         const card = document.createElement('div');
         card.classList.add('site-card');
 
