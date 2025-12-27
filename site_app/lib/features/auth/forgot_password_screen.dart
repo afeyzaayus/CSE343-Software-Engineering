@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_controller.dart';
+import '../../globals.dart';
 
 /// Provider to manage the local state of the password reset flow.
 final resetPasswordNotifierProvider =
@@ -65,6 +66,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   /// Verifies the SMS code with Firebase, retrieves the ID Token,
   /// and calls the backend to update the password.
   Future<void> _updatePassword() async {
+    // 1. Input Validation
     if (_otpController.text.isEmpty || _newPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Lütfen tüm alanları doldurun.")),
@@ -78,37 +80,62 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       notifier.setLoading(true);
 
-      // 1. Verify code with Firebase
+      // 2. Firebase Verification
+      // Create a credential using the verification ID (from Step 1) and the SMS code.
       PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: state.verificationId!,
         smsCode: _otpController.text.trim(),
       );
 
-      // 2. Sign in temporarily to get the ID Token
+      // Sign in temporarily to verify the code and get a valid ID Token.
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
-
       String? idToken = await userCredential.user?.getIdToken();
 
+      // --- CRITICAL STEP ---
+      // We sign out immediately after getting the token.
+      // This prevents the App Router (listening to AuthState) from detecting a
+      // "Logged In" state and prematurely redirecting the user to the Home screen.
+      await FirebaseAuth.instance.signOut();
+
       if (idToken != null) {
-        // 3. Send Token and New Password to Backend
+        // 3. Backend Request
+        // Send the ID Token (proof of phone ownership) and new password to the backend.
         final success = await ref
             .read(authStateProvider.notifier)
             .resetPassword(state.phone!, idToken, _newPasswordController.text);
 
-        if (success && mounted) {
-          // Close dialog and navigate to login
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          context.go('/login');
+        if (success) {
+          // 4. UI Cleanup
+          // Close the dialog if it's still open and the widget is mounted.
+          if (mounted && Navigator.canPop(context)) {
+            Navigator.of(context).pop();
+          }
 
-          ScaffoldMessenger.of(context).showSnackBar(
+          // 5. Global Feedback
+          // Use 'rootScaffoldMessengerKey' instead of 'context' to show the SnackBar.
+          // This ensures the message is visible even if the current screen is disposed
+          // or if the router navigates away during the process.
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
             const SnackBar(
-              content: Text("Şifreniz başarıyla güncellendi!"),
+              content: Text(
+                "Şifreniz başarıyla güncellendi! Giriş yapabilirsiniz.",
+              ),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
           );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+
+          // 6. Navigation
+          // Wait briefly for the user to read the success message.
+          await Future.delayed(const Duration(seconds: 1));
+
+          if (mounted) {
+            context.go('/login');
+          }
+        } else {
+          // Handle Backend Error
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
             SnackBar(
               content: Text("Hata: ${ref.read(authStateProvider).error}"),
               backgroundColor: Colors.red,
@@ -116,18 +143,11 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
           );
         }
       }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Doğrulama Hatası: ${e.message}")),
-        );
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Beklenmeyen hata: $e")));
-      }
+      // Handle Unexpected Errors (Firebase or Network)
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
+        SnackBar(content: Text("Bir hata oluştu: $e")),
+      );
     } finally {
       if (mounted) notifier.setLoading(false);
     }

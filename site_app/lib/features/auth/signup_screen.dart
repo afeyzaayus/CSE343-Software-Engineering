@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_controller.dart';
+import '../../globals.dart';
 
 /// Manages the local state of the phone authentication process.
 final phoneAuthNotifierProvider =
     StateNotifierProvider<PhoneAuthNotifier, PhoneAuthState>((ref) {
-  return PhoneAuthNotifier();
-});
+      return PhoneAuthNotifier();
+    });
 
 /// A multi-step sign-up screen involving Site ID validation,
 /// Password creation, and SMS Verification (Firebase).
@@ -84,13 +85,15 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
     String rawPhone = _phoneController.text.trim().replaceAll(' ', '');
     if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
-    
+
     // Ensure E.164 format for Turkey (+90)
     String formattedPhone = rawPhone.startsWith('+')
         ? rawPhone
         : '+90$rawPhone';
 
-    ref.read(phoneAuthNotifierProvider.notifier).startVerification(
+    ref
+        .read(phoneAuthNotifierProvider.notifier)
+        .startVerification(
           phoneNumber: formattedPhone,
           password: _passController.text,
         );
@@ -99,11 +102,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   /// Verifies the entered OTP and registers the user in the backend.
   Future<void> _verifyOtpAndRegister() async {
     final state = ref.read(phoneAuthNotifierProvider);
-    
+
     if (_otpController.text.isEmpty || state.verificationId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Lütfen kodu giriniz.")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Lütfen kodu giriniz.")));
       return;
     }
 
@@ -119,8 +122,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       // 2. Sign in to Firebase to get the ID Token
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
-      
+
       String? idToken = await userCredential.user?.getIdToken();
+
+      await FirebaseAuth.instance.signOut();
 
       if (idToken != null) {
         await _finishSignupProcess(idToken: idToken);
@@ -135,9 +140,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     } catch (e) {
       if (mounted) {
         ref.read(phoneAuthNotifierProvider.notifier).setLoading(false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Hata: $e")),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Hata: $e")));
       }
     }
   }
@@ -146,14 +151,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   Future<void> _finishSignupProcess({required String idToken}) async {
     final state = ref.read(phoneAuthNotifierProvider);
 
+    // Validate that we have the necessary data to proceed
     if (state.savedPhone == null || state.savedPassword == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Oturum zaman aşımı. Lütfen tekrar deneyin.")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Oturum zaman aşımı. Lütfen tekrar deneyin."),
+          ),
+        );
+      }
       return;
     }
 
-    // Call the main Auth Controller
+    // Call the main Auth Controller to hit the backend API.
+    // NOTE: This might trigger a global AuthState change. Since GoRouter listens
+    // to AuthState, it might unmount/dispose this widget immediately after this line.
     final authNotifier = ref.read(authStateProvider.notifier);
 
     final success = await authNotifier.completeSignup(
@@ -162,27 +174,55 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       password: state.savedPassword!,
     );
 
+    // Stop the loading spinner if the widget is still active
     if (mounted) {
       ref.read(phoneAuthNotifierProvider.notifier).setLoading(false);
     }
 
-    if (success && mounted) {
-      ref.read(phoneAuthNotifierProvider.notifier).reset();
+    if (success) {
+      // --- CRITICAL SECTION: Handling Race Conditions ---
 
-      // Close dialog if open
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
+      // 1. Safe UI Cleanup:
+      // Attempt to close the OTP dialog and hide the keyboard.
+      // We check 'mounted' and use try-catch because the router might have
+      // already disposed of this widget, making 'context' invalid.
+      if (mounted) {
+        try {
+          FocusScope.of(context).unfocus(); // Hide keyboard
+          if (Navigator.canPop(context)) {
+            Navigator.of(context).pop(); // Close the OTP Dialog
+          }
+        } catch (_) {
+          // Silently ignore errors if the context is already dead.
+        }
       }
 
-      context.go('/login');
-
-      ScaffoldMessenger.of(context).showSnackBar(
+      // 2. Global Feedback:
+      // We use 'rootScaffoldMessengerKey' instead of 'ScaffoldMessenger.of(context)'.
+      // This ensures the Success SnackBar appears even if this page is disposed/unmounted
+      // by the router redirection.
+      rootScaffoldMessengerKey.currentState?.showSnackBar(
         const SnackBar(
-          content: Text("Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz."),
+          content: Text(
+            "Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.",
+          ),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
         ),
       );
+
+      // 3. Navigation / Delay:
+      // Wait briefly for the user to see the message.
+      await Future.delayed(const Duration(seconds: 1));
+
+      // If the Router hasn't redirected us automatically yet, force it manually.
+      if (mounted) {
+        context.go('/home');
+      }
     } else if (mounted) {
+      // Handle Errors:
+      // If failure happens, the auth state likely didn't change, so we are
+      // still on the same page and 'context' is safe to use.
       final errorMsg = ref.read(authStateProvider).error ?? "Kayıt başarısız.";
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
@@ -209,7 +249,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       }
 
       // Handle auto-verification (Android specific)
-      if (next.autoVerifiedToken != null && previous?.autoVerifiedToken == null) {
+      if (next.autoVerifiedToken != null &&
+          previous?.autoVerifiedToken == null) {
         _finishSignupProcess(idToken: next.autoVerifiedToken!);
       }
     });
@@ -281,7 +322,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 30),
-          
+
           TextFormField(
             controller: _siteIdController,
             decoration: const InputDecoration(
@@ -293,7 +334,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             validator: (v) => (v == null || v.isEmpty) ? 'Zorunlu alan' : null,
           ),
           const SizedBox(height: 16),
-          
+
           TextFormField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
@@ -307,10 +348,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             validator: (v) => (v == null || v.isEmpty) ? 'Zorunlu alan' : null,
           ),
           const SizedBox(height: 32),
-          
+
           FilledButton(
             onPressed: _nextStep,
-            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
             child: const Text('Devam Et'),
           ),
         ],
@@ -330,7 +373,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 30),
-          
+
           TextFormField(
             controller: _passController,
             obscureText: true,
@@ -343,7 +386,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                 (v == null || v.length < 6) ? 'En az 6 karakter olmalı' : null,
           ),
           const SizedBox(height: 16),
-          
+
           TextFormField(
             controller: _passConfirmController,
             obscureText: true,
@@ -352,10 +395,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.lock),
             ),
-            validator: (v) => (v != _passController.text) ? 'Şifreler uyuşmuyor' : null,
+            validator: (v) =>
+                (v != _passController.text) ? 'Şifreler uyuşmuyor' : null,
           ),
           const SizedBox(height: 32),
-          
+
           if (isLoading)
             const Center(child: CircularProgressIndicator())
           else
@@ -365,7 +409,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                   _startPhoneAuth();
                 }
               },
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
               child: const Text('Kaydı Tamamla'),
             ),
         ],
@@ -375,7 +421,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   void _showOtpDialog() {
     _otpController.clear();
-    
+
     if (!mounted) return;
 
     showDialog(
@@ -495,14 +541,17 @@ class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
         // Android automatic verification
         verificationCompleted: (PhoneAuthCredential credential) async {
           // Sign in to get the token, then update state
-          final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+          final userCred = await FirebaseAuth.instance.signInWithCredential(
+            credential,
+          );
           String? token = await userCred.user?.getIdToken();
           state = state.copyWith(isLoading: false, autoVerifiedToken: token);
         },
 
         verificationFailed: (FirebaseAuthException e) {
           String msg = e.message ?? "Doğrulama hatası.";
-          if (e.code == 'invalid-phone-number') msg = "Geçersiz telefon numarası.";
+          if (e.code == 'invalid-phone-number')
+            msg = "Geçersiz telefon numarası.";
           state = state.copyWith(isLoading: false, error: msg);
         },
 
