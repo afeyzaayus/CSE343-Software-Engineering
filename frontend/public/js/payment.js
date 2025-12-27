@@ -19,14 +19,8 @@ let currentMonthlyDues = [];
 let pendingPaymentData = null;
 let selectedApartmentForPayment = null;  // Modal'da seçilen daire
 
-function getRoleText(role) {
-    const roleMap = {
-        'COMPANY_MANAGER': 'Şirket Yöneticisi',
-        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
-        'INDIVIDUAL': 'Bireysel Hesap',
-    };
-    return roleMap[role] || role;
-}
+// getRoleText() fonksiyonu userInfo.js'de tanımlı
+
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
     if (!selectedSite || !SITE_ID) {
@@ -43,18 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Başlığı güncelle
     document.getElementById('dashboard-title').textContent = `Aidat Takibi - ${selectedSite.site_name}`;
 
-    // Sağ üst köşe admin bilgisi
-    // Admin bilgisi (sağ üst)
-    const userInfo = document.getElementById('dashboard-user-info');
-    if (userInfo) {
-        userInfo.innerHTML = `
-            <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
-            <div style="margin-left: 10px;">
-                <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
-            </div>
-        `;
-    }
+    // Kullanıcı bilgisi userInfo.js tarafından otomatik gösteriliyor
 
     // Yıl seçeneğini doldur
     fillYearSelect();

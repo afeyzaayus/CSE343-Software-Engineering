@@ -21,6 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ Token bulundu:', token.substring(0, 20) + '...');
     console.log('✅ User data:', userData);
 
+    // ✅ currentUser'ı hemen oluştur (site seçilmeden önce de kullanılabilsin)
+    if (!localStorage.getItem('currentUser')) {
+        localStorage.setItem('currentUser', JSON.stringify({
+            user_id: userData.id || userData.user_id,
+            full_name: userData.full_name || userData.name,
+            account_type: userData.role || userData.account_type,
+            email: userData.email || ''
+        }));
+        console.log('✅ currentUser localStorage\'a kaydedildi');
+    }
+
     // UI'ı doldur
     setupUI(userData);
 

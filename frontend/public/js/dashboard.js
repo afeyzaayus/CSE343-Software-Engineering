@@ -4,14 +4,9 @@ const BASE_URL = 'http://localhost:3000';
 // LocalStorage'dan admin ve site bilgilerini al
 const currentUser = JSON.parse(localStorage.getItem('currentUser'));
 const selectedSite = JSON.parse(localStorage.getItem('selectedSite'));
-function getRoleText(role) {
-    const roleMap = {
-        'COMPANY_MANAGER': 'Şirket Yöneticisi',
-        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
-        'INDIVIDUAL': 'Bireysel Hesap',
-    };
-    return roleMap[role] || role;
-}
+
+// getRoleText() fonksiyonu userInfo.js'de tanımlı
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser) {
         // Kullanıcı yoksa login sayfasına yönlendir
@@ -28,18 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const dashboardTitle = document.getElementById('dashboard-title');
     dashboardTitle.textContent = `Ana Sayfa - ${selectedSite.site_name}`;
 
-    // Sağ üst köşe admin bilgisi
-    const userInfo = document.getElementById('dashboard-user-info');
-    userInfo.innerHTML = `
-        <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
-        <div style="margin-left: 10px;">
-            <div style="font-weight: 600;">${currentUser.full_name}</div>
-            <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
-        </div>
-    `;
+    // Kullanıcı bilgisi userInfo.js tarafından otomatik gösteriliyor
 
-     // Logout
-     const logoutBtn = document.getElementById('logoutBtn');
+    // Logout
+    const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
             localStorage.removeItem('selectedSite');
