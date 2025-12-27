@@ -18,7 +18,14 @@ let allApartments = [];  // Tüm daireler (daire bazında ödeme için)
 let currentMonthlyDues = [];
 let pendingPaymentData = null;
 let selectedApartmentForPayment = null;  // Modal'da seçilen daire
-
+function getRoleText(role) {
+    const roleMap = {
+        'COMPANY_MANAGER': 'Şirket Yöneticisi',
+        'COMPANY_EMPLOYEE': 'Şirket Çalışanı',
+        'INDIVIDUAL': 'Bireysel Hesap',
+    };
+    return roleMap[role] || role;
+}
 // Sayfa yüklendiğinde
 document.addEventListener('DOMContentLoaded', async () => {
     if (!selectedSite || !SITE_ID) {
@@ -42,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             <div class="user-avatar" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #2196F3; color: white; border-radius: 50%; font-weight: bold;">${(currentUser.full_name || 'A')[0].toUpperCase()}</div>
             <div style="margin-left: 10px;">
                 <div style="font-weight: 600;">${currentUser.full_name}</div>
-                <div style="font-size: 12px; opacity: 0.8;">${currentUser.account_type}</div>
+                <div style="font-size: 12px; opacity: 0.8;">${getRoleText(currentUser.account_type)}</div>
             </div>
         `;
     }

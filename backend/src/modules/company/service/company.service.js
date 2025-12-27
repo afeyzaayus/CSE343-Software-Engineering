@@ -392,31 +392,41 @@ export async function deleteEmployeeService(managerId, employeeId) {
     if (!employee) throw new Error('EMPLOYEE_ERROR: Çalışan bulunamadı veya yetkiniz yok');
 
     const adminId = employee.admin_id;
+    const now = new Date();
 
-    // 🔥 HARD DELETE — TAMAMEN SİLME
+    // 🔄 SOFT DELETE — deleted_at güncelleme
     await prisma.$transaction(async (tx) => {
 
-      // 1) Site erişimlerini sil
-      await tx.employee_site_access.deleteMany({
-        where: { employee_id: employeeId }
+      // 1) Site erişimlerini soft delete yap
+      await tx.employee_site_access.updateMany({
+        where: { employee_id: employeeId },
+        data: { deleted_at: now }
       });
 
-      // 2) Şirket çalışanı tablosundan sil
-      await tx.company_employees.delete({
-        where: { id: employeeId }
+      // 2) Şirket çalışanı tablosunda soft delete yap
+      await tx.company_employees.update({
+        where: { id: employeeId },
+        data: {
+          deleted_at: now,
+          status: 'DELETED'
+        }
       });
 
-      // 3) Admin tablosundan sil
-      await tx.admin.delete({
-        where: { id: adminId }
+      // 3) Admin tablosunda soft delete yap
+      await tx.admin.update({
+        where: { id: adminId },
+        data: {
+          deleted_at: now,
+          account_status: 'DELETED'
+        }
       });
 
     });
 
-    console.log(`🗑️ Çalışan tamamen silindi: employeeId=${employeeId}, adminId=${adminId}`);
+    console.log(`✅ Çalışan soft delete yapıldı: employeeId=${employeeId}, adminId=${adminId}`);
 
     return {
-      message: 'Çalışan tamamen silindi (hard delete)',
+      message: 'Çalışan başarıyla silindi (soft delete)',
       employee: {
         id: employeeId,
         admin_id: adminId,
