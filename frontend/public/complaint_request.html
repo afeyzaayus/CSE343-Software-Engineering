@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Şikayet/Talep - Site Yönetim Sistemi</title>
-    
+
     <link rel="stylesheet" href="css/base.css">
     <link rel="stylesheet" href="css/sidebar.css">
     <link rel="stylesheet" href="css/table.css">
     <link rel="stylesheet" href="css/complaint_request.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
     <div class="container">
         <div class="sidebar">
@@ -23,20 +25,22 @@
                 <li><a href="payment.html"><i class="fas fa-money-bill-wave"></i> Aidat Takibi</a></li>
                 <li><a href="/announcements"><i class="fas fa-bullhorn"></i> Duyurular</a></li>
                 <li><a href="socialfacilities.html"><i class="fas fa-swimming-pool"></i> Sosyal Tesisler</a></li>
-                <li class="active"><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a></li>
+                <li class="active"><a href="complaint_request.html"><i class="fas fa-comments"></i> Şikayet/Talep</a>
+                </li>
                 <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
 
         <div class="main-content">
-            
-            <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+
+            <div class="header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Şikayet ve Talepler - <span id="site-name-header">Yükleniyor...</span></h2>
                 <div class="user-info" id="dashboard-user-info"></div>
             </div>
-            
+
             <div class="complaints-content">
-                
+
                 <div class="complaint-filters" style="margin-bottom: 20px;">
                     <button class="filter-btn active" data-filter="all">Tümü</button>
                     <button class="filter-btn" data-filter="pending">Bekleyen</button>
@@ -74,7 +78,13 @@
             </div>
         </div>
     </div>
-    <script src="js/userInfo.js"></script>
+    <script>
+        // Cache-busting için userInfo.js'i dinamik olarak yükle
+        const script = document.createElement('script');
+        script.src = 'js/userInfo.js?v=' + Date.now();
+        document.head.appendChild(script);
+    </script>
     <script src="js/complaints.js"></script>
 </body>
+
 </html>

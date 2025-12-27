@@ -152,7 +152,12 @@
             </form>
         </div>
     </div>
-    <script src="js/userInfo.js"></script>
+    <script>
+        // Cache-busting için userInfo.js'i dinamik olarak yükle
+        const script = document.createElement('script');
+        script.src = 'js/userInfo.js?v=' + Date.now();
+        document.head.appendChild(script);
+    </script>
     <script type="module" src="js/announcements.js"></script>
 </body>
 

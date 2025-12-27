@@ -1,10 +1,21 @@
 // Kullanıcı bilgilerini localStorage'dan al ve göster
 function updateUserInfoDisplay() {
-    // localStorage'dan kullanıcı bilgisini al
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+    // ✅ Chrome cache sorununu çözmek için localStorage'ı her seferinde yeniden oku
+    // Cache bypass: localStorage.getItem her çağrıldığında fresh data döner
+    let currentUser = null;
+
+    try {
+        const userDataRaw = localStorage.getItem('currentUser');
+        if (userDataRaw) {
+            currentUser = JSON.parse(userDataRaw);
+            console.log('🔄 UserInfo güncellendi:', currentUser.full_name || currentUser.name);
+        }
+    } catch (error) {
+        console.error('❌ localStorage parse hatası:', error);
+    }
 
     if (!currentUser) {
-        console.warn('currentUser bulunamadı, kullanıcı bilgisi gösterilemiyor');
+        console.warn('⚠️ currentUser bulunamadı, kullanıcı bilgisi gösterilemiyor');
         return;
     }
 
@@ -59,13 +70,27 @@ function getRoleText(role) {
     return roleMap[role] || role;
 }
 
-// Sayfa yüklendiğinde otomatik çalıştır
+// ✅ Sayfa yüklendiğinde otomatik çalıştır (Chrome cache bypass)
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', updateUserInfoDisplay);
 } else {
     // DOMContentLoaded zaten geçmişse hemen çalıştır
     updateUserInfoDisplay();
 }
+
+// ✅ Sayfa tamamen yüklendiğinde bir kez daha çalıştır (cache bypass için)
+window.addEventListener('load', () => {
+    console.log('🔄 Window load event - userInfo güncelleniyor...');
+    updateUserInfoDisplay();
+});
+
+// ✅ Sayfa görünür hale geldiğinde güncelle (tab değişikliklerinde)
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        console.log('👁️ Sayfa görünür hale geldi - userInfo güncelleniyor...');
+        updateUserInfoDisplay();
+    }
+});
 
 // ✅ Başka sekmede localStorage değişince güncelle
 window.addEventListener('storage', (e) => {
