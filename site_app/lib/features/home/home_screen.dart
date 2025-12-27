@@ -1,26 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart'; // Used for date formatting
 
 import '../../core/auth/auth_controller.dart';
 import '../../core/network/dio_provider.dart';
 import '../../core/repos/announcements_repo.dart';
 import '../../core/models/announcement.dart';
 
-/// Repo provider
-final announcementsRepoProvider =
-    Provider<AnnouncementsRepo>((ref) => AnnouncementsRepo(ref.read(dioProvider)));
+/// Provider for the Announcements Repository.
+final announcementsRepoProvider = Provider<AnnouncementsRepo>(
+  (ref) => AnnouncementsRepo(ref.read(dioProvider)),
+);
 
-/// Aktif kullanıcının siteId’sine göre duyuruları getiren provider
+/// Asynchronously fetches the list of announcements for the logged-in user's site.
+/// Uses [autoDispose] to reset state when the user leaves the screen.
 final announcementsFutureProvider =
     FutureProvider.autoDispose<List<Announcement>>((ref) async {
   final user = ref.read(authStateProvider).user;
+  
+  // If no user is logged in, return an empty list immediately.
   if (user == null) return [];
+  
   final repo = ref.read(announcementsRepoProvider);
-  // siteCode'u kullanıyoruz (E993EU gibi)
   return repo.listBySite(user.siteCode.toString());
 });
 
+/// The main dashboard screen displaying user info and announcements.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -28,16 +34,17 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).user;
     final asyncAnnouncements = ref.watch(announcementsFutureProvider);
-    
-    // --- TEMA RENKLERİ ---
-    const primaryColor = Color(0xFF1A4F70); // Koyu Mavi
-    const backgroundColor = Color(0xFFF5F7FA); // Açık Gri
 
+    // Define local theme colors
+    const primaryColor = Color(0xFF1A4F70);
+    const backgroundColor = Color(0xFFF5F7FA);
+
+    // Show a loader while the user session is being restored
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Baş harfleri hesapla
+    // Generate initials for the avatar (e.g., "Ahmet Yilmaz" -> "AY")
     String initials = '';
     if (user.name.isNotEmpty) {
       final names = user.name.trim().split(' ');
@@ -51,17 +58,16 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         backgroundColor: primaryColor,
         elevation: 0,
-        // --- LEADING: AVATAR ---
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: GestureDetector(
-            onTap: () => context.push('/profile'), // Profile git
+            onTap: () => context.push('/profile'),
             child: CircleAvatar(
               backgroundColor: Colors.white,
               child: Text(
                 initials,
                 style: const TextStyle(
-                  color: primaryColor, 
+                  color: primaryColor,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -73,27 +79,24 @@ class HomeScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Ana Sayfa', 
-              style: TextStyle(fontSize: 14, color: Colors.white70)
+              'Ana Sayfa',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
             Text(
-              user.siteName, 
+              user.siteName,
               style: const TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 18, 
-                color: Colors.white
-              )
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
-        // Çıkış butonu buradan kaldırıldı, Profile taşındı.
-        actions: [
-          // İstersen buraya bildirim ikonu koyabilirsin
-          // IconButton(onPressed: (){}, icon: Icon(Icons.notifications, color: Colors.white))
-        ],
       ),
       body: asyncAnnouncements.when(
         loading: () => const Center(child: CircularProgressIndicator()),
+        
+        // Error State
         error: (e, st) => Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -108,6 +111,8 @@ class HomeScreen extends ConsumerWidget {
             ],
           ),
         ),
+        
+        // Data Loaded State
         data: (items) {
           if (items.isEmpty) {
             return RefreshIndicator(
@@ -119,7 +124,11 @@ class HomeScreen extends ConsumerWidget {
                   Center(
                     child: Column(
                       children: [
-                        Icon(Icons.campaign_outlined, size: 64, color: Colors.grey[300]),
+                        Icon(
+                          Icons.campaign_outlined,
+                          size: 64,
+                          color: Colors.grey[300],
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'Henüz duyuru yok.',
@@ -139,8 +148,9 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               itemCount: items.length,
               itemBuilder: (_, i) {
-                final a = items[i];
-                // Başlık "Son Duyurular" gibi bir label atmak istersen i==0 kontrolü yapabilirsin.
+                final announcement = items[i];
+                
+                // Add a header before the first item
                 if (i == 0) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,11 +166,11 @@ class HomeScreen extends ConsumerWidget {
                           ),
                         ),
                       ),
-                      _buildAnnouncementCard(context, a),
+                      _buildAnnouncementCard(context, announcement),
                     ],
                   );
                 }
-                return _buildAnnouncementCard(context, a);
+                return _buildAnnouncementCard(context, announcement);
               },
             ),
           );
@@ -169,13 +179,10 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// Builds a single card widget for an announcement.
   Widget _buildAnnouncementCard(BuildContext context, Announcement a) {
-    // Tarih formatlama
-    final hh = a.createdAt.hour.toString().padLeft(2, '0');
-    final mm = a.createdAt.minute.toString().padLeft(2, '0');
-    final dd = a.createdAt.day.toString().padLeft(2, '0');
-    final mon = a.createdAt.month.toString().padLeft(2, '0');
-    final dateStr = '$dd.$mon $hh:$mm';
+    // Format date: "27.12 14:30"
+    final dateStr = DateFormat('dd.MM HH:mm').format(a.createdAt);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -184,7 +191,7 @@ class HomeScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 5,
             offset: const Offset(0, 2),
           ),
@@ -198,7 +205,7 @@ class HomeScreen extends ConsumerWidget {
           child: IntrinsicHeight(
             child: Row(
               children: [
-                // SOL ŞERİT (Web arayüzündeki gibi)
+                // Decorative colored bar on the left
                 Container(
                   width: 6,
                   decoration: const BoxDecoration(
@@ -209,7 +216,6 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // İÇERİK
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -236,7 +242,7 @@ class HomeScreen extends ConsumerWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey[500],
-                                fontWeight: FontWeight.w500
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
@@ -264,8 +270,12 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  // --- ALTTAN ÇIKAN PANEL (Aynı kalabilir, sadece ufak stil iyileştirmesi) ---
-  void _showDetailBottomSheet(BuildContext context, Announcement a, String dateStr) {
+  /// Displays the full details of the announcement in a bottom sheet.
+  void _showDetailBottomSheet(
+    BuildContext context,
+    Announcement a,
+    String dateStr,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -286,6 +296,7 @@ class HomeScreen extends ConsumerWidget {
                 controller: scrollController,
                 children: [
                   const SizedBox(height: 12),
+                  // Drag Handle
                   Center(
                     child: Container(
                       width: 50,
@@ -297,35 +308,42 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Başlık
+
                   Text(
                     a.title,
                     style: const TextStyle(
-                      fontSize: 22, 
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A4F70), // Başlık da ana renk
+                      color: Color(0xFF1A4F70),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
-                  // Tarih
+
+                  // Date Row
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, size: 14, color: Colors.grey),
+                      const Icon(
+                        Icons.calendar_today,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
                       const SizedBox(width: 6),
-                      Text(dateStr, style: TextStyle(color: Colors.grey[600], fontSize: 14)),
+                      Text(
+                        dateStr,
+                        style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      ),
                     ],
                   ),
 
                   const Divider(height: 32, thickness: 1),
 
+                  // Full Content
                   Text(
                     a.body,
                     style: const TextStyle(
-                      fontSize: 16, 
-                      height: 1.6, 
-                      color: Colors.black87
+                      fontSize: 16,
+                      height: 1.6,
+                      color: Colors.black87,
                     ),
                   ),
                   SizedBox(height: MediaQuery.of(context).padding.bottom + 20),

@@ -5,15 +5,18 @@ import '../../core/network/dio_provider.dart';
 import '../../core/repos/social_repo.dart';
 import '../../core/models/social_amenity.dart';
 
-// --- PROVIDER TANIMLARI ---
+/// Provider for the Social Repository.
 final socialRepoProvider = Provider<SocialRepo>(
   (ref) => SocialRepo(ref.read(dioProvider)),
 );
 
-final socialFutureProvider = FutureProvider.autoDispose<List<SocialAmenity>>((ref) async {
+/// Fetches the list of social amenities for the user's site.
+/// Uses [autoDispose] to refresh data when the screen is re-entered.
+final socialFutureProvider = FutureProvider.autoDispose<List<SocialAmenity>>((
+  ref,
+) async {
   final user = ref.read(authStateProvider).user;
   if (user == null) return [];
-  // API rotası düzeltildi: /api/social-facilities/site/:id
   return ref.read(socialRepoProvider).listBySite(user.siteId);
 });
 
@@ -23,15 +26,16 @@ class SocialScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncSocial = ref.watch(socialFutureProvider);
+    const primaryColor = Color(0xFF1A4F70);
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
         title: const Text(
-          'Social Facilities',
+          'Sosyal Tesisler',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        backgroundColor: primaryColor,
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
@@ -60,10 +64,10 @@ class SocialScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.wifi_off, size: 48, color: Colors.grey),
               const SizedBox(height: 16),
-              const Text('Failed to load facilities.'),
+              const Text('Tesisler yüklenirken hata oluştu.'),
               TextButton(
                 onPressed: () => ref.invalidate(socialFutureProvider),
-                child: const Text('Retry'),
+                child: const Text('Tekrar Dene'),
               ),
             ],
           ),
@@ -72,6 +76,7 @@ class SocialScreen extends ConsumerWidget {
     );
   }
 
+  /// Displays a message when no facilities are found.
   Widget _buildEmptyState(WidgetRef ref) {
     return Center(
       child: Column(
@@ -80,13 +85,13 @@ class SocialScreen extends ConsumerWidget {
           Icon(Icons.deck, size: 64, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'No social facilities found for your site.',
+            'Sitenizde sosyal tesis bulunamadı.',
             style: TextStyle(color: Colors.grey[600], fontSize: 16),
           ),
           const SizedBox(height: 8),
           TextButton(
             onPressed: () => ref.invalidate(socialFutureProvider),
-            child: const Text('Refresh'),
+            child: const Text('Yenile'),
           ),
         ],
       ),
@@ -94,7 +99,6 @@ class SocialScreen extends ConsumerWidget {
   }
 }
 
-// --- TASARIM DETAYI: FACILITY CARD (GÜNCELLENMİŞ) ---
 class _SocialFacilityCard extends StatelessWidget {
   final SocialAmenity facility;
 
@@ -102,9 +106,10 @@ class _SocialFacilityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Statü Rengi Belirleme
+    // Determine status (Open/Closed) based on keywords
     final statusLower = facility.status.toLowerCase();
-    final isOpen = statusLower.contains('açık') ||
+    final isOpen =
+        statusLower.contains('açık') ||
         statusLower.contains('open') ||
         statusLower.contains('active');
 
@@ -113,7 +118,8 @@ class _SocialFacilityCard extends StatelessWidget {
 
     return Card(
       elevation: 2,
-      shadowColor: Colors.black.withOpacity(0.9),
+      // Updated for Flutter 3.27+
+      shadowColor: Colors.black.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -123,9 +129,9 @@ class _SocialFacilityCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. ÜST KISIM: İkon, Başlık ve Statü
               Row(
                 children: [
+                  // Icon Container
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
@@ -139,6 +145,8 @@ class _SocialFacilityCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
+                  
+                  // Name & Short Desc
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,8 +162,8 @@ class _SocialFacilityCard extends StatelessWidget {
                         if (facility.description.isNotEmpty)
                           Text(
                             facility.description,
-                            maxLines: 1, // Sadece 1 satır göster
-                            overflow: TextOverflow.ellipsis, // Sığmazsa ... koy
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 13,
@@ -164,12 +172,17 @@ class _SocialFacilityCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  
+                  // Status Badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: statusColor.withOpacity(0.5)),
+                      border: Border.all(color: statusColor.withValues(alpha: 0.5)),
                     ),
                     child: Text(
                       statusText,
@@ -182,19 +195,23 @@ class _SocialFacilityCard extends StatelessWidget {
                   ),
                 ],
               ),
-              
+
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
                 child: Divider(height: 1),
               ),
 
-              // 2. ALT KISIM: Kısa Bilgiler
-              _buildInfoRow(Icons.access_time, "Hours:", facility.hours.isNotEmpty ? facility.hours : 'Belirtilmedi'),
+              // Quick Info Rows
+              _buildInfoRow(
+                Icons.access_time,
+                "Saatler:",
+                facility.hours.isNotEmpty ? facility.hours : 'Belirtilmedi',
+              ),
               const SizedBox(height: 8),
               _buildInfoRow(
                 Icons.info_outline,
-                "Info:",
-                "Tap for details", // Kullanıcıyı tıklamaya teşvik eden yazı
+                "Bilgi:",
+                "Detaylar için dokunun",
               ),
             ],
           ),
@@ -203,8 +220,12 @@ class _SocialFacilityCard extends StatelessWidget {
     );
   }
 
-  // --- DETAY PENCERESİ (MODAL) ---
-  void _showFacilityDetails(BuildContext context, bool isOpen, Color statusColor) {
+  /// Opens a BottomSheet with full details about the facility.
+  void _showFacilityDetails(
+    BuildContext context,
+    bool isOpen,
+    Color statusColor,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -222,7 +243,7 @@ class _SocialFacilityCard extends StatelessWidget {
           child: ListView(
             controller: controller,
             children: [
-              // Tutamaç Çizgisi
+              // Drag Handle
               Center(
                 child: Container(
                   width: 40,
@@ -234,8 +255,7 @@ class _SocialFacilityCard extends StatelessWidget {
                   ),
                 ),
               ),
-              
-              // Başlık
+
               Text(
                 facility.name,
                 style: const TextStyle(
@@ -246,23 +266,30 @@ class _SocialFacilityCard extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-              // Durum Etiketi (Büyük)
+              // Status Banner in Sheet
               Align(
                 alignment: Alignment.centerLeft,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: statusColor.withOpacity(0.3)),
+                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(isOpen ? Icons.check_circle : Icons.cancel, size: 16, color: statusColor),
+                      Icon(
+                        isOpen ? Icons.check_circle : Icons.cancel,
+                        size: 16,
+                        color: statusColor,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        isOpen ? 'Currently Open' : 'Currently Closed',
+                        isOpen ? 'Şu An Açık' : 'Şu An Kapalı',
                         style: TextStyle(
                           color: statusColor,
                           fontWeight: FontWeight.bold,
@@ -274,16 +301,14 @@ class _SocialFacilityCard extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              // Detaylar
-              _buildDetailSection("Description", facility.description),
-              _buildDetailSection("Opening Hours", facility.hours),
-              _buildDetailSection("Rules & Regulations", facility.rules),
-              // Eğer modelinde 'extra' alanı varsa buraya ekleyebilirsin:
-              // _buildDetailSection("Extra Info", facility.extra),
+              // Sections
+              _buildDetailSection("Açıklama", facility.description),
+              _buildDetailSection("Çalışma Saatleri", facility.hours),
+              _buildDetailSection("Kurallar & Yönetmelik", facility.rules),
 
               const SizedBox(height: 24),
-              
-              // Kapat Butonu
+
+              // Close Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -296,7 +321,7 @@ class _SocialFacilityCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text("Close"),
+                  child: const Text("Kapat"),
                 ),
               ),
             ],
@@ -306,7 +331,6 @@ class _SocialFacilityCard extends StatelessWidget {
     );
   }
 
-  // Detay Başlıkları ve İçerikleri
   Widget _buildDetailSection(String title, String? content) {
     if (content == null || content.isEmpty) return const SizedBox.shrink();
     return Padding(
@@ -338,7 +362,6 @@ class _SocialFacilityCard extends StatelessWidget {
     );
   }
 
-  // Kart üzerindeki satır yapısı
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
@@ -358,30 +381,36 @@ class _SocialFacilityCard extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 13,
-            ),
+            style: const TextStyle(color: Colors.black87, fontSize: 13),
           ),
         ),
       ],
     );
   }
 
-  // İkon Seçici
+  /// Maps facility names to relevant material icons.
   IconData _getIconForName(String name) {
     final n = name.toLowerCase();
-    if (n.contains('spor') || n.contains('fitness') || n.contains('gym') || n.contains('sport')) {
+    if (n.contains('spor') ||
+        n.contains('fitness') ||
+        n.contains('gym') ||
+        n.contains('sport')) {
       return Icons.fitness_center;
-    } else if (n.contains('havuz') || n.contains('pool') || n.contains('swim')) {
+    } else if (n.contains('havuz') ||
+        n.contains('pool') ||
+        n.contains('swim')) {
       return Icons.pool;
-    } else if (n.contains('park') || n.contains('bahçe') || n.contains('garden')) {
+    } else if (n.contains('park') ||
+        n.contains('bahçe') ||
+        n.contains('garden')) {
       return Icons.park;
     } else if (n.contains('kafe') || n.contains('cafe')) {
       return Icons.local_cafe;
     } else if (n.contains('sauna') || n.contains('spa')) {
       return Icons.hot_tub;
-    } else if (n.contains('kütüphane') || n.contains('library') || n.contains('kitap')) {
+    } else if (n.contains('kütüphane') ||
+        n.contains('library') ||
+        n.contains('kitap')) {
       return Icons.local_library;
     }
     return Icons.meeting_room;

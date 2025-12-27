@@ -1,0 +1,37 @@
+# --- Flutter / Dart ---
+/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# --- Android ---
+/android/.gradle/
+/android/app/build/
+/android/local.properties
+
+# --- iOS ---
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/App.framework
+
+# --- Node.js (Backend) ---
+node_modules/
+npm-debug.log
+yarn-error.log
+.env
+dist/
+
+# --- IDE / Editör ---
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# --- Mac / Windows ---
+.DS_Store
+Thumbs.db

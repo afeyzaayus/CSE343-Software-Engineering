@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'router.dart';
 import 'theme.dart';
 
+/// The root widget of the application initializing the router and theme.
 class SiteApp extends ConsumerWidget {
   const SiteApp({super.key});
 
@@ -11,7 +12,7 @@ class SiteApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Site App',
+      title: 'Site Portal',
       theme: AppTheme.light,
       routerConfig: router,
     );

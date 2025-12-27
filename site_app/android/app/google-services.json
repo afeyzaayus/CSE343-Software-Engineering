@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "316803296196",
+    "project_id": "m1w-site-management",
+    "storage_bucket": "m1w-site-management.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:316803296196:android:9f7b8f85b6c3c244385291",
+        "android_client_info": {
+          "package_name": "com.example.site_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "316803296196-l5pe033vrlh8u2tkm2vgu8jmj0041kpl.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHlptK-u4v8o2XwpiHT_WWGW3CWzdK05w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "316803296196-l5pe033vrlh8u2tkm2vgu8jmj0041kpl.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "316803296196-j6b431jk5eaofqe2s39kj1dre8mlufr4.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.5m1w.siteApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

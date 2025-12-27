@@ -1,7 +1,8 @@
+/// Represents an announcement or notification entity displayed in the application.
 class Announcement {
   final int id;
   final String title;
-  final String body; // UI tarafında 'body' kullanıyorsun
+  final String body;
   final DateTime createdAt;
 
   Announcement({
@@ -11,18 +12,16 @@ class Announcement {
     required this.createdAt,
   });
 
+  /// Factory constructor to create an [Announcement] instance from a JSON map.
+  ///
+  /// Maps the backend's 'content' field to the local 'body' property.
+  /// Uses [DateTime.tryParse] to prevent crashes on invalid date formats.
   factory Announcement.fromJson(Map<String, dynamic> json) {
     return Announcement(
       id: json['id'] ?? 0,
       title: json['title'] ?? '',
-      
-      // DÜZELTME 1: Backend 'content' gönderiyor, biz 'body' değişkenine atıyoruz.
-      body: json['content'] ?? '', 
-      
-      // DÜZELTME 2: Backend 'created_at' gönderiyor.
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
-          : DateTime.now(),
+      body: json['content'] ?? '',
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }

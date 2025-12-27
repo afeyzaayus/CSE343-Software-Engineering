@@ -1,18 +1,23 @@
 import 'payment.dart';
 
+/// Represents the authenticated user profile, including personal details,
+/// site information, and apartment specifics.
 class User {
   final String id;
   final String name;
-  final List<Payment> payments;
   final String email;
   final String phoneNumber;
-  final String siteId; // Veritabanı ID'si (Örn: "5")
-  final String siteCode; // Site Kodu (Örn: "E993EU") - Backend'den geliyorsa
-  final String siteName; // Site Adı (Örn: "Gül4")
-  final String? blockNo; // Backend 'block_id' gönderiyor
-  final String? apartmentNo;
+  
+  // Site & Residence Details
+  final String siteId;
+  final String siteCode;
+  final String siteName;
   final String siteAddress;
+  final String? blockNo;
+  final String? apartmentNo;
   final String? plates;
+  
+  final List<Payment> payments;
 
   User({
     required this.id,
@@ -29,47 +34,32 @@ class User {
     this.plates,
   });
 
-  factory User.fromJson(Map<String, dynamic> j) {
+  /// Factory constructor to create a [User] instance from a JSON map.
+  /// 
+  /// Handles nested 'site' objects and maps 'monthlyDues' to the payments list.
+  factory User.fromJson(Map<String, dynamic> json) {
+    // Safely extract the nested site object
+    final siteData = json['site'] is Map<String, dynamic> ? json['site'] : null;
+
     return User(
-      // 1. ID: Backend int gönderiyor, String'e çeviriyoruz
-      id: j['id'].toString(),
+      id: json['id']?.toString() ?? '',
+      name: json['full_name'] ?? json['name'] ?? '',
+      email: json['email'] ?? '',
+      phoneNumber: json['phone_number'] ?? '',
+      
+      // Handle potential key variations (camelCase vs snake_case)
+      siteId: json['siteId']?.toString() ?? json['site_id']?.toString() ?? '',
+      
+      // Extract details from the nested site object
+      siteName: siteData?['site_name'] ?? '',
+      siteCode: siteData?['site_id']?.toString() ?? siteData?['code'] ?? '', 
+      siteAddress: siteData?['site_address'] ?? '',
+      
+      plates: json['plates']?.toString(),
+      blockNo: json['block_id']?.toString(),
+      apartmentNo: json['apartment_no']?.toString(),
 
-      // 2. İsim: Backend 'full_name' gönderiyor
-      name: j['full_name'] ?? '',
-
-      // 3. Email: Backend göndermiyorsa boş string
-      email: j['email'] ?? '',
-
-      // 4. Telefon: Backend 'phone_number' gönderiyor
-      phoneNumber: j['phone_number'] ?? '',
-
-      // 5. Site ID: Ana objede 'siteId' (int) olarak var
-      siteId: j['siteId']?.toString() ?? '',
-
-      // --- İÇ İÇE OBJE PARSING (ÖNEMLİ) ---
-      // Backend cevabında "site": { "site_name": "...", "site_id": "..." } var.
-      // Bu yüzden j['site'] üzerinden erişiyoruz.
-
-      // Site Adı:
-      siteName: j['site']?['site_name'] ?? '',
-
-      // Site Kodu (E993EU): Eğer backend login servisine eklediysen buradan gelir.
-      // Eklemediysen boş gelir, uygulama çökmez.
-      siteCode: j['site']?['site_id'] ?? '',
-
-      siteAddress: j['site']?['site_address'] ?? '',
-
-      plates: j['plates']?.toString(),
-      // ------------------------------------
-
-      // 6. Blok: Backend loglarında 'block_id' görünüyor
-      blockNo: j['block_id']?.toString(),
-
-      // 7. Daire: Backend 'apartment_no' gönderiyor
-      apartmentNo: j['apartment_no']?.toString(),
-
-      payments:
-          (j['monthlyDues'] as List?)
+      payments: (json['monthlyDues'] as List?)
               ?.map((e) => Payment.fromJson(e))
               .toList() ??
           [],

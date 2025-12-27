@@ -4,21 +4,38 @@ import '../../core/auth/auth_controller.dart';
 import '../../core/network/dio_provider.dart';
 import '../../core/repos/requests_repo.dart';
 
+/// Provides access to the [RequestsRepo].
+final requestsRepoProvider = Provider<RequestsRepo>((ref) {
+  return RequestsRepo(ref.read(dioProvider));
+});
+
+/// Screen for creating and submitting a new service request or complaint.
 class NewRequestScreen extends ConsumerStatefulWidget {
   const NewRequestScreen({super.key});
+
   @override
   ConsumerState<NewRequestScreen> createState() => _NewRequestScreenState();
 }
 
 class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
   final _formKey = GlobalKey<FormState>();
+  
+  // Controllers for input fields
   final _titleCtrl = TextEditingController();
   final _contentCtrl = TextEditingController();
   
-  // Varsayılan Kategori
-  String _selectedCategory = 'MAINTENANCE';
-  final List<String> _categories = ['MAINTENANCE', 'COMPLAINT', 'REQUEST', 'OTHER'];
+  // Constant theme color
+  static const _primaryColor = Color(0xFF1A4F70);
 
+  // Mapping backend enum values (keys) to UI display text (values).
+  final Map<String, String> _categoryMap = {
+    'MAINTENANCE': 'Bakım / Onarım',
+    'COMPLAINT': 'Şikayet',
+    'REQUEST': 'İstek / Talep',
+    'OTHER': 'Diğer',
+  };
+
+  String _selectedCategory = 'MAINTENANCE';
   bool _sending = false;
 
   @override
@@ -28,40 +45,56 @@ class _NewRequestScreenState extends ConsumerState<NewRequestScreen> {
     super.dispose();
   }
 
+  /// Validates the form and submits the data to the backend.
   Future<void> _submit() async {
+    // Validate inputs
     if (!_formKey.currentState!.validate()) return;
 
+    // Close keyboard
+    FocusScope.of(context).unfocus();
+
+    // Check authentication state
     final user = ref.read(authStateProvider).user;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User session not found.')),
+        const SnackBar(content: Text('Oturum bulunamadı. Lütfen tekrar giriş yapın.')),
       );
       return;
     }
 
-    final repo = RequestsRepo(ref.read(dioProvider));
-
     setState(() => _sending = true);
+    
     try {
-      // Backend: createComplaint controller'ı
-await repo.create(
-        // DÜZELTME: siteCode ("E993EU") gönderiliyor
-        siteId: user.siteCode, 
-        userId: user.id, // String ID ("2")
+      final repo = ref.read(requestsRepoProvider);
+      
+      await repo.create(
+        siteId: user.siteCode,
+        userId: user.id,
         title: _titleCtrl.text.trim(),
         content: _contentCtrl.text.trim(),
         category: _selectedCategory,
       );
 
       if (!mounted) return;
+      
+      // Success Feedback
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request created successfully!')),
+        const SnackBar(
+          content: Text('Talep başarıyla oluşturuldu!'), 
+          backgroundColor: Colors.green
+        ),
       );
-      Navigator.pop(context); // Listeye dön
+      
+      // Return to previous screen
+      Navigator.pop(context);
+
     } catch (e) {
       if (!mounted) return;
+      
+      // Error Feedback
+      final errorMessage = e.toString().replaceAll('Exception:', '').trim();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text('Hata: $errorMessage'), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -72,21 +105,24 @@ await repo.create(
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Request'),
-        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        title: const Text('Yeni Talep Oluştur'),
+        backgroundColor: _primaryColor,
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
-      body: SingleChildScrollView( // Klavye açılınca taşmasın diye
+      body: SingleChildScrollView( 
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Kategori Seçimi
-              const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
+              // --- Category Dropdown ---
+              const Text(
+                'Kategori', 
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -98,10 +134,11 @@ await repo.create(
                   child: DropdownButton<String>(
                     value: _selectedCategory,
                     isExpanded: true,
-                    items: _categories.map((c) {
-                      return DropdownMenuItem(
-                        value: c,
-                        child: Text(c),
+                    icon: const Icon(Icons.arrow_drop_down, color: _primaryColor),
+                    items: _categoryMap.entries.map((entry) {
+                      return DropdownMenuItem<String>(
+                        value: entry.key,
+                        child: Text(entry.value),
                       );
                     }).toList(),
                     onChanged: (val) {
@@ -110,45 +147,63 @@ await repo.create(
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // Başlık
+              // --- Title Input ---
               TextFormField(
                 controller: _titleCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Title',
+                  labelText: 'Başlık',
+                  hintText: 'Örn: Musluk Damlatıyor',
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.title, color: Colors.grey),
                 ),
                 textInputAction: TextInputAction.next,
-                validator: (v) => (v == null || v.trim().length < 3) ? 'Title is too short' : null,
+                validator: (v) => (v == null || v.trim().length < 3) 
+                    ? 'Başlık en az 3 karakter olmalı' 
+                    : null,
               ),
               const SizedBox(height: 16),
 
-              // İçerik
+              // --- Content Input ---
               TextFormField(
                 controller: _contentCtrl,
                 decoration: const InputDecoration(
-                  labelText: 'Content',
+                  labelText: 'Açıklama', 
+                  hintText: 'Sorunu detaylıca açıklayınız...',
                   alignLabelWithHint: true,
                   border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.description, color: Colors.grey),
                 ),
                 maxLines: 5,
-                validator: (v) => (v == null || v.trim().length < 5) ? 'Please explain in detail' : null,
+                validator: (v) => (v == null || v.trim().length < 5) 
+                    ? 'Lütfen daha detaylı açıklama girin' 
+                    : null,
               ),
               const SizedBox(height: 24),
 
-              // Gönder Butonu
+              // --- Submit Button ---
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: FilledButton.icon(
                   onPressed: _sending ? null : _submit,
                   icon: _sending
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 20, 
+                          height: 20, 
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
                       : const Icon(Icons.send),
-                  label: Text(_sending ? 'Sending...' : 'Create Request'),
+                  label: Text(
+                    _sending ? 'Gönderiliyor...' : 'Talebi Gönder',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: Color(0xFF1A4F70),
+                    backgroundColor: _primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),

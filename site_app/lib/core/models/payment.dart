@@ -1,14 +1,15 @@
+/// Represents a payment transaction or dues record.
 class Payment {
   final int id;
   final String userId;
   final String siteId;
   final double amount;
-  final DateTime paymentDate; // Backend'deki 'due_date' (Son Ödeme Tarihi)
-  final String? paymentMethod; // Ödenmemişse null olabilir
-  final String status; // 'PAID', 'UNPAID', 'OVERDUE'
-  final int month; // Filtreleme için gerekli
-  final int year;  // Filtreleme için gerekli
-  final String description; // UI'da göstermek için
+  final DateTime paymentDate;
+  final String? paymentMethod;
+  final String status;
+  final int month;
+  final int year;
+  final String description;
 
   Payment({
     required this.id,
@@ -23,32 +24,28 @@ class Payment {
     required this.description,
   });
 
+  /// Creates a [Payment] instance from a JSON map.
+  /// 
+  /// Handles fallback logic for dates, description generation, and 
+  /// varying key formats (e.g., camelCase vs snake_case).
   factory Payment.fromJson(Map<String, dynamic> json) {
-    // Backend'den gelen 'due_date' veya 'created_at' bilgisini alıyoruz
-    DateTime parsedDate;
-    if (json['due_date'] != null) {
-      parsedDate = DateTime.parse(json['due_date'].toString());
-    } else if (json['created_at'] != null) {
-      parsedDate = DateTime.parse(json['created_at'].toString());
-    } else {
-      parsedDate = DateTime.now();
-    }
+    // Determine the relevant date string safely
+    final dateStr = json['due_date']?.toString() ?? json['created_at']?.toString();
+    final parsedDate = DateTime.tryParse(dateStr ?? '') ?? DateTime.now();
 
-    // Backend'den gelen ay ve yıl bilgileri
     final int valMonth = int.tryParse(json['month'].toString()) ?? parsedDate.month;
     final int valYear = int.tryParse(json['year'].toString()) ?? parsedDate.year;
 
-    // Description alanı genelde aidat tablosunda olmaz, biz üretiyoruz
-    String generatedDesc = json['description']?.toString() ?? '';
-    if (generatedDesc.isEmpty) {
-      // İngilizce ay isimleri veya basitçe "Aidat"
-      generatedDesc = '$valYear / $valMonth - Monthly Dues'; 
+    // Generate a default description if none is provided
+    String desc = json['description']?.toString() ?? '';
+    if (desc.isEmpty) {
+      desc = '$valYear / $valMonth - Monthly Dues';
     }
 
     return Payment(
-      id: json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      id: int.tryParse(json['id'].toString()) ?? 0,
       
-      // Prisma genelde camelCase döner (userId), ama snake_case (user_id) kontrolü de yapalım
+      // Support both camelCase and snake_case keys for IDs
       userId: json['userId']?.toString() ?? json['user_id']?.toString() ?? '',
       siteId: json['siteId']?.toString() ?? json['site_id']?.toString() ?? '',
       
@@ -56,14 +53,14 @@ class Payment {
       
       paymentDate: parsedDate,
       
-      // Status genelde 'payment_status' olarak gelir
+      // Default to 'UNPAID' if status is missing
       status: json['payment_status']?.toString() ?? 'UNPAID',
       
-      paymentMethod: json['payment_method']?.toString(), // Null olabilir
+      paymentMethod: json['payment_method']?.toString(),
       
       month: valMonth,
       year: valYear,
-      description: generatedDesc,
+      description: desc,
     );
   }
 }

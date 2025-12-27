@@ -1,35 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_controller.dart';
 
+/// Screen displaying the user's profile information and site details.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).user;
-
-    // Tema Rengi
     const primaryColor = Color(0xFF1A4F70);
 
+    // Show loading if user data is not yet available
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // Baş harfleri alma (Örn: Ahmet Yılmaz -> AY)
+    // Safe logic to generate initials (e.g., "Ahmet Yilmaz" -> "AY")
     String initials = '';
     if (user.name.isNotEmpty) {
-      final names = user.name.trim().split(' ');
+      // Split by one or more spaces to handle accidental double spaces
+      final names = user.name.trim().split(RegExp(r'\s+'));
       if (names.length >= 2) {
         initials = '${names.first[0]}${names.last[0]}'.toUpperCase();
-      } else {
+      } else if (names.isNotEmpty) {
         initials = names.first[0].toUpperCase();
       }
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Açık gri arka plan
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text('Profilim'),
         backgroundColor: primaryColor,
@@ -40,7 +40,7 @@ class ProfileScreen extends ConsumerWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- ÜST KISIM (HEADER) ---
+            // --- Header Section (Avatar & Name) ---
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 20, bottom: 40),
@@ -84,7 +84,8 @@ class ProfileScreen extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      // Updated for Flutter 3.27+
+                      color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
@@ -98,7 +99,7 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: 20),
 
-            // --- KONUT BİLGİLERİ KARTI ---
+            // --- Housing Information Card ---
             _buildInfoCard(
               title: 'Konut Bilgileri',
               items: [
@@ -107,7 +108,6 @@ class ProfileScreen extends ConsumerWidget {
                   label: 'Site Adı',
                   value: user.siteName,
                 ),
-                // User modelinde null gelme ihtimaline karşı kontrol:
                 _InfoItem(
                   icon: Icons.location_on_outlined,
                   label: 'Adres',
@@ -126,7 +126,7 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
 
-            // --- İLETİŞİM BİLGİLERİ KARTI ---
+            // --- Contact Information Card ---
             _buildInfoCard(
               title: 'İletişim Bilgileri',
               items: [
@@ -150,7 +150,7 @@ class ProfileScreen extends ConsumerWidget {
 
             const SizedBox(height: 30),
 
-            // --- ÇIKIŞ BUTONU ---
+            // --- Logout Button ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: SizedBox(
@@ -179,7 +179,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // Çıkış Onay Dialogu
+  /// Displays a confirmation dialog before logging out.
   void _showLogoutDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
@@ -195,11 +195,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () {
-              Navigator.pop(ctx); // Dialogu kapat
-              ref
-                  .read(authStateProvider.notifier)
-                  .logout(); // Çıkış işlemini tetikle
-              // Router otomatik olarak Login ekranına atacak
+              Navigator.pop(ctx); // Close dialog
+              ref.read(authStateProvider.notifier).logout(); // Trigger logout
             },
             child: const Text('Çıkış Yap', style: TextStyle(color: Colors.red)),
           ),
@@ -208,7 +205,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  // Bilgi Kartı Yapısı
+  /// Helper widget to build grouped information cards.
   Widget _buildInfoCard({
     required String title,
     required List<_InfoItem> items,
@@ -220,7 +217,8 @@ class ProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            // Updated for Flutter 3.27+
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -268,6 +266,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+/// Simple data class to hold info item details.
 class _InfoItem {
   final IconData icon;
   final String label;

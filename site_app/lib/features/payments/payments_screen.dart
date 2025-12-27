@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/models/payment.dart';
 
-// --- EKRAN ---
+/// A screen that displays the user's payment history with year and month filters.
 class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
 
@@ -13,23 +13,20 @@ class PaymentsScreen extends ConsumerStatefulWidget {
 }
 
 class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
-  // Varsayılan olarak bugünün yıl ve ayını seçili getir
+  // Initialize filters with the current date
   int _selectedYear = DateTime.now().year;
   int _selectedMonth = DateTime.now().month;
 
   @override
   Widget build(BuildContext context) {
-    // 1. Kullanıcı verisini AuthState içinden çekiyoruz (YÖNTEM 1)
     final user = ref.watch(authStateProvider).user;
 
-    // Kullanıcı henüz yüklenmediyse loading göster
+    // Show loader if user data isn't ready
     if (user == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    // 2. Kullanıcının ödeme listesini seçili tarihe göre filtrele
-    // Not: Payment modelinde 'year' ve 'month' alanları backend'den geliyor.
-    // Eğer modelinde bu alanlar yoksa p.paymentDate.year şeklinde kullanabilirsin.
+    // Filter payments based on selected year and month
     final filteredPayments = user.payments.where((p) {
       return p.year == _selectedYear && p.month == _selectedMonth;
     }).toList();
@@ -37,18 +34,16 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Payment History'),
-        backgroundColor: const Color(0xFF1A4F70), // Kurumsal Mavi
+        title: const Text('Ödeme Geçmişi'),
+        backgroundColor: const Color(0xFF1A4F70),
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
       ),
       body: Column(
         children: [
-          // FİLTRE ALANI
           _buildFilterBar(),
 
-          // LİSTE ALANI
           Expanded(
             child: filteredPayments.isEmpty
                 ? _buildEmptyState()
@@ -66,18 +61,26 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     );
   }
 
+  /// Builds the top bar containing Year and Month dropdowns.
   Widget _buildFilterBar() {
+    // Generate a dynamic list of years (Current Year - 2 to Current Year + 2)
+    final currentYear = DateTime.now().year;
+    final years = List.generate(5, (index) => currentYear - 2 + index);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 5),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 5,
+          ),
         ],
       ),
       child: Row(
         children: [
-          // YIL DROPDOWN
+          // Year Dropdown
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -90,11 +93,13 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
                   value: _selectedYear,
                   isExpanded: true,
                   icon: const Icon(Icons.calendar_today, size: 16),
-                  items: [2024, 2025, 2026].map((year) {
+                  items: years.map((year) {
                     return DropdownMenuItem(
                       value: year,
-                      child: Text("$year",
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        "$year",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -107,7 +112,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
 
           const SizedBox(width: 12),
 
-          // AY DROPDOWN
+          // Month Dropdown
           Expanded(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -122,9 +127,11 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
                   icon: const Icon(Icons.arrow_drop_down),
                   items: List.generate(12, (index) {
                     final monthIndex = index + 1;
-                    // Ay isimleri İngilizce (January, February...)
-                    final monthName = DateFormat.MMMM('en_US')
-                        .format(DateTime(2024, monthIndex));
+                    // Format month name (e.g., "Ocak", "Şubat") using locale
+                    final monthName = DateFormat.MMMM(
+                      'tr_TR',
+                    ).format(DateTime(currentYear, monthIndex));
+                    
                     return DropdownMenuItem(
                       value: monthIndex,
                       child: Text(monthName),
@@ -142,6 +149,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
     );
   }
 
+  /// Builds the UI for when no payments are found.
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -150,7 +158,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
           Icon(Icons.receipt_long, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'No records found for this date.',
+            'Bu tarih için kayıt bulunamadı.',
             style: TextStyle(color: Colors.grey[600]),
           ),
         ],
@@ -159,6 +167,7 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
   }
 }
 
+/// A card widget representing a single payment transaction.
 class _PaymentCard extends StatelessWidget {
   final Payment payment;
 
@@ -166,16 +175,14 @@ class _PaymentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Para birimi ve Tarih formatı (İngilizce)
-    final currencyFormat = NumberFormat.currency(locale: 'en_US', symbol: '₺');
-    final dateFormat = DateFormat('dd MMM yyyy', 'en_US');
+    final currencyFormat = NumberFormat.currency(locale: 'tr_TR', symbol: '₺');
+    final dateFormat = DateFormat('dd MMM yyyy', 'tr_TR');
 
-    // Status Kontrolü (Backend'den gelen payment_status'e göre)
-    // Eğer payment_status "PAID" ise ödendi kabul et
-    final status = payment.status?.toUpperCase() ?? 'UNPAID';
+    final status = payment.status.toUpperCase();
     final isPaid = status == 'PAID';
     final isOverdue = status == 'OVERDUE';
 
+    // Determine visual style based on status
     Color statusColor;
     IconData statusIcon;
     String statusText;
@@ -183,15 +190,15 @@ class _PaymentCard extends StatelessWidget {
     if (isPaid) {
       statusColor = Colors.green;
       statusIcon = Icons.check_circle;
-      statusText = 'PAID';
+      statusText = 'ÖDENDİ';
     } else if (isOverdue) {
       statusColor = Colors.red;
       statusIcon = Icons.warning_amber_rounded;
-      statusText = 'OVERDUE';
+      statusText = 'GECİKMİŞ';
     } else {
       statusColor = Colors.orange;
       statusIcon = Icons.hourglass_empty;
-      statusText = 'UNPAID';
+      statusText = 'ÖDENMEDİ';
     }
 
     return Container(
@@ -199,10 +206,10 @@ class _PaymentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -210,32 +217,27 @@ class _PaymentCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // 1. SOL: DURUM İKONU
+          // Status Icon
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: statusColor.withOpacity(0.1),
+              color: statusColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              statusIcon,
-              color: statusColor,
-              size: 24,
-            ),
+            child: Icon(statusIcon, color: statusColor, size: 24),
           ),
 
           const SizedBox(width: 16),
 
-          // 2. ORTA: AÇIKLAMA VE TARİH
+          // Details (Description & Date)
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // Eğer description boşsa varsayılan metin
-                  payment.description.isNotEmpty 
-                      ? payment.description 
-                      : 'Monthly Dues',
+                  payment.description.isNotEmpty
+                      ? payment.description
+                      : 'Aylık Aidat',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -245,7 +247,11 @@ class _PaymentCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 12, color: Colors.grey[500]),
+                    Icon(
+                      Icons.calendar_today,
+                      size: 12,
+                      color: Colors.grey[500],
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       dateFormat.format(payment.paymentDate),
@@ -257,7 +263,7 @@ class _PaymentCard extends StatelessWidget {
             ),
           ),
 
-          // 3. SAĞ: TUTAR VE ETİKET
+          // Amount & Status Label
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -273,7 +279,7 @@ class _PaymentCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
+                  color: statusColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(

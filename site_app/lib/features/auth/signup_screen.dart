@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_controller.dart';
 
+/// Manages the local state of the phone authentication process.
+final phoneAuthNotifierProvider =
+    StateNotifierProvider<PhoneAuthNotifier, PhoneAuthState>((ref) {
+  return PhoneAuthNotifier();
+});
+
+/// A multi-step sign-up screen involving Site ID validation,
+/// Password creation, and SMS Verification (Firebase).
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
 
@@ -10,42 +20,46 @@ class SignupScreen extends ConsumerStatefulWidget {
 }
 
 class _SignupScreenState extends ConsumerState<SignupScreen> {
-  // Sayfa geçişlerini kontrol etmek için controller
   final PageController _pageController = PageController();
-  
-  // Hangi adımda olduğumuzu takip etmek için
   int _currentStep = 0;
 
-  // Her adım için ayrı form key (Validasyon için)
+  // Form keys for validation
   final _formKeyStep1 = GlobalKey<FormState>();
   final _formKeyStep2 = GlobalKey<FormState>();
 
-  // Controller'lar
-  final phone = TextEditingController();
-  final siteId = TextEditingController();
-  
-  // Şifre Controller'ları
-  final pass = TextEditingController();
-  final passConfirm = TextEditingController();
-
-  // OTP Dialog için controller
+  // Input Controllers
+  final _phoneController = TextEditingController();
+  final _siteIdController = TextEditingController();
+  final _passController = TextEditingController();
+  final _passConfirmController = TextEditingController();
   final _otpController = TextEditingController();
 
   @override
   void dispose() {
-    phone.dispose();
-    siteId.dispose();
-    pass.dispose();
-    passConfirm.dispose();
+    _phoneController.dispose();
+    _siteIdController.dispose();
+    _passController.dispose();
+    _passConfirmController.dispose();
     _otpController.dispose();
     _pageController.dispose();
     super.dispose();
   }
 
-  // --- İLERİ BUTONU FONKSİYONU ---
+  @override
+  void initState() {
+    super.initState();
+    // Reset the provider state when entering the screen to ensure a clean slate.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(phoneAuthNotifierProvider.notifier).reset();
+    });
+  }
+
+  /// Validates Step 1 and moves to the Password creation step.
   void _nextStep() {
+    // Dismiss keyboard
+    FocusScope.of(context).unfocus();
+
     if (_formKeyStep1.currentState!.validate()) {
-      // Validasyon geçerliyse 2. sayfaya geç
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
@@ -54,8 +68,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     }
   }
 
-  // --- GERİ BUTONU FONKSİYONU ---
+  /// Moves back to Step 1.
   void _prevStep() {
+    FocusScope.of(context).unfocus();
     _pageController.previousPage(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
@@ -63,63 +78,188 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() => _currentStep = 0);
   }
 
+  /// Formats the phone number and initiates Firebase Phone Auth.
+  void _startPhoneAuth() {
+    FocusScope.of(context).unfocus();
+
+    String rawPhone = _phoneController.text.trim().replaceAll(' ', '');
+    if (rawPhone.startsWith('0')) rawPhone = rawPhone.substring(1);
+    
+    // Ensure E.164 format for Turkey (+90)
+    String formattedPhone = rawPhone.startsWith('+')
+        ? rawPhone
+        : '+90$rawPhone';
+
+    ref.read(phoneAuthNotifierProvider.notifier).startVerification(
+          phoneNumber: formattedPhone,
+          password: _passController.text,
+        );
+  }
+
+  /// Verifies the entered OTP and registers the user in the backend.
+  Future<void> _verifyOtpAndRegister() async {
+    final state = ref.read(phoneAuthNotifierProvider);
+    
+    if (_otpController.text.isEmpty || state.verificationId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Lütfen kodu giriniz.")),
+      );
+      return;
+    }
+
+    try {
+      ref.read(phoneAuthNotifierProvider.notifier).setLoading(true);
+
+      // 1. Create credential from OTP
+      PhoneAuthCredential credential = PhoneAuthProvider.credential(
+        verificationId: state.verificationId!,
+        smsCode: _otpController.text.trim(),
+      );
+
+      // 2. Sign in to Firebase to get the ID Token
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithCredential(credential);
+      
+      String? idToken = await userCredential.user?.getIdToken();
+
+      if (idToken != null) {
+        await _finishSignupProcess(idToken: idToken);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        ref.read(phoneAuthNotifierProvider.notifier).setLoading(false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Doğrulama Hatası: ${e.message}")),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ref.read(phoneAuthNotifierProvider.notifier).setLoading(false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Hata: $e")),
+        );
+      }
+    }
+  }
+
+  /// Calls the backend to finalize the user registration.
+  Future<void> _finishSignupProcess({required String idToken}) async {
+    final state = ref.read(phoneAuthNotifierProvider);
+
+    if (state.savedPhone == null || state.savedPassword == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Oturum zaman aşımı. Lütfen tekrar deneyin.")),
+      );
+      return;
+    }
+
+    // Call the main Auth Controller
+    final authNotifier = ref.read(authStateProvider.notifier);
+
+    final success = await authNotifier.completeSignup(
+      phoneNumber: state.savedPhone!,
+      code: idToken, // In this flow, ID Token acts as proof of verification
+      password: state.savedPassword!,
+    );
+
+    if (mounted) {
+      ref.read(phoneAuthNotifierProvider.notifier).setLoading(false);
+    }
+
+    if (success && mounted) {
+      ref.read(phoneAuthNotifierProvider.notifier).reset();
+
+      // Close dialog if open
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      context.go('/login');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz."),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (mounted) {
+      final errorMsg = ref.read(authStateProvider).error ?? "Kayıt başarısız.";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMsg), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authStateProvider);
-    
+    final phoneState = ref.watch(phoneAuthNotifierProvider);
+
+    // Listen to state changes to trigger UI events (Dialogs, Snackbars)
+    ref.listen(phoneAuthNotifierProvider, (previous, next) {
+      if (next.error != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error!), backgroundColor: Colors.red),
+        );
+        ref.read(phoneAuthNotifierProvider.notifier).clearError();
+      }
+
+      // Show OTP dialog when verification ID is received
+      if (next.verificationId != null && previous?.verificationId == null) {
+        _showOtpDialog();
+      }
+
+      // Handle auto-verification (Android specific)
+      if (next.autoVerifiedToken != null && previous?.autoVerifiedToken == null) {
+        _finishSignupProcess(idToken: next.autoVerifiedToken!);
+      }
+    });
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
           title: Text(_currentStep == 0 ? 'Hesap Oluştur' : 'Şifre Belirle'),
           centerTitle: true,
-          leading: _currentStep == 1 
-            ? IconButton(icon: const Icon(Icons.arrow_back), onPressed: _prevStep)
-            : null,
+          leading: _currentStep == 1
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _prevStep,
+                )
+              : IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () => context.pop(),
+                ),
         ),
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Adım göstergesi (Progress Bar)
-              LinearProgressIndicator(
-                value: (_currentStep + 1) / 2,
-                backgroundColor: Colors.grey[200],
-                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                minHeight: 6,
-                borderRadius: BorderRadius.circular(10),
+              // Animated Progress Indicator
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                tween: Tween<double>(begin: 0, end: (_currentStep + 1) / 2),
+                builder: (context, value, _) {
+                  return LinearProgressIndicator(
+                    value: value,
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(10),
+                  );
+                },
               ),
-              const SizedBox(height: 24),
-              
-              // Hata mesajı varsa göster
-              if (auth.error != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.error_outline, color: Colors.red),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(auth.error!, style: const TextStyle(color: Colors.red))),
-                      ],
-                    ),
-                  ),
-                ),
 
-              // Sayfa İçeriği (PageView)
+              const SizedBox(height: 24),
+
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(), // Elle kaydırmayı kapat
-                  children: [
-                    _buildStep1(), // Adım 1: Kimlik
-                    _buildStep2(), // Adım 2: Şifre (Kutucuklar burada)
-                  ],
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentStep = index;
+                    });
+                  },
+                  children: [_buildStep1(), _buildStep2(phoneState.isLoading)],
                 ),
               ),
             ],
@@ -129,7 +269,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     );
   }
 
-  // --- ADIM 1: SİTE ID ve TELEFON ---
+  /// Step 1: Site ID and Phone Number Input
   Widget _buildStep1() {
     return Form(
       key: _formKeyStep1,
@@ -137,130 +277,107 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         children: [
           const Text(
             "Lütfen site kodunuzu ve telefon numaranızı giriniz.",
-            style: TextStyle(color: Colors.grey, fontSize: 16),
             textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 30),
           
           TextFormField(
-            controller: siteId,
+            controller: _siteIdController,
             decoration: const InputDecoration(
               labelText: 'Site ID',
-              prefixIcon: Icon(Icons.business),
               border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.business),
+              hintText: "Örn: VN58FN",
             ),
-            textInputAction: TextInputAction.next,
-            validator: (v) => (v == null || v.isEmpty) ? 'Site ID zorunludur' : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Zorunlu alan' : null,
           ),
           const SizedBox(height: 16),
           
           TextFormField(
-            controller: phone,
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
             decoration: const InputDecoration(
               labelText: 'Telefon Numarası',
-              prefixIcon: Icon(Icons.phone),
               border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.phone),
               hintText: "5XX...",
+              prefixText: "+90 ",
             ),
-            keyboardType: TextInputType.phone,
-            validator: (v) => (v == null || v.isEmpty) ? 'Telefon zorunludur' : null,
+            validator: (v) => (v == null || v.isEmpty) ? 'Zorunlu alan' : null,
           ),
           const SizedBox(height: 32),
           
           FilledButton(
             onPressed: _nextStep,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text('Devam Et', style: TextStyle(fontSize: 16)),
+            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            child: const Text('Devam Et'),
           ),
         ],
       ),
     );
   }
 
-  // --- ADIM 2: ŞİFRE BELİRLEME (BURAYI KONTROL EDİN) ---
-  Widget _buildStep2() {
-    final authState = ref.watch(authStateProvider);
-    final isLoading = authState.isLoading;
-
+  /// Step 2: Password Creation
+  Widget _buildStep2(bool isLoading) {
     return Form(
       key: _formKeyStep2,
       child: ListView(
         children: [
           const Text(
             "Hesabınız için güvenli bir şifre belirleyin.",
-            style: TextStyle(color: Colors.grey, fontSize: 16),
             textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 30),
-
-          // --- EKSİK OLAN KISIM BURASIYDI ---
+          
           TextFormField(
-            controller: pass,
+            controller: _passController,
+            obscureText: true,
             decoration: const InputDecoration(
               labelText: 'Şifre',
-              prefixIcon: Icon(Icons.lock_outline),
               border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock_outline),
             ),
-            obscureText: true, // Şifreyi gizle
-            validator: (v) {
-              if (v == null || v.length < 6) return 'Şifre en az 6 karakter olmalı';
-              return null;
-            },
+            validator: (v) =>
+                (v == null || v.length < 6) ? 'En az 6 karakter olmalı' : null,
           ),
           const SizedBox(height: 16),
           
           TextFormField(
-            controller: passConfirm,
+            controller: _passConfirmController,
+            obscureText: true,
             decoration: const InputDecoration(
               labelText: 'Şifreyi Onayla',
-              prefixIcon: Icon(Icons.lock),
               border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.lock),
             ),
-            obscureText: true, // Şifreyi gizle
-            validator: (v) {
-              if (v != pass.text) return 'Şifreler eşleşmiyor';
-              return null;
-            },
+            validator: (v) => (v != _passController.text) ? 'Şifreler uyuşmuyor' : null,
           ),
-          // ------------------------------------
-
           const SizedBox(height: 32),
           
           if (isLoading)
             const Center(child: CircularProgressIndicator())
           else
             FilledButton(
-              onPressed: () async {
+              onPressed: () {
                 if (_formKeyStep2.currentState!.validate()) {
-                  // 1. Önce kayıt işlemini başlat (SMS göndert)
-                  final success = await ref.read(authStateProvider.notifier).initiateSignup(
-                        phoneNumber: phone.text,
-                        siteId: siteId.text,
-                      );
-
-                  // 2. Başarılıysa OTP dialogunu aç
-                  if (success && context.mounted) {
-                    _showOtpDialog();
-                  }
+                  _startPhoneAuth();
                 }
               },
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Kaydı Tamamla', style: TextStyle(fontSize: 16)),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+              child: const Text('Kaydı Tamamla'),
             ),
         ],
       ),
     );
   }
 
-  // --- OTP DIALOG ---
   void _showOtpDialog() {
     _otpController.clear();
+    
+    if (!mounted) return;
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -269,58 +386,139 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text("${phone.text} numarasına gelen kodu giriniz:"),
+            const Text("Telefonunuza gelen doğrulama kodunu giriniz:"),
             const SizedBox(height: 16),
             TextField(
               controller: _otpController,
               keyboardType: TextInputType.number,
-              maxLength: 6,
               textAlign: TextAlign.center,
-              style: const TextStyle(letterSpacing: 4, fontSize: 18, fontWeight: FontWeight.bold),
               decoration: const InputDecoration(
+                hintText: "SMS Kodu",
                 border: OutlineInputBorder(),
-                hintText: "______",
-                counterText: "",
               ),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () {
+              ref.read(phoneAuthNotifierProvider.notifier).reset();
+              Navigator.pop(ctx);
+            },
             child: const Text("İptal"),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final authNotifier = ref.read(authStateProvider.notifier);
-              
-              // Şifreyi de göndererek kaydı tamamla
-              final isVerified = await authNotifier.completeSignup(
-                phoneNumber: phone.text, 
-                code: _otpController.text,
-                password: pass.text, 
-              );
-
-              if (isVerified && context.mounted) {
-                Navigator.pop(ctx); // Dialog'u kapat
-                Navigator.pop(context); // Sign Up ekranını kapat
-                
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text("Hesabınız oluşturuldu! Giriş yapabilirsiniz."),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text("Hatalı kod veya işlem başarısız.")),
-                );
-              }
+          Consumer(
+            builder: (context, ref, child) {
+              final loading = ref.watch(phoneAuthNotifierProvider).isLoading;
+              return loading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : ElevatedButton(
+                      onPressed: _verifyOtpAndRegister,
+                      child: const Text("Onayla"),
+                    );
             },
-            child: const Text("Onayla"),
           ),
         ],
       ),
     );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// State Management Classes
+// -----------------------------------------------------------------------------
+
+/// State object representing the UI state of the phone authentication flow.
+class PhoneAuthState {
+  final bool isLoading;
+  final String? verificationId;
+  final String? error;
+  final String? autoVerifiedToken;
+  final String? savedPhone;
+  final String? savedPassword;
+
+  PhoneAuthState({
+    this.isLoading = false,
+    this.verificationId,
+    this.error,
+    this.autoVerifiedToken,
+    this.savedPhone,
+    this.savedPassword,
+  });
+
+  PhoneAuthState copyWith({
+    bool? isLoading,
+    String? verificationId,
+    String? error,
+    String? autoVerifiedToken,
+    String? savedPhone,
+    String? savedPassword,
+  }) {
+    return PhoneAuthState(
+      isLoading: isLoading ?? this.isLoading,
+      verificationId: verificationId ?? this.verificationId,
+      error: error,
+      autoVerifiedToken: autoVerifiedToken ?? this.autoVerifiedToken,
+      savedPhone: savedPhone ?? this.savedPhone,
+      savedPassword: savedPassword ?? this.savedPassword,
+    );
+  }
+}
+
+/// Controller managing the Firebase Phone Verification logic for Sign Up.
+class PhoneAuthNotifier extends StateNotifier<PhoneAuthState> {
+  PhoneAuthNotifier() : super(PhoneAuthState());
+
+  void setLoading(bool val) => state = state.copyWith(isLoading: val);
+  void clearError() => state = state.copyWith(error: null);
+  void reset() => state = PhoneAuthState();
+
+  Future<void> startVerification({
+    required String phoneNumber,
+    required String password,
+  }) async {
+    state = state.copyWith(
+      isLoading: true,
+      error: null,
+      savedPhone: phoneNumber,
+      savedPassword: password,
+    );
+
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+
+        // Android automatic verification
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          // Sign in to get the token, then update state
+          final userCred = await FirebaseAuth.instance.signInWithCredential(credential);
+          String? token = await userCred.user?.getIdToken();
+          state = state.copyWith(isLoading: false, autoVerifiedToken: token);
+        },
+
+        verificationFailed: (FirebaseAuthException e) {
+          String msg = e.message ?? "Doğrulama hatası.";
+          if (e.code == 'invalid-phone-number') msg = "Geçersiz telefon numarası.";
+          state = state.copyWith(isLoading: false, error: msg);
+        },
+
+        codeSent: (String verificationId, int? resendToken) {
+          state = state.copyWith(
+            isLoading: false,
+            verificationId: verificationId,
+          );
+        },
+
+        codeAutoRetrievalTimeout: (String verificationId) {
+          state = state.copyWith(verificationId: verificationId);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: "Beklenmeyen hata: $e");
+    }
   }
 }
