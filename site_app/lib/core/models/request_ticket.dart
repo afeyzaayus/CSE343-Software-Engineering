@@ -24,7 +24,8 @@ class RequestTicket {
   /// Includes safety checks for date parsing and status mapping.
   factory RequestTicket.fromJson(Map<String, dynamic> json) {
     // Handle date keys safely (support both camelCase and snake_case)
-    final dateStr = json['createdAt']?.toString() ?? json['created_at']?.toString();
+    final dateStr =
+        json['createdAt']?.toString() ?? json['created_at']?.toString();
 
     return RequestTicket(
       id: int.tryParse(json['id'].toString()) ?? 0,
@@ -50,19 +51,24 @@ class RequestTicket {
       case 'RESOLVED':
         return TicketStatus.resolved;
       case 'CANCELLED':
+      case 'REJECTED':
         return TicketStatus.cancelled;
       default:
         return TicketStatus.pending;
     }
   }
-  
+
   /// Returns a user-friendly display string for the status.
   String get statusText {
     switch (status) {
-      case TicketStatus.pending: return 'Pending';
-      case TicketStatus.inProgress: return 'In Progress';
-      case TicketStatus.resolved: return 'Resolved';
-      case TicketStatus.cancelled: return 'Cancelled';
+      case TicketStatus.pending:
+        return 'Pending';
+      case TicketStatus.inProgress:
+        return 'In Progress';
+      case TicketStatus.resolved:
+        return 'Resolved';
+      case TicketStatus.cancelled:
+        return 'Cancelled';
     }
   }
 }

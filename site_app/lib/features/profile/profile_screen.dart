@@ -84,7 +84,6 @@ class ProfileScreen extends ConsumerWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      // Updated for Flutter 3.27+
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
@@ -116,7 +115,7 @@ class ProfileScreen extends ConsumerWidget {
                 _InfoItem(
                   icon: Icons.location_city,
                   label: 'Blok',
-                  value: user.blockNo ?? '-',
+                  value: user.blockName ?? '-',
                 ),
                 _InfoItem(
                   icon: Icons.door_front_door,

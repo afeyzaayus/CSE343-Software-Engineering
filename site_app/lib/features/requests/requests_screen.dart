@@ -149,7 +149,7 @@ class _RequestCard extends StatelessWidget {
         statusTextTr = 'ÇÖZÜLDÜ';
         break;
       case TicketStatus.cancelled:
-        statusColor = Colors.grey;
+        statusColor = const Color.fromARGB(255, 229, 11, 11);
         statusIcon = Icons.cancel_outlined;
         statusTextTr = 'İPTAL EDİLDİ';
         break;

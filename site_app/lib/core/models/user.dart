@@ -13,7 +13,7 @@ class User {
   final String siteCode;
   final String siteName;
   final String siteAddress;
-  final String? blockNo;
+  final String? blockName;
   final String? apartmentNo;
   final String? plates;
   
@@ -29,7 +29,7 @@ class User {
     required this.siteCode,
     required this.siteName,
     required this.siteAddress,
-    this.blockNo,
+    this.blockName,
     this.apartmentNo,
     this.plates,
   });
@@ -40,6 +40,7 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     // Safely extract the nested site object
     final siteData = json['site'] is Map<String, dynamic> ? json['site'] : null;
+    final blockData = json['blocks'] is Map<String, dynamic> ? json['blocks'] : null;
 
     return User(
       id: json['id']?.toString() ?? '',
@@ -54,9 +55,10 @@ class User {
       siteName: siteData?['site_name'] ?? '',
       siteCode: siteData?['site_id']?.toString() ?? siteData?['code'] ?? '', 
       siteAddress: siteData?['site_address'] ?? '',
+
+      blockName: blockData?['block_name']?.toString() ?? json['block_id']?.toString(),
       
       plates: json['plates']?.toString(),
-      blockNo: json['block_id']?.toString(),
       apartmentNo: json['apartment_no']?.toString(),
 
       payments: (json['monthlyDues'] as List?)
